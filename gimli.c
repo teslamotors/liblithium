@@ -1,5 +1,25 @@
 #include "gimli.h"
 
+static unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS],
+                                 size_t i)
+{
+    return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+}
+
+static void gimli_write8(uint32_t state[static GIMLI_WORDS], size_t i,
+                         unsigned char x)
+{
+    size_t wi = i / 4;
+    int sh = (8 * (i % 4));
+    state[wi] &= ~(UINT32_C(0xFF) << sh);
+    state[wi] |= (uint32_t)x << sh;
+}
+
+void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x)
+{
+    gimli_write8(state, i, gimli_read8(state, i) ^ x);
+}
+
 static uint32_t rotate(uint32_t x, int bits)
 {
     if (bits == 0)
@@ -9,8 +29,8 @@ static uint32_t rotate(uint32_t x, int bits)
 
 void gimli(uint32_t *state)
 {
-    int round;
-    int column;
+    unsigned int round;
+    unsigned int column;
     uint32_t x;
     uint32_t y;
     uint32_t z;
