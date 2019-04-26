@@ -5,15 +5,23 @@
 #include <string.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define rateInBytes 16
+#define GIMLI_HASH_RATE 16
+
+static void gimli_byte_xor(uint32_t state[static 12], size_t i, unsigned char x)
+{
+    state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
+}
+
+static unsigned char gimli_byte_read(uint32_t state[static 12], size_t i)
+{
+    return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+}
 
 void gimli_hash(unsigned char *output, size_t output_len,
                 const unsigned char *input, size_t input_len)
 {
     uint32_t state[12];
-    uint8_t *state_8 = (uint8_t *)state;
-    uint64_t blockSize = 0;
-    uint64_t i;
+    size_t block_len = 0;
 
     // === Initialize the state ===
     memset(state, 0, sizeof(state));
@@ -21,33 +29,36 @@ void gimli_hash(unsigned char *output, size_t output_len,
     // === Absorb all the input blocks ===
     while (input_len > 0)
     {
-        blockSize = MIN(input_len, rateInBytes);
-        for (i = 0; i < blockSize; i++)
-            state_8[i] ^= input[i];
-        input += blockSize;
-        input_len -= blockSize;
+        block_len = MIN(input_len, GIMLI_HASH_RATE);
+        for (size_t i = 0; i < block_len; i++)
+            gimli_byte_xor(state, i, input[i]);
+        input += block_len;
+        input_len -= block_len;
 
-        if (blockSize == rateInBytes)
+        if (block_len == GIMLI_HASH_RATE)
         {
             gimli(state);
-            blockSize = 0;
+            block_len = 0;
         }
     }
 
     // === Do the padding and switch to the squeezing phase ===
-    state_8[blockSize] ^= 0x1F;
+    gimli_byte_xor(state, block_len, 0x1F);
     // Add the second bit of padding
-    state_8[rateInBytes - 1] ^= 0x80;
+    gimli_byte_xor(state, GIMLI_HASH_RATE - 1, 0x80);
     // Switch to the squeezing phase
     gimli(state);
 
     // === Squeeze out all the output blocks ===
     while (output_len > 0)
     {
-        blockSize = MIN(output_len, rateInBytes);
-        memcpy(output, state, blockSize);
-        output += blockSize;
-        output_len -= blockSize;
+        block_len = MIN(output_len, GIMLI_HASH_RATE);
+        for (size_t i = 0; i < block_len; ++i)
+        {
+            output[i] = gimli_byte_read(state, i);
+        }
+        output += block_len;
+        output_len -= block_len;
 
         if (output_len > 0)
             gimli(state);
