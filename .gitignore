@@ -1,4 +1,4 @@
-/obj/
+*.o
 /test
 /test_hash
 /test.txt
