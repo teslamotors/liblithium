@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "gimli.h"
 
 uint32_t rotate(uint32_t x, int bits)
 {

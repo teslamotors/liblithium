@@ -1,5 +1,9 @@
 #include "gimli_hash.h"
 
+#include "gimli.h"
+
+#include <string.h>
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define rateInBytes 16
 
