@@ -1,1 +1,4 @@
 BasedOnStyle: LLVM
+BreakBeforeBraces: Allman
+IndentWidth: 4
+AllowShortFunctionsOnASingleLine: false
