@@ -1,12 +1,12 @@
 #include "gimli.h"
 
-uint32_t rotate(uint32_t x, int bits) {
+static uint32_t rotate(uint32_t x, int bits) {
   if (bits == 0)
     return x;
   return (x << bits) | (x >> (32 - bits));
 }
 
-extern void gimli(uint32_t *state) {
+void gimli(uint32_t *state) {
   int round;
   int column;
   uint32_t x;
