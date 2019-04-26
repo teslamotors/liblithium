@@ -1,9 +1,15 @@
 CC=gcc -O1 -fomit-frame-pointer
 
-test.out: test test_hash
-	./test > test.out
-	cmp test.out test.exp
-	./test_hash 2> testVectors.tex
+.PHONY: all
+all: test.txt test_hash.tex
+
+test.txt: test
+	./test > test.txt
+	cmp test.txt test.exp
+
+test_hash.tex: test_hash
+	./test_hash 2> test_hash.tex
+	cmp test_hash.tex test_hash.exp
 
 obj:
 	mkdir -p obj
@@ -21,4 +27,4 @@ test_hash: obj/gimli.o test_hash.c gimli_hash.c
 
 clean:
 	@echo "cleaning..."
-	@rm -r test 2> /dev/null || true
+	@$(RM) -r test test.txt test_hash test_hash.tex obj

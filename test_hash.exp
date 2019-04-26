@@ -1,0 +1,32 @@
+\section{Test Vectors for \gimli-Hash}
+	\noindent
+	{\bf input:} "There's plenty for the both of us, may the best Dwarf win."\\
+	{\bf input (bytes):}\\
+	{\tt 54686572 65277320 706c656e 74792066 6f722074 68652062 6f746820 6f662075 732c206d 61792074 68652062 65737420 44776172 66207769 6e2e}\\
+	{\bf output:}\\
+	{\tt 4afb3ff784c7ad6943d49cf5da79facfa7c4434e1ce44f5dd4b28f91a84d22c8}\\
+	\medskip
+
+	\noindent
+	{\bf input:} "If anyone was to ask for my opinion, which I note they're not, I'd say we were taking the long way around."\\
+	{\bf input (bytes):}\\
+	{\tt 49662061 6e796f6e 65207761 7320746f 2061736b 20666f72 206d7920 6f70696e 696f6e2c 20776869 63682049 206e6f74 65207468 65792772 65206e6f 742c2049 27642073 61792077 65207765 72652074 616b696e 67207468 65206c6f 6e672077 61792061 726f756e 642e}\\
+	{\bf output:}\\
+	{\tt ba82a16a7b224c15bed8e8bdc88903a4006bc7beda78297d96029203ef08e07c}\\
+	\medskip
+
+	\noindent
+	{\bf input:} "It's true you don't see many Dwarf-women. And in fact, they are so alike in voice and appearance, that they are often mistaken for Dwarf-men.  And this in turn has given rise to the belief that there are no Dwarf-women, and that Dwarves just spring out of holes in the ground! Which is, of course, ridiculous."\\
+	{\bf input (bytes):}\\
+	{\tt 49742773 20747275 6520796f 7520646f 6e277420 73656520 6d616e79 20447761 72662d77 6f6d656e 2e20416e 6420696e 20666163 742c2074 68657920 61726520 736f2061 6c696b65 20696e20 766f6963 6520616e 64206170 70656172 616e6365 2c207468 61742074 68657920 61726520 6f667465 6e206d69 7374616b 656e2066 6f722044 77617266 2d6d656e 2e202041 6e642074 68697320 696e2074 75726e20 68617320 67697665 6e207269 73652074 6f207468 65206265 6c696566 20746861 74207468 65726520 61726520 6e6f2044 77617266 2d776f6d 656e2c20 616e6420 74686174 20447761 72766573 206a7573 74207370 72696e67 206f7574 206f6620 686f6c65 7320696e 20746865 2067726f 756e6421 20576869 63682069 732c206f 6620636f 75727365 2c207269 64696375 6c6f7573 2e}\\
+	{\bf output:}\\
+	{\tt ebe9bfc05ce15c73336fc3c5b52b01f75cf619bb37f13bfc7f567f9d5603191a}\\
+	\medskip
+
+	\noindent
+	{\bf input:} "" (empty string)\\
+	{\bf input (bytes):} {\it(0 bytes)}\\
+	{\bf output:}\\
+	{\tt b0634b2c0b082aedc5c0a2fe4ee3adcfc989ec05de6f00addb04b3aaac271f67}\\
+	\medskip
+
