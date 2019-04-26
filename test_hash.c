@@ -22,7 +22,7 @@ void print_hex(uint8_t *x, uint32_t l) {
 
 void print_test(char *string, uint8_t *output) {
   printf("input: %s\n", string);
-  Gimli_hash(string, strlen(string), output, 32);
+  gimli_hash(output, 32, string, strlen(string));
   printf("-\n");
   printf("input: ");
   print_hex(string, strlen(string));
@@ -62,7 +62,7 @@ void print_tex(char *string, uint8_t *output) {
     fprintf(stderr, "\t{\\bf input (bytes):} {\\it(0 bytes)}\\\\\n");
   }
   fprintf(stderr, "\t{\\bf output:}\\\\\n");
-  Gimli_hash(string, strlen(string), output, 32);
+  gimli_hash(output, 32, string, strlen(string));
   print_output_err(output);
   fprintf(stderr, "\t\\medskip\n\n");
 }
@@ -85,10 +85,6 @@ int main() {
 
   printf("----------------------\n");
 
-  /*
-          Gimli_hash(const uint8_t *input, uint64_t inputByteLen, uint8_t
-     delimitedSuffix, uint8_t *output, uint64_t outputByteLen);
-  */
   print_test(string1, output);
   print_test(string2, output);
   print_test(string3, output);

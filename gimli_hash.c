@@ -7,8 +7,8 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define rateInBytes 16
 
-void Gimli_hash(const uint8_t *input, uint64_t inputByteLen, uint8_t *output,
-                uint64_t outputByteLen) {
+void gimli_hash(unsigned char *output, size_t output_len,
+                const unsigned char *input, size_t input_len) {
   uint32_t state[12];
   uint8_t *state_8 = (uint8_t *)state;
   uint64_t blockSize = 0;
@@ -18,12 +18,12 @@ void Gimli_hash(const uint8_t *input, uint64_t inputByteLen, uint8_t *output,
   memset(state, 0, sizeof(state));
 
   // === Absorb all the input blocks ===
-  while (inputByteLen > 0) {
-    blockSize = MIN(inputByteLen, rateInBytes);
+  while (input_len > 0) {
+    blockSize = MIN(input_len, rateInBytes);
     for (i = 0; i < blockSize; i++)
       state_8[i] ^= input[i];
     input += blockSize;
-    inputByteLen -= blockSize;
+    input_len -= blockSize;
 
     if (blockSize == rateInBytes) {
       gimli(state);
@@ -39,13 +39,13 @@ void Gimli_hash(const uint8_t *input, uint64_t inputByteLen, uint8_t *output,
   gimli(state);
 
   // === Squeeze out all the output blocks ===
-  while (outputByteLen > 0) {
-    blockSize = MIN(outputByteLen, rateInBytes);
+  while (output_len > 0) {
+    blockSize = MIN(output_len, rateInBytes);
     memcpy(output, state, blockSize);
     output += blockSize;
-    outputByteLen -= blockSize;
+    output_len -= blockSize;
 
-    if (outputByteLen > 0)
+    if (output_len > 0)
       gimli(state);
   }
 }
