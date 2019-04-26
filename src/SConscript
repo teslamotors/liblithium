@@ -1,0 +1,9 @@
+# SConscript
+
+Import("env")
+
+liblithium = env.StaticLibrary(
+    target="lithium", source=["gimli.c", "gimli_hash.c"]
+)
+
+Return("liblithium")

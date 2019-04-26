@@ -1,4 +1,4 @@
-#include "gimli.h"
+#include <lithium/gimli.h>
 
 static unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS],
                                  size_t i)

@@ -1,0 +1,24 @@
+# SConscript
+
+Import("env")
+
+test_gimli = env.Program("test_gimli.c")
+test_gimli_hash = env.Program("test_gimli_hash.c")
+
+test_gimli_out = env.Command(
+    target="test_gimli.txt", source=test_gimli, action="$SOURCE > $TARGET"
+)
+test_gimli_hash_out = env.Command(
+    target="test_gimli_hash.tex", source=test_gimli_hash, action="$SOURCE 2> $TARGET"
+)
+
+env.Command(
+    target="test_gimli.diff",
+    source=[test_gimli_out, "test_gimli.exp"],
+    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+)
+env.Command(
+    target="test_gimli_hash.diff",
+    source=[test_gimli_hash_out, "test_gimli_hash.exp"],
+    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+)

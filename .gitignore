@@ -1,5 +1,3 @@
-*.o
-/test
-/test_hash
-/test.txt
-/test_hash.tex
+/.sconsign.dblite
+/dist/
+/tags

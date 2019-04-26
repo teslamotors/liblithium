@@ -1,6 +1,6 @@
-#include "gimli_hash.h"
+#include <lithium/gimli_hash.h>
 
-#include "gimli.h"
+#include <lithium/gimli.h>
 
 #include <string.h>
 
