@@ -51,13 +51,13 @@ void gimli_hash_final(gimli_hash_state *state, unsigned char *output,
     // === Squeeze out all the output blocks ===
     while (len > 0)
     {
-        state->offset = MIN(len, GIMLI_RATE);
-        for (size_t i = 0; i < state->offset; ++i)
+        size_t block_len = MIN(len, GIMLI_RATE);
+        for (size_t i = 0; i < block_len; ++i)
         {
             output[i] = gimli_byte_read(state->state, i);
         }
-        output += state->offset;
-        len -= state->offset;
+        output += block_len;
+        len -= block_len;
 
         if (len > 0)
             gimli(state->state);
