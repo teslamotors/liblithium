@@ -9,15 +9,15 @@ static unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS],
 static void gimli_write8(uint32_t state[static GIMLI_WORDS], size_t i,
                          unsigned char x)
 {
-    size_t wi = i / 4;
-    int sh = (8 * (i % 4));
+    const size_t wi = i / 4;
+    const int sh = (8 * (i % 4));
     state[wi] &= ~(UINT32_C(0xFF) << sh);
     state[wi] |= (uint32_t)x << sh;
 }
 
 void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x)
 {
-    gimli_write8(state, i, gimli_read8(state, i) ^ x);
+    state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
 }
 
 static uint32_t rotate(uint32_t x, int bits)
