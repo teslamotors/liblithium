@@ -5,6 +5,11 @@ void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x)
     state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
 }
 
+unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS], size_t i)
+{
+    return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+}
+
 static uint32_t rotate(uint32_t x, int bits)
 {
     if (bits == 0)

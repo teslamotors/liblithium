@@ -9,3 +9,5 @@
 void gimli(uint32_t state[static GIMLI_WORDS]);
 
 void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x);
+
+unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS], size_t i);
