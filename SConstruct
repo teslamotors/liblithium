@@ -11,7 +11,10 @@ if platform == "darwin":
     # SCons invokes 'gcc' normally on OS X.
     # Usually this is just clang but with options that we don't need.
     env["CC"] = "clang"
-    env.Append(CCFLAGS=["-Weverything", "-Werror", "-Os", "-g"])
+    env.Append(
+        CCFLAGS=["-Weverything", "-Werror", "-O3", "-g", "-flto"],
+        LINKFLAGS=["-O3", "-flto"],
+    )
 
 # GCC
 if platform == "posix":
