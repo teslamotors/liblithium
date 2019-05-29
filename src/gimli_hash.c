@@ -4,61 +4,61 @@
 
 #include <string.h>
 
-unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS], size_t i)
+unsigned char gimli_read8(const uint32_t *state, size_t i)
 {
     return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
 }
 
-void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x)
+void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
 {
     state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
 }
 
-void gimli_hash_init(gimli_hash_state *state)
+void gimli_hash_init(gimli_hash_state *g)
 {
-    memset(state, 0, sizeof(*state));
+    memset(g, 0, sizeof(*g));
 }
 
-void gimli_hash_update(gimli_hash_state *state, const unsigned char *input,
+void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
                        size_t len)
 {
-    size_t offset = state->offset;
+    size_t offset = g->offset;
     for (size_t i = 0; i < len; ++i)
     {
-        gimli_xor8(state->state, offset, input[i]);
+        gimli_xor8(g->state, offset, input[i]);
         ++offset;
         if (offset == GIMLI_RATE)
         {
-            gimli(state->state);
+            gimli(g->state);
             offset = 0;
         }
     }
-    state->offset = offset;
+    g->offset = offset;
 }
 
-void gimli_hash_final(gimli_hash_state *state, unsigned char *output,
+void gimli_hash_final(gimli_hash_state *g, unsigned char *output,
                       size_t len)
 {
     // Apply padding.
-    gimli_xor8(state->state, state->offset, 0x1F);
-    gimli_xor8(state->state, GIMLI_RATE - 1, 0x80);
+    gimli_xor8(g->state, g->offset, 0x1F);
+    gimli_xor8(g->state, GIMLI_RATE - 1, 0x80);
 
     // Switch to the squeezing phase.
     for (size_t i = 0; i < len; ++i)
     {
         if (i % GIMLI_RATE == 0)
         {
-            gimli(state->state);
+            gimli(g->state);
         }
-        output[i] = gimli_read8(state->state, i % GIMLI_RATE);
+        output[i] = gimli_read8(g->state, i % GIMLI_RATE);
     }
 }
 
 void gimli_hash(unsigned char *output, size_t output_len,
                 const unsigned char *input, size_t input_len)
 {
-    gimli_hash_state state;
-    gimli_hash_init(&state);
-    gimli_hash_update(&state, input, input_len);
-    gimli_hash_final(&state, output, output_len);
+    gimli_hash_state g;
+    gimli_hash_init(&g);
+    gimli_hash_update(&g, input, input_len);
+    gimli_hash_final(&g, output, output_len);
 }
