@@ -12,8 +12,16 @@ if platform == "darwin":
     # Usually this is just clang but with options that we don't need.
     env["CC"] = "clang"
     env.Append(
-        CCFLAGS=["-Weverything", "-Werror", "-O3", "-g", "-flto"],
-        LINKFLAGS=["-O3", "-flto"],
+        CCFLAGS=[
+            "-Weverything",
+            "-Werror",
+            "-O3",
+            "-g",
+            "-flto",
+            "-ffunction-sections",
+            "-fdata-sections",
+        ],
+        LINKFLAGS=["-O3", "-flto", "-dead_strip"],
     )
 
 # GCC
