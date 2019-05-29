@@ -4,6 +4,16 @@
 
 #include <string.h>
 
+unsigned char gimli_read8(const uint32_t state[static GIMLI_WORDS], size_t i)
+{
+    return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+}
+
+void gimli_xor8(uint32_t state[static GIMLI_WORDS], size_t i, unsigned char x)
+{
+    state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
+}
+
 void gimli_hash_init(gimli_hash_state *state)
 {
     memset(state, 0, sizeof(*state));
