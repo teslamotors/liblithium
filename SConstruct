@@ -31,12 +31,17 @@ if platform == "posix":
             "-Wall",
             "-Wextra",
             "-Wpedantic",
+            "-Wconversion",
             "-Werror",
-            "-Os",
+            "-O3",
             "-g",
+            "-flto",
+            "-ffunction-sections",
+            "-fdata-sections",
             "-fsanitize=address,undefined",
         ],
-        LIBS=["asan", "ubsan", "m", "bsd"],
+        LINKFLAGS=["-O3", "-flto", "-Wl,--gc-sections"],
+        LIBS=["asan", "ubsan"],
     )
 
 # MSVC

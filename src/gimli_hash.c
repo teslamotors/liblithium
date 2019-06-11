@@ -6,7 +6,7 @@
 
 unsigned char gimli_read8(const uint32_t *state, size_t i)
 {
-    return (state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+    return (unsigned char)(state[i / 4] >> (8 * (i % 4)) & 0xFFU);
 }
 
 void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
@@ -36,8 +36,7 @@ void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
     g->offset = offset;
 }
 
-void gimli_hash_final(gimli_hash_state *g, unsigned char *output,
-                      size_t len)
+void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len)
 {
     // Apply padding.
     gimli_xor8(g->state, g->offset, 0x1F);
