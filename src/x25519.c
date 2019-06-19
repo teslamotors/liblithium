@@ -104,7 +104,7 @@ static void sub(fe out, const fe a, const fe b)
     propagate(out, 1 + carry);
 }
 
-static void __attribute__((unused)) swapin(limb_t *x, const uint8_t *in)
+static void __attribute__((unused)) swapin(limb_t *x, const unsigned char *in)
 {
     memcpy(x, in, sizeof(fe));
     unsigned i;
@@ -114,7 +114,7 @@ static void __attribute__((unused)) swapin(limb_t *x, const uint8_t *in)
     }
 }
 
-static void __attribute__((unused)) swapout(uint8_t *out, limb_t *x)
+static void __attribute__((unused)) swapout(unsigned char *out, limb_t *x)
 {
     unsigned i;
     for (i = 0; i < NLIMBS; i++)
@@ -245,14 +245,14 @@ static void ladder_part2(fe xs[5], const fe x1)
     mul1(x2, t1);    // x2 = AA*BB
 }
 
-static void x25519_core(fe xs[5], const uint8_t scalar[X25519_BYTES],
-                        const uint8_t *x1, int clamp)
+static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
+                        const unsigned char *x1, int clamp)
 {
     int i;
 
     fe x1i;
     swapin(x1i, x1);
-    x1 = (const uint8_t *)x1;
+    x1 = (const unsigned char *)x1;
 
     limb_t swap = 0;
     limb_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
@@ -262,7 +262,7 @@ static void x25519_core(fe xs[5], const uint8_t scalar[X25519_BYTES],
 
     for (i = 255; i >= 0; i--)
     {
-        uint8_t bytei = scalar[i / 8];
+        unsigned char bytei = scalar[i / 8];
         if (clamp)
         {
             if (i / 8 == 0)
@@ -285,8 +285,9 @@ static void x25519_core(fe xs[5], const uint8_t scalar[X25519_BYTES],
     condswap(x2, x3, swap);
 }
 
-int x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
-           const uint8_t x1[X25519_BYTES], int clamp)
+int x25519(unsigned char out[X25519_BYTES],
+           const unsigned char scalar[X25519_BYTES],
+           const unsigned char x1[X25519_BYTES], int clamp)
 {
     fe xs[5];
     x25519_core(xs, scalar, x1, clamp);
@@ -320,10 +321,10 @@ int x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
         return 0;
 }
 
-const uint8_t X25519_BASE_POINT[X25519_BYTES] = {9};
+const unsigned char X25519_BASE_POINT[X25519_BYTES] = {9};
 
 static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
-                                 const uint8_t other2[X25519_BYTES])
+                                 const unsigned char other2[X25519_BYTES])
 {
     limb_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
 
@@ -358,10 +359,10 @@ static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
     return canon(z2) | ~canon(z3);
 }
 
-int x25519_verify_p2(const uint8_t response[X25519_BYTES],
-                     const uint8_t challenge[X25519_BYTES],
-                     const uint8_t eph[X25519_BYTES],
-                     const uint8_t pub[X25519_BYTES])
+int x25519_verify_p2(const unsigned char response[X25519_BYTES],
+                     const unsigned char challenge[X25519_BYTES],
+                     const unsigned char eph[X25519_BYTES],
+                     const unsigned char pub[X25519_BYTES])
 {
     fe xs[7];
     x25519_core(&xs[0], challenge, pub, 0);
@@ -416,10 +417,10 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     }
 }
 
-void x25519_sign_p2(uint8_t response[X25519_BYTES],
-                    const uint8_t challenge[X25519_BYTES],
-                    const uint8_t eph_secret[X25519_BYTES],
-                    const uint8_t secret[X25519_BYTES])
+void x25519_sign_p2(unsigned char response[X25519_BYTES],
+                    const unsigned char challenge[X25519_BYTES],
+                    const unsigned char eph_secret[X25519_BYTES],
+                    const unsigned char secret[X25519_BYTES])
 {
     /* FUTURE memory/code size: just make eph_secret non-const? */
     scalar_t scalar1;
