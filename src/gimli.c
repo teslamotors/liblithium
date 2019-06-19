@@ -30,28 +30,29 @@ void gimli(uint32_t *state)
             state[column] = z ^ y ^ ((x & y) << 3);
         }
 
-        if ((round & 3) == 0)
-        { // small swap: pattern s...s...s... etc.
+        switch (round & 3)
+        {
+        case 0:
+            // small swap: pattern s...s...s... etc.
             x = state[0];
             state[0] = state[1];
             state[1] = x;
             x = state[2];
             state[2] = state[3];
             state[3] = x;
-        }
-        if ((round & 3) == 2)
-        { // big swap: pattern ..S...S...S. etc.
+            // add constant: pattern c...c...c... etc.
+            state[0] ^= (0x9e377900 | round);
+            break;
+
+        case 2:
+            // big swap: pattern ..S...S...S. etc.
             x = state[0];
             state[0] = state[2];
             state[2] = x;
             x = state[1];
             state[1] = state[3];
             state[3] = x;
-        }
-
-        if ((round & 3) == 0)
-        { // add constant: pattern c...c...c... etc.
-            state[0] ^= (0x9e377900 | round);
+            break;
         }
     }
 }
