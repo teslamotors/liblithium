@@ -31,7 +31,6 @@ typedef int64_t sdlimb_t;
 #define NLIMBS (256 / X25519_WBITS)
 typedef limb_t fe[NLIMBS];
 
-#if X25519_SUPPORT_SIGN
 typedef limb_t scalar_t[NLIMBS];
 static const limb_t MONTGOMERY_FACTOR = (limb_t)0xd2b51da312547e1bull;
 static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
@@ -41,7 +40,6 @@ static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
                       sc_r2 = {
                           LIMB(0xa40611e3449c0f01), LIMB(0xd00e1ba768859347),
                           LIMB(0xceec73d217f5be65), LIMB(0x0399411b7c309a3d)};
-#endif
 
 static inline limb_t umaal(limb_t *carry, limb_t acc, limb_t mand, limb_t mier)
 {
@@ -251,11 +249,11 @@ static void x25519_core(fe xs[5], const uint8_t scalar[X25519_BYTES],
                         const uint8_t *x1, int clamp)
 {
     int i;
-#if X25519_MEMCPY_PARAMS
+
     fe x1i;
     swapin(x1i, x1);
     x1 = (const uint8_t *)x1;
-#endif
+
     limb_t swap = 0;
     limb_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
     memset(xs, 0, 4 * sizeof(fe));
@@ -298,25 +296,6 @@ int x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
     int i;
 
     limb_t *prev = z2;
-#if X25519_USE_POWER_CHAIN
-    static const struct
-    {
-        uint8_t a, c, n;
-    } steps[13] = {{2, 1, 1},  {2, 1, 1},  {4, 2, 3},  {2, 4, 6},  {3, 1, 1},
-                   {3, 2, 12}, {4, 3, 25}, {2, 3, 25}, {2, 4, 50}, {3, 2, 125},
-                   {3, 1, 2},  {3, 1, 2},  {3, 1, 1}};
-    for (i = 0; i < 13; i++)
-    {
-        int j;
-        limb_t *a = xs[steps[i].a];
-        for (j = steps[i].n; j > 0; j--)
-        {
-            sqr(a, prev);
-            prev = a;
-        }
-        mul1(a, xs[steps[i].c]);
-    }
-#else
     /* Raise to the p-2 = 0x7f..ffeb */
     for (i = 253; i >= 0; i--)
     {
@@ -327,18 +306,14 @@ int x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
             mul1(z3, z2);
         }
     }
-#endif
 
     /* Here prev = z3 */
     /* x2 /= z2 */
-#if X25519_MEMCPY_PARAMS
+
     mul1(x2, z3);
     int ret = canon(x2);
     swapout(out, x2);
-#else
-    mul((limb_t *)out, x2, z3, NLIMBS);
-    int ret = canon((limb_t *)out);
-#endif
+
     if (clamp)
         return ret;
     else
@@ -347,17 +322,13 @@ int x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
 
 const uint8_t X25519_BASE_POINT[X25519_BYTES] = {9};
 
-#if X25519_SUPPORT_VERIFY
 static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
                                  const uint8_t other2[X25519_BYTES])
 {
     limb_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
-#if X25519_MEMCPY_PARAMS
+
     fe xo2;
     swapin(xo2, other2);
-#else
-    const limb_t *xo2 = (const limb_t *)other2;
-#endif
 
     memcpy(x3, other1, 2 * sizeof(fe));
 
@@ -397,9 +368,7 @@ int x25519_verify_p2(const uint8_t response[X25519_BYTES],
     x25519_core(&xs[2], response, X25519_BASE_POINT, 0);
     return x25519_verify_core(&xs[2], xs[0], eph);
 }
-#endif // X25519_SUPPORT_VERIFY
 
-#if X25519_SUPPORT_SIGN
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
 {
     /**
@@ -456,7 +425,6 @@ void x25519_sign_p2(uint8_t response[X25519_BYTES],
     scalar_t scalar1;
     swapin(scalar1, eph_secret);
 
-#if X25519_MEMCPY_PARAMS
     scalar_t scalar2, scalar3;
     swapin(scalar2, secret);
     swapin(scalar3, challenge);
@@ -464,11 +432,4 @@ void x25519_sign_p2(uint8_t response[X25519_BYTES],
     memset(scalar2, 0, sizeof(scalar2));
     sc_montmul(scalar2, scalar1, sc_r2);
     swapout(response, scalar2);
-#else
-    sc_montmul(scalar1, (const limb_t *)secret, (const limb_t *)challenge);
-    memset(response, 0, X25519_BYTES);
-    sc_montmul((limb_t *)response, scalar1, sc_r2);
-#endif
 }
-#endif // X25519_SUPPORT_SIGN
-

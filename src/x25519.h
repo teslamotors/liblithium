@@ -34,9 +34,8 @@ extern const unsigned char X25519_BASE_POINT[X25519_BYTES];
 
 /* x25519 scalar multiplication.  Sets out to scalar*base.
  *
- * If clamp is set (and supported by X25519_INTEROP_SUPPORT_CLAMP)
- * then the scalar will be "clamped" like a Curve25519 secret key.
- * This adds almost no security, but permits interop with other x25519
+ * If clamp is set then the scalar will be "clamped" like a Curve25519 secret
+ * key.  This adds almost no security, but permits interop with other x25519
  * implementations without manually clamping the keys.
  *
  * Per RFC 7748, this function returns failure (-1) if the output
@@ -44,8 +43,7 @@ extern const unsigned char X25519_BASE_POINT[X25519_BYTES];
  * meaning that one party might steer the key so that the other party's
  * contribution doesn't matter, or contributes only a little entropy.
  *
- * If clamp==0, or if X25519_INTEROP_SUPPORT_CLAMP==0, then this function
- * always returns 0.
+ * If clamp==0, then this function always returns 0.
  */
 int x25519(unsigned char out[EC_PUBLIC_BYTES],
            const unsigned char scalar[EC_PRIVATE_BYTES],
@@ -58,8 +56,7 @@ int x25519(unsigned char out[EC_PUBLIC_BYTES],
  * is zero and clamp is set.  This usually doesn't matter for
  * base scalarmuls.
  *
- * If clamp==0, or if X25519_INTEROP_SUPPORT_CLAMP==0, then this function
- * always returns 0.
+ * If clamp==0, then this function always returns 0.
  *
  * Same as x255(out,scalar,X255_BASE_POINT), except that
  * other implementations may optimize it.
