@@ -7,8 +7,7 @@
  * @brief X25519 key exchange and signatures.
  */
 
-#ifndef __X25519_H__
-#define __X25519_H__
+#pragma once
 
 #define X25519_BYTES (256/8)
 
@@ -117,5 +116,3 @@ int x25519_verify_p2 (
     const unsigned char eph[X25519_BYTES],
     const unsigned char pub[X25519_BYTES]
 );
-
-#endif /* __X25519_H__ */

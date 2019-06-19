@@ -7,10 +7,10 @@
  * @author Mike Hamburg
  * @brief Key exchange and signatures based on X25519.
  */
-#include <stdint.h>
+
 #include "x25519.h"
-#include "strobe.h"
-#include "strobe_config.h"
+
+#include <stdint.h>
 
 #if X25519_WBITS == 64
     typedef uint64_t limb_t;
