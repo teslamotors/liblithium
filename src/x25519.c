@@ -12,20 +12,20 @@
 
 #include <stdint.h>
 
-#if X25519_WBITS == 64
+#if defined(__SIZEOF_INT128__)
+#define X25519_WBITS 64
 typedef uint64_t limb_t;
 typedef __uint128_t dlimb_t;
 typedef __int128_t sdlimb_t;
 #define eswap_limb eswap_letoh_64
 #define LIMB(x) x##ull
-#elif X25519_WBITS == 32
+#else // no *int128_t
+#define X25519_WBITS 32
 typedef uint32_t limb_t;
 typedef uint64_t dlimb_t;
 typedef int64_t sdlimb_t;
 #define eswap_limb eswap_letoh_32
 #define LIMB(x) (uint32_t)(x##ull), (uint32_t)((x##ull) >> 32)
-#else
-#error "Need to know X25519_WBITS"
 #endif
 
 #define NLIMBS (256 / X25519_WBITS)
