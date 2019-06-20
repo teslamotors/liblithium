@@ -451,12 +451,10 @@ void x25519_sign_p2(unsigned char response[X25519_LEN],
                     const unsigned char secret[X25519_LEN])
 {
     /* FUTURE memory/code size: just make eph_secret non-const? */
-    scalar_t scalar1;
-    read_fe(scalar1, eph_secret);
-
-    scalar_t scalar2, scalar3;
-    read_fe(scalar2, secret);
-    read_fe(scalar3, challenge);
+    scalar_t scalar1, scalar2, scalar3;
+    read_limbs(scalar1, eph_secret);
+    read_limbs(scalar2, secret);
+    read_limbs(scalar3, challenge);
     sc_montmul(scalar1, scalar2, scalar3);
     memset(scalar2, 0, sizeof(scalar2));
     sc_montmul(scalar2, scalar1, sc_r2);
