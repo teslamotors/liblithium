@@ -348,7 +348,7 @@ int x25519(unsigned char out[X25519_BYTES],
         return 0;
 }
 
-const unsigned char X25519_BASE_POINT[X25519_BYTES] = {9};
+const unsigned char x25519_base_point[X25519_BYTES] = {9};
 
 static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
                                  const unsigned char other2[X25519_BYTES])
@@ -393,7 +393,7 @@ int x25519_verify_p2(const unsigned char response[X25519_BYTES],
 {
     fe xs[7];
     x25519_core(&xs[0], challenge, pub, 0);
-    x25519_core(&xs[2], response, X25519_BASE_POINT, 0);
+    x25519_core(&xs[2], response, x25519_base_point, 0);
     return (int)x25519_verify_core(&xs[2], xs[0], eph);
 }
 

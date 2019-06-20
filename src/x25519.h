@@ -12,7 +12,7 @@
 #define X25519_BYTES (256 / 8)
 
 /* The base point (9) */
-extern const unsigned char X25519_BASE_POINT[X25519_BYTES];
+extern const unsigned char x25519_base_point[X25519_BYTES];
 
 /** Number of bytes in an EC public key */
 #define EC_PUBLIC_BYTES 32
@@ -58,14 +58,14 @@ int x25519(unsigned char out[EC_PUBLIC_BYTES],
  *
  * If clamp==0, then this function always returns 0.
  *
- * Same as x255(out,scalar,X255_BASE_POINT), except that
+ * Same as x25519(out,scalar,x25519_base_point), except that
  * other implementations may optimize it.
  */
 static inline int x25519_base(unsigned char out[EC_PUBLIC_BYTES],
                               const unsigned char scalar[EC_PRIVATE_BYTES],
                               int clamp)
 {
-    return x25519(out, scalar, X25519_BASE_POINT, clamp);
+    return x25519(out, scalar, x25519_base_point, clamp);
 }
 
 /**
