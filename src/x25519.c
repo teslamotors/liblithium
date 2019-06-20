@@ -273,7 +273,7 @@ static void ladder_part2(fe xs[5], const fe x1)
     mul1(x2, t1);    // x2 = AA*BB
 }
 
-static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
+static void x25519_core(fe xs[5], const unsigned char scalar[X25519_LEN],
                         const unsigned char *x1, int clamp)
 {
     int i;
@@ -296,7 +296,7 @@ static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
             {
                 bytei &= ~7;
             }
-            else if (i / 8 == X25519_BYTES - 1)
+            else if (i / 8 == X25519_LEN - 1)
             {
                 bytei &= 0x7F;
                 bytei |= 0x40;
@@ -312,12 +312,12 @@ static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
     condswap(x2, x3, swap);
 }
 
-int x25519(unsigned char out[X25519_BYTES],
-           const unsigned char scalar[X25519_BYTES],
-           const unsigned char x1[X25519_BYTES], int clamp)
+int x25519(unsigned char out[X25519_LEN],
+           const unsigned char scalar[X25519_LEN],
+           const unsigned char base[X25519_LEN], int clamp)
 {
     fe xs[5];
-    x25519_core(xs, scalar, x1, clamp);
+    x25519_core(xs, scalar, base, clamp);
 
     /* Precomputed inversion chain */
     limb_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];
@@ -348,10 +348,10 @@ int x25519(unsigned char out[X25519_BYTES],
         return 0;
 }
 
-const unsigned char x25519_base_point[X25519_BYTES] = {9};
+const unsigned char x25519_base_point[X25519_LEN] = {9};
 
 static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
-                                 const unsigned char other2[X25519_BYTES])
+                                 const unsigned char other2[X25519_LEN])
 {
     limb_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
 
@@ -386,10 +386,10 @@ static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
     return canon(z2) | ~canon(z3);
 }
 
-int x25519_verify_p2(const unsigned char response[X25519_BYTES],
-                     const unsigned char challenge[X25519_BYTES],
-                     const unsigned char eph[X25519_BYTES],
-                     const unsigned char pub[X25519_BYTES])
+int x25519_verify_p2(const unsigned char response[X25519_LEN],
+                     const unsigned char challenge[X25519_LEN],
+                     const unsigned char eph[X25519_LEN],
+                     const unsigned char pub[X25519_LEN])
 {
     fe xs[7];
     x25519_core(&xs[0], challenge, pub, 0);
@@ -444,10 +444,10 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     }
 }
 
-void x25519_sign_p2(unsigned char response[X25519_BYTES],
-                    const unsigned char challenge[X25519_BYTES],
-                    const unsigned char eph_secret[X25519_BYTES],
-                    const unsigned char secret[X25519_BYTES])
+void x25519_sign_p2(unsigned char response[X25519_LEN],
+                    const unsigned char challenge[X25519_LEN],
+                    const unsigned char eph_secret[X25519_LEN],
+                    const unsigned char secret[X25519_LEN])
 {
     /* FUTURE memory/code size: just make eph_secret non-const? */
     scalar_t scalar1;
