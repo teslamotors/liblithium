@@ -57,6 +57,25 @@ static inline void write_limb(unsigned char *p, limb_t x)
 #define NLIMBS (256 / X25519_WBITS)
 typedef limb_t fe[NLIMBS];
 
+static inline void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
+{
+    unsigned i;
+    for (i = 0; i < NLIMBS; i++)
+    {
+        x[i] = read_limb(in + i * X25519_WOCTETS);
+    }
+}
+
+static inline void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
+{
+    unsigned i;
+    for (i = 0; i < NLIMBS; i++)
+    {
+        write_limb(out + i * X25519_WOCTETS, x[i]);
+    }
+}
+
+typedef limb_t fe_t[NLIMBS];
 typedef limb_t scalar_t[NLIMBS];
 static const limb_t MONTGOMERY_FACTOR = (limb_t)0xd2b51da312547e1bull;
 static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
@@ -131,25 +150,7 @@ static void sub(fe out, const fe a, const fe b)
     propagate(out, (limb_t)(1 + carry));
 }
 
-static void read_fe(fe x, const unsigned char *in)
-{
-    unsigned i;
-    for (i = 0; i < NLIMBS; i++)
-    {
-        x[i] = read_limb(in + i * X25519_WOCTETS);
-    }
-}
-
-static void write_fe(unsigned char *out, const fe x)
-{
-    unsigned i;
-    for (i = 0; i < NLIMBS; i++)
-    {
-        write_limb(out + i * X25519_WOCTETS, x[i]);
-    }
-}
-
-static void mul(fe out, const fe a, const fe b, unsigned nb)
+static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
 {
     /*
      * GCC at least produces pretty decent asm for this, so don't need to have
