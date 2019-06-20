@@ -1,11 +1,7 @@
-/**
- * @cond internal
- * @file x25519.c
- * @copyright
- *   Copyright (c) 2015-2016 Cryptography Research, Inc.
- *   Released under the MIT License. See LICENSE for license information.
- * @author Mike Hamburg
- * @brief Key exchange and signatures based on X25519.
+/*
+ * Copyright (c) 2015-2016 Cryptography Research, Inc.
+ * Released under the MIT License.
+ * See LICENSE for license information.
  */
 
 #include "x25519.h"
@@ -93,7 +89,8 @@ static inline limb_t adc0(limb_t *carry, limb_t acc)
     return (limb_t)total;
 }
 
-/* Precondition: carry is small.
+/*
+ * Precondition: carry is small.
  * Invariant: result of propagate is < 2^255 + 1 word
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
@@ -154,8 +151,10 @@ static void write_fe(unsigned char *out, const fe x)
 
 static void mul(fe out, const fe a, const fe b, unsigned nb)
 {
-    /* GCC at least produces pretty decent asm for this, so don't need to have
-     * dedicated asm. */
+    /*
+     * GCC at least produces pretty decent asm for this, so don't need to have
+     * dedicated asm.
+     */
     limb_t accum[2 * NLIMBS] = {0};
     unsigned i, j;
 
@@ -206,8 +205,9 @@ static void condswap(limb_t a[2 * NLIMBS], limb_t b[2 * NLIMBS], limb_t doswap)
 
 static limb_t canon(fe x)
 {
-    /* Canonicalize a field element x, reducing it to the least residue
-     * which is congruent to it mod 2^255-19.
+    /*
+     * Canonicalize a field element x, reducing it to the least residue which
+     * is congruent to it mod 2^255-19.
      *
      * Precondition: x < 2^255 + 1 word
      */
@@ -221,14 +221,15 @@ static limb_t canon(fe x)
     }
     propagate(x, carry0);
 
-    /* Here, 19 <= x2 < 2^255
+    /*
+     * Here, 19 <= x2 < 2^255
      *
-     * This is because we added 19, so before propagate it can't be less
-     * than 19. After propagate, it still can't be less than 19, because if
+     * This is because we added 19, so before propagate it can't be less than
+     * 19. After propagate, it still can't be less than 19, because if
      * propagate does anything it adds 19.
      *
      * We know that the high bit must be clear, because either the input was
-     * ~ 2^255 + one word + 19 (in which case it propagates to at most 2 words)
+     * ~2^255 + one word + 19 (in which case it propagates to at most 2 words)
      * or it was < 2^255.
      *
      * So now, if we subtract 19, we will get back to something in [0,2^255-19).
@@ -337,7 +338,6 @@ int x25519(unsigned char out[X25519_LEN],
 
     /* Here prev = z3 */
     /* x2 /= z2 */
-
     mul1(x2, z3);
     int ret = (int)canon(x2);
     write_fe(out, x2);
@@ -376,12 +376,12 @@ static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
     /* check equality */
     sub(z3, z3, z2);
 
-    /* If canon(z2) then both sides are zero.
+    /*
+     * If canon(z2) then both sides are zero.
      * If canon(z3) then the two sides are equal.
      *
-     * Reject sigs where both sides are zero, because
-     * that can happen if an input causes the ladder to
-     * return 0/0.
+     * Reject sigs where both sides are zero, because that can happen if an
+     * input causes the ladder to return 0/0.
      */
     return canon(z2) | ~canon(z3);
 }
@@ -399,13 +399,13 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
 {
-    /**
-     * OK, so carry bounding.  We're using a high carry, so that the
-     * inputs don't have to be reduced.
+    /*
+     * OK, so carry bounding. We're using a high carry, so that the inputs
+     * don't have to be reduced.
      *
-     * First montmul: output < (M^2 + Mp)/M = M+p, subtract p, < M.  This gets
-     * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp + Mp)/M
-     * = 2p, subtract p, < p, done.
+     * First montmul: output < (M^2 + Mp)/M = M+p, subtract p, < M. This gets
+     * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp +
+     * Mp)/M = 2p, subtract p, < p, done.
      */
     unsigned i, j;
     limb_t hic = 0;
