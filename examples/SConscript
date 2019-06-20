@@ -1,3 +1,7 @@
 Import("env")
 
 env.Program("gimli-hash.c")
+env.Program("lith-sign.c")
+env.Program("lith-verify.c")
+env.Program("lith-keygen.c")
+env.Program("dummy-verify.c")

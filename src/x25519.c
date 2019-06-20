@@ -28,7 +28,6 @@ static void write_limb(unsigned char *p, uint32_t x)
 #define X25519_WOCTETS (X25519_WBITS / 8)
 
 #define NLIMBS (256 / X25519_WBITS)
-typedef limb_t fe[NLIMBS];
 
 static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
@@ -90,7 +89,7 @@ static uint32_t adc0(uint32_t *carry, uint32_t acc)
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
  */
-static void propagate(fe x, uint32_t over)
+static void propagate(fe_t x, uint32_t over)
 {
     over = x[NLIMBS - 1] >> (X25519_WBITS - 1) | over << 1;
     x[NLIMBS - 1] &= ~((uint32_t)1 << (X25519_WBITS - 1));
@@ -102,7 +101,7 @@ static void propagate(fe x, uint32_t over)
     }
 }
 
-static void add(fe out, const fe a, const fe b)
+static void add(fe_t out, const fe_t a, const fe_t b)
 {
     uint32_t carry = 0;
     for (unsigned i = 0; i < NLIMBS; i++)
@@ -112,7 +111,7 @@ static void add(fe out, const fe a, const fe b)
     propagate(out, carry);
 }
 
-static void sub(fe out, const fe a, const fe b)
+static void sub(fe_t out, const fe_t a, const fe_t b)
 {
     int64_t carry = -38;
     for (unsigned i = 0; i < NLIMBS; i++)
@@ -153,15 +152,17 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
     propagate(out, carry2);
 }
 
-static void sqr(fe out, const fe a)
+static void sqr(fe_t out, const fe_t a)
 {
     mul(out, a, a, NLIMBS);
 }
-static void mul1(fe out, const fe a)
+
+static void mul1(fe_t out, const fe_t a)
 {
     mul(out, a, out, NLIMBS);
 }
-static void sqr1(fe a)
+
+static void sqr1(fe_t a)
 {
     mul1(a, a);
 }
@@ -177,7 +178,7 @@ static void condswap(uint32_t a[2 * NLIMBS], uint32_t b[2 * NLIMBS],
     }
 }
 
-static uint32_t canon(fe x)
+static uint32_t canon(fe_t x)
 {
     /*
      * Canonicalize a field element x, reducing it to the least residue which
@@ -221,7 +222,7 @@ static uint32_t canon(fe x)
 
 static const uint32_t a24[1] = {121665};
 
-static void ladder_part1(fe xs[5])
+static void ladder_part1(fe_t xs[5])
 {
     uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
     add(t1, x2, z2);                                // t1 = A
@@ -312,15 +313,15 @@ void x25519_base(unsigned char out[X25519_LEN],
     x25519(out, scalar, base_point);
 }
 
-static uint32_t x25519_verify_core(fe xs[5], const uint32_t *other1,
+static uint32_t x25519_verify_core(fe_t xs[5], const uint32_t *other1,
                                    const unsigned char other2[X25519_LEN])
 {
     uint32_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
 
-    fe xo2;
-    read_fe(xo2, other2);
+    fe_t xo2;
+    read_limbs(xo2, other2);
 
-    memcpy(x3, other1, 2 * sizeof(fe));
+    memcpy(x3, other1, 2 * sizeof(fe_t));
 
     ladder_part1(xs);
 
@@ -419,5 +420,5 @@ void x25519_sign_p2(unsigned char response[X25519_LEN],
     sc_montmul(scalar1, scalar2, scalar3);
     memset(scalar2, 0, sizeof(scalar2));
     sc_montmul(scalar2, scalar1, sc_r2);
-    write_fe(response, scalar2);
+    write_limbs(response, scalar2);
 }

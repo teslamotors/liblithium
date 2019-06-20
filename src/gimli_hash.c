@@ -16,7 +16,9 @@
 #define LITH_SMALL 0
 #endif
 
-unsigned char gimli_read8(const uint32_t *state, size_t i)
+#define GIMLI_RATE 16
+
+static unsigned char gimli_read8(const uint32_t *state, size_t i)
 {
     if (LITH_LITTLE_ENDIAN)
     {
@@ -28,7 +30,7 @@ unsigned char gimli_read8(const uint32_t *state, size_t i)
     }
 }
 
-void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
+static void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
 {
     if (LITH_LITTLE_ENDIAN)
     {
