@@ -11,22 +11,52 @@
 #include "x25519.h"
 
 #include <stdint.h>
+#include <string.h>
 
 #if defined(__SIZEOF_INT128__)
 #define X25519_WBITS 64
 typedef uint64_t limb_t;
 typedef __uint128_t dlimb_t;
 typedef __int128_t sdlimb_t;
-#define eswap_limb eswap_letoh_64
-#define LIMB(x) x##ull
+static inline limb_t read_limb(const unsigned char *p)
+{
+    return (limb_t)p[0] | (limb_t)p[1] << 8 | (limb_t)p[2] << 16 |
+           (limb_t)p[3] << 24 | (limb_t)p[4] << 32 | (limb_t)p[5] << 40 |
+           (limb_t)p[6] << 48 | (limb_t)p[7] << 56;
+}
+static inline void write_limb(unsigned char *p, limb_t x)
+{
+    p[0] = (unsigned char)x & 0xFF;
+    p[1] = (unsigned char)(x >> 8) & 0xFF;
+    p[2] = (unsigned char)(x >> 16) & 0xFF;
+    p[3] = (unsigned char)(x >> 24) & 0xFF;
+    p[4] = (unsigned char)(x >> 32) & 0xFF;
+    p[5] = (unsigned char)(x >> 40) & 0xFF;
+    p[6] = (unsigned char)(x >> 48) & 0xFF;
+    p[7] = (unsigned char)(x >> 56) & 0xFF;
+}
+#define LIMB(x) UINT64_C(x)
 #else // no *int128_t
 #define X25519_WBITS 32
 typedef uint32_t limb_t;
 typedef uint64_t dlimb_t;
 typedef int64_t sdlimb_t;
-#define eswap_limb eswap_letoh_32
-#define LIMB(x) (uint32_t)(x##ull), (uint32_t)((x##ull) >> 32)
+static inline limb_t read_limb(const unsigned char *p)
+{
+    return (limb_t)p[0] | (limb_t)p[1] << 8 | (limb_t)p[2] << 16 |
+           (limb_t)p[3] << 24;
+}
+static inline void write_limb(unsigned char *p, limb_t x)
+{
+    p[0] = (unsigned char)x & 0xFF;
+    p[1] = (unsigned char)(x >> 8) & 0xFF;
+    p[2] = (unsigned char)(x >> 16) & 0xFF;
+    p[3] = (unsigned char)(x >> 24) & 0xFF;
+}
+#define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
 #endif
+
+#define X25519_WOCTETS (X25519_WBITS / 8)
 
 #define NLIMBS (256 / X25519_WBITS)
 typedef limb_t fe[NLIMBS];
@@ -45,7 +75,7 @@ static inline limb_t umaal(limb_t *carry, limb_t acc, limb_t mand, limb_t mier)
 {
     dlimb_t tmp = (dlimb_t)mand * mier + acc + *carry;
     *carry = tmp >> X25519_WBITS;
-    return tmp;
+    return (limb_t)tmp;
 }
 
 /* These functions are implemented in terms of umaal on ARM */
@@ -53,14 +83,14 @@ static inline limb_t adc(limb_t *carry, limb_t acc, limb_t mand)
 {
     dlimb_t total = (dlimb_t)*carry + acc + mand;
     *carry = total >> X25519_WBITS;
-    return total;
+    return (limb_t)total;
 }
 
 static inline limb_t adc0(limb_t *carry, limb_t acc)
 {
     dlimb_t total = (dlimb_t)*carry + acc;
     *carry = total >> X25519_WBITS;
-    return total;
+    return (limb_t)total;
 }
 
 /* Precondition: carry is small.
@@ -98,30 +128,28 @@ static void sub(fe out, const fe a, const fe b)
     sdlimb_t carry = -38;
     for (i = 0; i < NLIMBS; i++)
     {
-        out[i] = carry = carry + a[i] - b[i];
+        out[i] = (limb_t)(carry = carry + a[i] - b[i]);
         carry >>= X25519_WBITS;
     }
-    propagate(out, 1 + carry);
+    propagate(out, (limb_t)(1 + carry));
 }
 
-static void __attribute__((unused)) swapin(limb_t *x, const unsigned char *in)
-{
-    memcpy(x, in, sizeof(fe));
-    unsigned i;
-    for (i = 0; i < NLIMBS; i++)
-    {
-        x[i] = eswap_limb(x[i]);
-    }
-}
-
-static void __attribute__((unused)) swapout(unsigned char *out, limb_t *x)
+static void read_fe(fe x, const unsigned char *in)
 {
     unsigned i;
     for (i = 0; i < NLIMBS; i++)
     {
-        x[i] = eswap_limb(x[i]);
+        x[i] = read_limb(in + i * X25519_WOCTETS);
     }
-    memcpy(out, x, sizeof(fe));
+}
+
+static void write_fe(unsigned char *out, const fe x)
+{
+    unsigned i;
+    for (i = 0; i < NLIMBS; i++)
+    {
+        write_limb(out + i * X25519_WOCTETS, x[i]);
+    }
 }
 
 static void mul(fe out, const fe a, const fe b, unsigned nb)
@@ -209,7 +237,7 @@ static limb_t canon(fe x)
     limb_t res = 0;
     for (i = 0; i < NLIMBS; i++)
     {
-        res |= x[i] = carry += x[i];
+        res |= x[i] = (limb_t)(carry += x[i]);
         carry >>= X25519_WBITS;
     }
     return ((dlimb_t)res - 1) >> X25519_WBITS;
@@ -251,14 +279,13 @@ static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
     int i;
 
     fe x1i;
-    swapin(x1i, x1);
-    x1 = (const unsigned char *)x1;
+    read_fe(x1i, x1);
 
     limb_t swap = 0;
     limb_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
     memset(xs, 0, 4 * sizeof(fe));
     x2[0] = z3[0] = 1;
-    memcpy(x3, x1, sizeof(fe));
+    memcpy(x3, x1i, sizeof(fe));
 
     for (i = 255; i >= 0; i--)
     {
@@ -280,7 +307,7 @@ static void x25519_core(fe xs[5], const unsigned char scalar[X25519_BYTES],
         swap = doswap;
 
         ladder_part1(xs);
-        ladder_part2(xs, (const limb_t *)x1);
+        ladder_part2(xs, x1i);
     }
     condswap(x2, x3, swap);
 }
@@ -312,8 +339,8 @@ int x25519(unsigned char out[X25519_BYTES],
     /* x2 /= z2 */
 
     mul1(x2, z3);
-    int ret = canon(x2);
-    swapout(out, x2);
+    int ret = (int)canon(x2);
+    write_fe(out, x2);
 
     if (clamp)
         return ret;
@@ -329,7 +356,7 @@ static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
     limb_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
 
     fe xo2;
-    swapin(xo2, other2);
+    read_fe(xo2, other2);
 
     memcpy(x3, other1, 2 * sizeof(fe));
 
@@ -367,7 +394,7 @@ int x25519_verify_p2(const unsigned char response[X25519_BYTES],
     fe xs[7];
     x25519_core(&xs[0], challenge, pub, 0);
     x25519_core(&xs[2], response, X25519_BASE_POINT, 0);
-    return x25519_verify_core(&xs[2], xs[0], eph);
+    return (int)x25519_verify_core(&xs[2], xs[0], eph);
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
@@ -405,10 +432,10 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     sdlimb_t scarry = 0;
     for (i = 0; i < NLIMBS; i++)
     {
-        out[i] = scarry = scarry + out[i] - sc_p[i];
+        out[i] = (limb_t)(scarry = scarry + out[i] - sc_p[i]);
         scarry >>= X25519_WBITS;
     }
-    limb_t need_add = -(scarry + hic);
+    limb_t need_add = (limb_t)(-(scarry + hic));
 
     limb_t carry = 0;
     for (i = 0; i < NLIMBS; i++)
@@ -424,13 +451,13 @@ void x25519_sign_p2(unsigned char response[X25519_BYTES],
 {
     /* FUTURE memory/code size: just make eph_secret non-const? */
     scalar_t scalar1;
-    swapin(scalar1, eph_secret);
+    read_fe(scalar1, eph_secret);
 
     scalar_t scalar2, scalar3;
-    swapin(scalar2, secret);
-    swapin(scalar3, challenge);
+    read_fe(scalar2, secret);
+    read_fe(scalar3, challenge);
     sc_montmul(scalar1, scalar2, scalar3);
     memset(scalar2, 0, sizeof(scalar2));
     sc_montmul(scalar2, scalar1, sc_r2);
-    swapout(response, scalar2);
+    write_fe(response, scalar2);
 }

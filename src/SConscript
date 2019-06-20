@@ -3,7 +3,7 @@
 Import("env")
 
 liblithium = env.StaticLibrary(
-    target="lithium", source=["gimli.c", "gimli_hash.c"]
+    target="lithium", source=["gimli.c", "gimli_hash.c", "x25519.c"]
 )
 
 Return("liblithium")
