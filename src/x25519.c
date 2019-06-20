@@ -275,19 +275,19 @@ static void ladder_part2(fe xs[5], const fe x1)
     mul1(x2, t1);    // x2 = AA*BB
 }
 
-static void x25519_core(fe xs[5], const unsigned char scalar[X25519_LEN],
-                        const unsigned char *x1, int clamp)
+static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
+                        const unsigned char base[X25519_LEN], int clamp)
 {
     int i;
 
-    fe x1i;
-    read_fe(x1i, x1);
+    fe_t x1;
+    read_limbs(x1, base);
 
     limb_t swap = 0;
     limb_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
-    memset(xs, 0, 4 * sizeof(fe));
+    memset(xs, 0, 4 * sizeof(fe_t));
     x2[0] = z3[0] = 1;
-    memcpy(x3, x1i, sizeof(fe));
+    memcpy(x3, x1, sizeof(fe_t));
 
     for (i = 255; i >= 0; i--)
     {
@@ -309,7 +309,7 @@ static void x25519_core(fe xs[5], const unsigned char scalar[X25519_LEN],
         swap = doswap;
 
         ladder_part1(xs);
-        ladder_part2(xs, x1i);
+        ladder_part2(xs, x1);
     }
     condswap(x2, x3, swap);
 }
