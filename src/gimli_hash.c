@@ -6,7 +6,7 @@
 
 unsigned char gimli_read8(const uint32_t *state, size_t i)
 {
-    return (unsigned char)(state[i / 4] >> (8 * (i % 4)) & 0xFFU);
+    return (unsigned char)(state[i / 4] >> (8 * (i % 4))) & 0xFFU;
 }
 
 void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
