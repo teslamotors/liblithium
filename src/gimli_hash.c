@@ -1,17 +1,31 @@
 #include <lithium/gimli_hash.h>
 
-#include <lithium/gimli.h>
-
+#include <limits.h>
 #include <string.h>
+
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) &&             \
+    (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) && (CHAR_BIT == 8)
+#define LITH_LITTLE_ENDIAN 1
+#elif
+#define LITH_LITTLE_ENDIAN 0
+#endif
 
 unsigned char gimli_read8(const uint32_t *state, size_t i)
 {
+#if (LITH_LITTLE_ENDIAN)
+    return ((const unsigned char *)state)[i];
+#else
     return (unsigned char)(state[i / 4] >> (8 * (i % 4))) & 0xFFU;
+#endif
 }
 
 void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
 {
+#if (LITH_LITTLE_ENDIAN)
+    ((unsigned char *)state)[i] ^= x;
+#else
     state[i / 4] ^= (uint32_t)x << (8 * (i % 4));
+#endif
 }
 
 void gimli_hash_init(gimli_hash_state *g)
