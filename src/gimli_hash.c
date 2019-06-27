@@ -57,16 +57,16 @@ void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len)
     gimli_xor8(g->state, GIMLI_RATE - 1, 0x80);
 
     // Switch to the squeezing phase.
-    size_t offset = GIMLI_RATE - 1;
+    size_t offset = GIMLI_RATE;
     for (size_t i = 0; i < len; ++i)
     {
-        ++offset;
         if (offset == GIMLI_RATE)
         {
             gimli(g->state);
             offset = 0;
         }
         output[i] = gimli_read8(g->state, offset);
+        ++offset;
     }
 }
 
