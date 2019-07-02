@@ -22,14 +22,14 @@ static inline limb_t read_limb(const unsigned char *p)
 }
 static inline void write_limb(unsigned char *p, limb_t x)
 {
-    p[0] = (unsigned char)x & 0xFF;
-    p[1] = (unsigned char)(x >> 8) & 0xFF;
-    p[2] = (unsigned char)(x >> 16) & 0xFF;
-    p[3] = (unsigned char)(x >> 24) & 0xFF;
-    p[4] = (unsigned char)(x >> 32) & 0xFF;
-    p[5] = (unsigned char)(x >> 40) & 0xFF;
-    p[6] = (unsigned char)(x >> 48) & 0xFF;
-    p[7] = (unsigned char)(x >> 56) & 0xFF;
+    p[0] = (unsigned char)x & 0xFFU;
+    p[1] = (unsigned char)(x >> 8) & 0xFFU;
+    p[2] = (unsigned char)(x >> 16) & 0xFFU;
+    p[3] = (unsigned char)(x >> 24) & 0xFFU;
+    p[4] = (unsigned char)(x >> 32) & 0xFFU;
+    p[5] = (unsigned char)(x >> 40) & 0xFFU;
+    p[6] = (unsigned char)(x >> 48) & 0xFFU;
+    p[7] = (unsigned char)(x >> 56) & 0xFFU;
 }
 #define LIMB(x) UINT64_C(x)
 #else // no *int128_t
@@ -44,10 +44,10 @@ static inline limb_t read_limb(const unsigned char *p)
 }
 static inline void write_limb(unsigned char *p, limb_t x)
 {
-    p[0] = (unsigned char)x & 0xFF;
-    p[1] = (unsigned char)(x >> 8) & 0xFF;
-    p[2] = (unsigned char)(x >> 16) & 0xFF;
-    p[3] = (unsigned char)(x >> 24) & 0xFF;
+    p[0] = (unsigned char)x & 0xFFU;
+    p[1] = (unsigned char)(x >> 8) & 0xFFU;
+    p[2] = (unsigned char)(x >> 16) & 0xFFU;
+    p[3] = (unsigned char)(x >> 24) & 0xFFU;
 }
 #define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
 #endif
