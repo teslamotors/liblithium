@@ -38,7 +38,7 @@ void gimli(uint32_t *state)
             swap(&state[0], &state[1]);
             swap(&state[2], &state[3]);
             // add constant: pattern c...c...c... etc.
-            state[0] ^= (UINT32_C(0x9e377900) | (uint32_t)round);
+            state[0] ^= UINT32_C(0x9e377900) | (uint32_t)round;
             break;
 
         case 2:
