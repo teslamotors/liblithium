@@ -89,7 +89,7 @@ static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
 static inline limb_t umaal(limb_t *carry, limb_t acc, limb_t mand, limb_t mier)
 {
     dlimb_t tmp = (dlimb_t)mand * mier + acc + *carry;
-    *carry = tmp >> X25519_WBITS;
+    *carry = (limb_t)(tmp >> X25519_WBITS);
     return (limb_t)tmp;
 }
 
@@ -97,14 +97,14 @@ static inline limb_t umaal(limb_t *carry, limb_t acc, limb_t mand, limb_t mier)
 static inline limb_t adc(limb_t *carry, limb_t acc, limb_t mand)
 {
     dlimb_t total = (dlimb_t)*carry + acc + mand;
-    *carry = total >> X25519_WBITS;
+    *carry = (limb_t)(total >> X25519_WBITS);
     return (limb_t)total;
 }
 
 static inline limb_t adc0(limb_t *carry, limb_t acc)
 {
     dlimb_t total = (dlimb_t)*carry + acc;
-    *carry = total >> X25519_WBITS;
+    *carry = (limb_t)(total >> X25519_WBITS);
     return (limb_t)total;
 }
 
@@ -242,7 +242,7 @@ static limb_t canon(fe x)
         res |= x[i] = (limb_t)(carry += x[i]);
         carry >>= X25519_WBITS;
     }
-    return ((dlimb_t)res - 1) >> X25519_WBITS;
+    return (limb_t)(((dlimb_t)res - 1) >> X25519_WBITS);
 }
 
 static const limb_t a24[1] = {121665};
@@ -296,12 +296,12 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
         {
             if (i / 8 == 0)
             {
-                bytei &= ~7;
+                bytei &= 0xF8U;
             }
             else if (i / 8 == X25519_LEN - 1)
             {
-                bytei &= 0x7F;
-                bytei |= 0x40;
+                bytei &= 0x7FU;
+                bytei |= 0x40U;
             }
         }
         limb_t doswap = -(limb_t)((bytei >> (i % 8)) & 1);
