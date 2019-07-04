@@ -20,8 +20,9 @@ if platform == "darwin":
             "-flto",
             "-ffunction-sections",
             "-fdata-sections",
+            "-march=native",
         ],
-        LINKFLAGS=["-O3", "-flto", "-dead_strip"],
+        LINKFLAGS=["-O3", "-g", "-flto", "-dead_strip"],
     )
 
 # GCC
@@ -39,8 +40,9 @@ if platform == "posix":
             "-ffunction-sections",
             "-fdata-sections",
             "-fsanitize=address,undefined",
+            "-march=native",
         ],
-        LINKFLAGS=["-O3", "-flto", "-Wl,--gc-sections"],
+        LINKFLAGS=["-O3", "-g", "-flto", "-Wl,--gc-sections"],
         LIBS=["asan", "ubsan"],
     )
 
