@@ -4,7 +4,7 @@
  * See LICENSE for license information.
  */
 
-#include "x25519.h"
+#include <lithium/x25519.h>
 
 #include <stdint.h>
 #include <string.h>

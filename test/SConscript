@@ -22,3 +22,6 @@ env.Command(
     source=[test_gimli_hash_out, "test_gimli_hash.exp"],
     action="diff ${SOURCES[0]} ${SOURCES[1]}",
 )
+
+test_x25519 = env.Program("test_x25519.c")
+env.Command(target="test_x25519_output", source=test_x25519, action="$SOURCE ")
