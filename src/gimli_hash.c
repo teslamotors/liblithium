@@ -96,8 +96,8 @@ void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
 void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len)
 {
     // Apply padding.
-    gimli_xor8(g->state, g->offset, 0x1F);
-    gimli_xor8(g->state, GIMLI_RATE - 1, 0x80);
+    gimli_xor8(g->state, g->offset, 0x01);
+    gimli_xor8(g->state, GIMLI_WORDS * 4 - 1, 0x01);
 
     // Switch to the squeezing phase.
     size_t offset = GIMLI_RATE;
