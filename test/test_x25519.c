@@ -83,8 +83,15 @@ int main(void)
         b = k;
         k = tmp;
     }
-    for (i = 0; i < X25519_LEN; i++)
-        printf("%02x", k[i]);
-    printf("\n");
-    return 0;
+    static const unsigned char expected[X25519_LEN] = {
+        0x68U, 0x4CU, 0xF5U, 0x9BU, 0xA8U, 0x33U, 0x09U, 0x55U,
+        0x28U, 0x00U, 0xEFU, 0x56U, 0x6FU, 0x2FU, 0x4DU, 0x3CU,
+        0x1CU, 0x38U, 0x87U, 0xC4U, 0x93U, 0x60U, 0xE3U, 0x87U,
+        0x5FU, 0x2EU, 0xB9U, 0x4DU, 0x99U, 0x53U, 0x2CU, 0x51U,
+    };
+    if (memcmp(k, expected, X25519_LEN) != 0)
+    {
+        fprintf(stderr, "FAIL iterated x25519\n");
+        return EXIT_FAILURE;
+    };
 }
