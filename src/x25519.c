@@ -62,7 +62,7 @@ static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
                           LIMB(0xceec73d217f5be65), LIMB(0x0399411b7c309a3d)};
 
 static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
-                             uint32_t mier)
+                      uint32_t mier)
 {
     uint64_t tmp = (uint64_t)mand * mier + acc + *carry;
     *carry = (uint32_t)(tmp >> X25519_WBITS);
@@ -92,12 +92,11 @@ static uint32_t adc0(uint32_t *carry, uint32_t acc)
  */
 static void propagate(fe x, uint32_t over)
 {
-    unsigned i;
     over = x[NLIMBS - 1] >> (X25519_WBITS - 1) | over << 1;
     x[NLIMBS - 1] &= ~((uint32_t)1 << (X25519_WBITS - 1));
 
     uint32_t carry = over * 19;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         x[i] = adc0(&carry, x[i]);
     }
@@ -105,9 +104,8 @@ static void propagate(fe x, uint32_t over)
 
 static void add(fe out, const fe a, const fe b)
 {
-    unsigned i;
     uint32_t carry = 0;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         out[i] = adc(&carry, a[i], b[i]);
     }
@@ -116,9 +114,8 @@ static void add(fe out, const fe a, const fe b)
 
 static void sub(fe out, const fe a, const fe b)
 {
-    unsigned i;
     int64_t carry = -38;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         out[i] = (uint32_t)(carry = carry + a[i] - b[i]);
         carry >>= X25519_WBITS;
@@ -133,25 +130,24 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
      * dedicated asm.
      */
     uint32_t accum[2 * NLIMBS] = {0};
-    unsigned i, j;
-
     uint32_t carry2;
-    for (i = 0; i < nb; i++)
+
+    for (unsigned i = 0; i < nb; i++)
     {
         carry2 = 0;
         uint32_t mand = b[i];
-        for (j = 0; j < NLIMBS; j++)
+        for (unsigned j = 0; j < NLIMBS; j++)
         {
             accum[i + j] = umaal(&carry2, accum[i + j], mand, a[j]);
         }
-        accum[i + j] = carry2;
+        accum[i + NLIMBS] = carry2;
     }
 
     carry2 = 0;
     const uint32_t mand = 38;
-    for (j = 0; j < NLIMBS; j++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
-        out[j] = umaal(&carry2, accum[j], mand, accum[j + NLIMBS]);
+        out[i] = umaal(&carry2, accum[i], mand, accum[i + NLIMBS]);
     }
     propagate(out, carry2);
 }
@@ -172,8 +168,7 @@ static void sqr1(fe a)
 static void condswap(uint32_t a[2 * NLIMBS], uint32_t b[2 * NLIMBS],
                      uint32_t doswap)
 {
-    unsigned i;
-    for (i = 0; i < 2 * NLIMBS; i++)
+    for (unsigned i = 0; i < 2 * NLIMBS; i++)
     {
         uint32_t xor = (a[i] ^ b[i]) & doswap;
         a[i] ^= xor;
@@ -191,9 +186,8 @@ static uint32_t canon(fe x)
      */
 
     /* First, add 19. */
-    unsigned i;
     uint32_t carry0 = 19;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         x[i] = adc0(&carry0, x[i]);
     }
@@ -214,7 +208,7 @@ static uint32_t canon(fe x)
      */
     int64_t carry = -19;
     uint32_t res = 0;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         res |= x[i] = (uint32_t)(carry += x[i]);
         carry >>= X25519_WBITS;
@@ -267,7 +261,7 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
 
     for (int i = 255; i >= 0; --i)
     {
-        limb_t doswap = -(uint32_t)((scalar[i / 8] >> (i % 8)) & 1);
+        uint32_t doswap = -(uint32_t)((scalar[i / 8] >> (i % 8)) & 1);
         condswap(x2, x3, swap ^ doswap);
         swap = doswap;
 
@@ -287,11 +281,10 @@ void x25519(unsigned char out[X25519_LEN],
 
     /* Precomputed inversion chain */
     uint32_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];
-    int i;
 
     uint32_t *prev = z2;
     /* Raise to the p-2 = 0x7f..ffeb */
-    for (i = 253; i >= 0; i--)
+    for (int i = 253; i >= 0; i--)
     {
         sqr(z3, prev);
         prev = z3;
@@ -367,13 +360,12 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
      * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp +
      * Mp)/M = 2p, subtract p, < p, done.
      */
-    unsigned i, j;
     uint32_t hic = 0;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = MONTGOMERY_FACTOR;
 
-        for (j = 0; j < NLIMBS; j++)
+        for (unsigned j = 0; j < NLIMBS; j++)
         {
             uint32_t acc = out[j];
             acc = umaal(&carry, acc, mand, b[j]);
@@ -390,7 +382,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
 
     /* Reduce */
     int64_t scarry = 0;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         out[i] = (uint32_t)(scarry = scarry + out[i] - sc_p[i]);
         scarry >>= X25519_WBITS;
@@ -398,7 +390,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     uint32_t need_add = (uint32_t)(-(scarry + hic));
 
     uint32_t carry = 0;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         out[i] = umaal(&carry, out[i], need_add, sc_p[i]);
     }
