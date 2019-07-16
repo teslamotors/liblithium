@@ -241,7 +241,8 @@ static void ladder_part1(fe xs[5])
     mul(z2, x2, a24, sizeof(a24) / sizeof(a24[0])); // z2 = E*a24
     add(z2, z2, t1);                                // z2 = E*a24 + AA
 }
-static void ladder_part2(fe xs[5], const fe x1)
+
+static void ladder_part2(fe_t xs[5], const fe_t x1)
 {
     uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
     sqr1(z3);        // z3 = (DA-CB)^2
@@ -253,10 +254,8 @@ static void ladder_part2(fe xs[5], const fe x1)
 }
 
 static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
-                        const unsigned char base[X25519_LEN], int clamp)
+                        const unsigned char base[X25519_LEN])
 {
-    int i;
-
     fe_t x1;
     read_limbs(x1, base);
 
@@ -266,37 +265,25 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
     x2[0] = z3[0] = 1;
     memcpy(x3, x1, sizeof(fe_t));
 
-    for (i = 255; i >= 0; i--)
+    for (int i = 255; i >= 0; --i)
     {
-        unsigned char bytei = scalar[i / 8];
-        if (clamp)
-        {
-            if (i / 8 == 0)
-            {
-                bytei &= 0xF8U;
-            }
-            else if (i / 8 == X25519_LEN - 1)
-            {
-                bytei &= 0x7FU;
-                bytei |= 0x40U;
-            }
-        }
-        uint32_t doswap = -(uint32_t)((bytei >> (i % 8)) & 1);
+        limb_t doswap = -(uint32_t)((scalar[i / 8] >> (i % 8)) & 1);
         condswap(x2, x3, swap ^ doswap);
         swap = doswap;
 
         ladder_part1(xs);
         ladder_part2(xs, x1);
     }
+
     condswap(x2, x3, swap);
 }
 
-int x25519(unsigned char out[X25519_LEN],
-           const unsigned char scalar[X25519_LEN],
-           const unsigned char base[X25519_LEN], int clamp)
+void x25519(unsigned char out[X25519_LEN],
+            const unsigned char scalar[X25519_LEN],
+            const unsigned char base[X25519_LEN])
 {
-    fe xs[5];
-    x25519_core(xs, scalar, base, clamp);
+    fe_t xs[5];
+    x25519_core(xs, scalar, base);
 
     /* Precomputed inversion chain */
     uint32_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];
@@ -317,13 +304,8 @@ int x25519(unsigned char out[X25519_LEN],
     /* Here prev = z3 */
     /* x2 /= z2 */
     mul1(x2, z3);
-    int ret = (int)canon(x2);
-    write_fe(out, x2);
-
-    if (clamp)
-        return ret;
-    else
-        return 0;
+    canon(x2);
+    write_limbs(out, x2);
 }
 
 const unsigned char x25519_base_point[X25519_LEN] = {9};
@@ -369,9 +351,9 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
                      const unsigned char eph[X25519_LEN],
                      const unsigned char pub[X25519_LEN])
 {
-    fe xs[7];
-    x25519_core(&xs[0], challenge, pub, 0);
-    x25519_core(&xs[2], response, x25519_base_point, 0);
+    fe_t xs[7];
+    x25519_core(&xs[0], challenge, pub);
+    x25519_core(&xs[2], response, x25519_base_point);
     return (int)x25519_verify_core(&xs[2], xs[0], eph);
 }
 

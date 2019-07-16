@@ -33,13 +33,13 @@ int main(void)
     for (i = 0; i < 1000; i++)
     {
         randomize(secret1);
-        x25519_base(public1, secret1, i % 2);
+        x25519(public1, secret1, x25519_base_point);
 
         randomize(secret2);
-        x25519_base(public2, secret2, i % 2);
+        x25519(public2, secret2, x25519_base_point);
 
-        x25519(shared1, secret1, public2, i % 2);
-        x25519(shared2, secret2, public1, i % 2);
+        x25519(shared1, secret1, public2);
+        x25519(shared2, secret2, public1);
 
         if (memcmp(shared1, shared2, sizeof(shared1)))
         {
@@ -53,9 +53,9 @@ int main(void)
     for (i = 0; i < 1000; i++)
     {
         randomize(secret1);
-        x25519_base(public1, secret1, 0);
+        x25519(public1, secret1, x25519_base_point);
         randomize(eph_secret);
-        x25519_base(eph_public, eph_secret, 0);
+        x25519(eph_public, eph_secret, x25519_base_point);
         randomize(challenge);
         x25519_sign_p2(response, challenge, eph_secret, secret1);
         if (0 != x25519_verify_p2(response, challenge, eph_public, public1))
@@ -78,7 +78,12 @@ int main(void)
 
     for (i = 0; i < 1000; i++)
     {
-        x25519(b, k, b, 1);
+        unsigned char ck[X25519_LEN];
+        memcpy(ck, k, X25519_LEN);
+        ck[0] &= 0xF8U;
+        ck[31] &= 0x7FU;
+        ck[31] |= 0x40U;
+        x25519(b, ck, b);
         tmp = b;
         b = k;
         k = tmp;
