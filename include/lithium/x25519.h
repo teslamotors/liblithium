@@ -8,16 +8,20 @@
 
 #define X25519_LEN (256 / 8)
 
-/* The base point (9) */
-extern const unsigned char x25519_base_point[X25519_LEN];
-
-/* x25519 scalar multiplication. Sets out to scalar*base.
+/*
+ * x25519 scalar multiplication. Sets out to scalar*base.
  *
  * Scalar should be clamped like a Curve25519 secret key.
  */
 void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char base[X25519_LEN]);
+
+/*
+ * Scalar multiplication of the curve's base point.
+ */
+void x25519_base(unsigned char out[X25519_LEN],
+                 const unsigned char scalar[X25519_LEN]);
 
 /*
  * STROBE-compatible Schnorr signatures using curve25519 (not ed25519).

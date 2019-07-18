@@ -33,10 +33,10 @@ int main(void)
     for (i = 0; i < 1000; i++)
     {
         randomize(secret1);
-        x25519(public1, secret1, x25519_base_point);
+        x25519_base(public1, secret1);
 
         randomize(secret2);
-        x25519(public2, secret2, x25519_base_point);
+        x25519_base(public2, secret2);
 
         x25519(shared1, secret1, public2);
         x25519(shared2, secret2, public1);
@@ -53,9 +53,9 @@ int main(void)
     for (i = 0; i < 1000; i++)
     {
         randomize(secret1);
-        x25519(public1, secret1, x25519_base_point);
+        x25519_base(public1, secret1);
         randomize(eph_secret);
-        x25519(eph_public, eph_secret, x25519_base_point);
+        x25519_base(eph_public, eph_secret);
         randomize(challenge);
         x25519_sign_p2(response, challenge, eph_secret, secret1);
         if (0 != x25519_verify_p2(response, challenge, eph_public, public1))

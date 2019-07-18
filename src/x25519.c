@@ -304,7 +304,13 @@ void x25519(unsigned char out[X25519_LEN],
     write_limbs(out, x2);
 }
 
-const unsigned char x25519_base_point[X25519_LEN] = {9};
+static const unsigned char base_point[X25519_LEN] = {9};
+
+void x25519_base(unsigned char out[X25519_LEN],
+                 const unsigned char scalar[X25519_LEN])
+{
+    x25519(out, scalar, base_point);
+}
 
 static uint32_t x25519_verify_core(fe xs[5], const uint32_t *other1,
                                    const unsigned char other2[X25519_LEN])
@@ -349,7 +355,7 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
 {
     fe_t xs[7];
     x25519_core(&xs[0], challenge, pub);
-    x25519_core(&xs[2], response, x25519_base_point);
+    x25519_core(&xs[2], response, base_point);
     return (int)x25519_verify_core(&xs[2], xs[0], eph);
 }
 
