@@ -117,7 +117,8 @@ static void sub(fe out, const fe a, const fe b)
     int64_t carry = -38;
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        out[i] = (uint32_t)(carry = carry + a[i] - b[i]);
+        carry = carry + a[i] - b[i];
+        out[i] = (uint32_t)carry;
         carry >>= X25519_WBITS;
     }
     propagate(out, (uint32_t)(1 + carry));
@@ -210,7 +211,9 @@ static uint32_t canon(fe x)
     uint32_t res = 0;
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        res |= x[i] = (uint32_t)(carry += x[i]);
+        carry += x[i];
+        x[i] = (uint32_t)carry;
+        res |= x[i];
         carry >>= X25519_WBITS;
     }
     return (uint32_t)(((uint64_t)res - 1) >> X25519_WBITS);
@@ -384,7 +387,8 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     int64_t scarry = 0;
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        out[i] = (uint32_t)(scarry = scarry + out[i] - sc_p[i]);
+        scarry = scarry + out[i] - sc_p[i];
+        out[i] = (uint32_t)scarry;
         scarry >>= X25519_WBITS;
     }
     uint32_t need_add = (uint32_t)(-(scarry + hic));
