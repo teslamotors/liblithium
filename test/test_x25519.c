@@ -18,7 +18,7 @@ static void randomize(unsigned char foo[X25519_LEN])
     for (i = 0; i < X25519_LEN; i++)
     {
         seed += seed * seed | 5;
-        foo[i] = seed >> 24;
+        foo[i] = (unsigned char)(seed >> 24);
     }
 }
 
