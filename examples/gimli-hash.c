@@ -38,6 +38,7 @@ int main(int argc, char **argv)
         perror("read");
         return EXIT_FAILURE;
     }
+    close(msgfd);
 
     gimli_hash_final(&state, output, sizeof output);
 

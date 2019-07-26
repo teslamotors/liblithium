@@ -12,5 +12,5 @@ pushd "$testdir"
 
 simple-keygen testkey
 head -c 1000000 /dev/urandom > input.bin
-simple-sign input.bin testkey input.sig
-simple-verify input.bin input.sig testkey.pub
+simple-sign testkey input.bin input.sig
+simple-verify testkey.pub input.bin input.sig
