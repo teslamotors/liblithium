@@ -60,7 +60,7 @@ static inline void x25519_base_uniform(unsigned char out[X25519_LEN],
 /*
  * STROBE-compatible Schnorr signatures using curve25519 (not ed25519).
  *
- * The user will call x25519_base_uniform(eph,eph_secret) to schedule a random
+ * The user will call x25519_base(eph, eph_secret) to schedule a random
  * ephemeral secret key. They then call a Schnorr oracle to get a challenge,
  * and compute the response using this function.
  */
