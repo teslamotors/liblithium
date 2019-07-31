@@ -87,6 +87,7 @@ GCCFLAGS = [
     "-mcpu=cortex-m4",
     "-Os",
     "-flto",
+    "-ffat-lto-objects",
     "-g",
 ]
 
