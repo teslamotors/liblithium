@@ -82,8 +82,8 @@ build_with_env("dist", host_env)
 arm_env = env.Clone()
 
 GCCFLAGS = [
-    "--specs=nosys.specs",
-    "--specs=nano.specs",
+    "-specs=nosys.specs",
+    "-specs=nano.specs",
     "-mcpu=cortex-m4",
     "-Os",
     "-flto",
