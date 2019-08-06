@@ -10,7 +10,7 @@ typedef uint32_t row_t __attribute__((vector_size(16)));
 #error "no suitable shuffle intrinsic"
 #endif
 
-static inline row_t rol(row_t x, int n)
+static row_t rol(row_t x, int n)
 {
     if (n == 0)
     {
@@ -19,7 +19,7 @@ static inline row_t rol(row_t x, int n)
     return x << n | x >> (32 - n);
 }
 
-static inline row_t rol24(row_t x)
+static row_t rol24(row_t x)
 {
     typedef uint8_t row8_t __attribute__((vector_size(16)));
     row8_t xb = (row8_t)x;
@@ -27,12 +27,12 @@ static inline row_t rol24(row_t x)
     return (row_t)xb;
 }
 
-static inline row_t load(uint32_t *p)
+static row_t load(const uint32_t *p)
 {
     return (row_t){p[0], p[1], p[2], p[3]};
 }
 
-static inline void store(uint32_t *p, row_t x)
+static void store(uint32_t *p, row_t x)
 {
     p[0] = x[0];
     p[1] = x[1];
@@ -40,17 +40,17 @@ static inline void store(uint32_t *p, row_t x)
     p[3] = x[3];
 }
 
-static inline row_t small_swap(row_t x)
+static row_t small_swap(row_t x)
 {
     return SHUFFLE(x, 1, 0, 3, 2);
 }
 
-static inline row_t big_swap(row_t x)
+static row_t big_swap(row_t x)
 {
     return SHUFFLE(x, 2, 3, 0, 1);
 }
 
-static inline void sp(row_t *x, row_t *y, row_t *z)
+static void sp(row_t *x, row_t *y, row_t *z)
 {
     *x = rol24(*x);
     *y = rol(*y, 9);
@@ -61,7 +61,7 @@ static inline void sp(row_t *x, row_t *y, row_t *z)
     *z = newz;
 }
 
-static inline row_t coeff(int round)
+static row_t coeff(int round)
 {
     return (row_t){UINT32_C(0x9e377900) | (uint32_t)round, 0, 0, 0};
 }

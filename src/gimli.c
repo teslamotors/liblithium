@@ -1,6 +1,6 @@
 #include <lithium/gimli.h>
 
-static uint32_t rotate(uint32_t x, int n)
+static uint32_t rol(uint32_t x, int n)
 {
     if (n == 0)
     {
@@ -22,8 +22,8 @@ void gimli(uint32_t *state)
     {
         for (int column = 0; column < 4; ++column)
         {
-            const uint32_t x = rotate(state[column], 24);
-            const uint32_t y = rotate(state[column + 4], 9);
+            const uint32_t x = rol(state[column], 24);
+            const uint32_t y = rol(state[column + 4], 9);
             const uint32_t z = state[column + 8];
 
             state[column + 8] = x ^ (z << 1) ^ ((y & z) << 2);
