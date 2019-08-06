@@ -9,40 +9,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#if defined(__SIZEOF_INT128__)
-#define X25519_WBITS 64
-typedef uint64_t limb_t;
-typedef __uint128_t dlimb_t;
-typedef __int128_t sdlimb_t;
-static inline limb_t read_limb(const unsigned char *p)
-{
-    return (limb_t)p[0] | (limb_t)p[1] << 8 | (limb_t)p[2] << 16 |
-           (limb_t)p[3] << 24 | (limb_t)p[4] << 32 | (limb_t)p[5] << 40 |
-           (limb_t)p[6] << 48 | (limb_t)p[7] << 56;
-}
-static inline void write_limb(unsigned char *p, limb_t x)
-{
-    p[0] = (unsigned char)x & 0xFFU;
-    p[1] = (unsigned char)(x >> 8) & 0xFFU;
-    p[2] = (unsigned char)(x >> 16) & 0xFFU;
-    p[3] = (unsigned char)(x >> 24) & 0xFFU;
-    p[4] = (unsigned char)(x >> 32) & 0xFFU;
-    p[5] = (unsigned char)(x >> 40) & 0xFFU;
-    p[6] = (unsigned char)(x >> 48) & 0xFFU;
-    p[7] = (unsigned char)(x >> 56) & 0xFFU;
-}
-#define LIMB(x) UINT64_C(x)
-#else // no *int128_t
 #define X25519_WBITS 32
-typedef uint32_t limb_t;
-typedef uint64_t dlimb_t;
-typedef int64_t sdlimb_t;
-static inline limb_t read_limb(const unsigned char *p)
+typedef uint32_t uint32_t;
+static uint32_t read_limb(const unsigned char *p)
 {
-    return (limb_t)p[0] | (limb_t)p[1] << 8 | (limb_t)p[2] << 16 |
-           (limb_t)p[3] << 24;
+    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 |
+           (uint32_t)p[3] << 24;
 }
-static inline void write_limb(unsigned char *p, limb_t x)
+static void write_limb(unsigned char *p, uint32_t x)
 {
     p[0] = (unsigned char)x & 0xFFU;
     p[1] = (unsigned char)(x >> 8) & 0xFFU;
@@ -50,14 +24,13 @@ static inline void write_limb(unsigned char *p, limb_t x)
     p[3] = (unsigned char)(x >> 24) & 0xFFU;
 }
 #define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
-#endif
 
 #define X25519_WOCTETS (X25519_WBITS / 8)
 
 #define NLIMBS (256 / X25519_WBITS)
 typedef limb_t fe[NLIMBS];
 
-static inline void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
+static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
     unsigned i;
     for (i = 0; i < NLIMBS; i++)
@@ -66,7 +39,7 @@ static inline void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
     }
 }
 
-static inline void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
+static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
     unsigned i;
     for (i = 0; i < NLIMBS; i++)
@@ -75,9 +48,11 @@ static inline void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
     }
 }
 
-typedef limb_t fe_t[NLIMBS];
-typedef limb_t scalar_t[NLIMBS];
-static const limb_t MONTGOMERY_FACTOR = (limb_t)0xd2b51da312547e1bull;
+typedef uint32_t fe_t[NLIMBS];
+typedef uint32_t scalar_t[NLIMBS];
+
+static const uint32_t MONTGOMERY_FACTOR =
+    (uint32_t)UINT64_C(0xd2b51da312547e1b);
 static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
                               LIMB(0x14def9dea2f79cd6),
                               LIMB(0x0000000000000000),
@@ -86,26 +61,27 @@ static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
                           LIMB(0xa40611e3449c0f01), LIMB(0xd00e1ba768859347),
                           LIMB(0xceec73d217f5be65), LIMB(0x0399411b7c309a3d)};
 
-static inline limb_t umaal(limb_t *carry, limb_t acc, limb_t mand, limb_t mier)
+static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
+                             uint32_t mier)
 {
-    dlimb_t tmp = (dlimb_t)mand * mier + acc + *carry;
-    *carry = (limb_t)(tmp >> X25519_WBITS);
-    return (limb_t)tmp;
+    uint64_t tmp = (uint64_t)mand * mier + acc + *carry;
+    *carry = (uint32_t)(tmp >> X25519_WBITS);
+    return (uint32_t)tmp;
 }
 
 /* These functions are implemented in terms of umaal on ARM */
-static inline limb_t adc(limb_t *carry, limb_t acc, limb_t mand)
+static uint32_t adc(uint32_t *carry, uint32_t acc, uint32_t mand)
 {
-    dlimb_t total = (dlimb_t)*carry + acc + mand;
-    *carry = (limb_t)(total >> X25519_WBITS);
-    return (limb_t)total;
+    uint64_t total = (uint64_t)*carry + acc + mand;
+    *carry = (uint32_t)(total >> X25519_WBITS);
+    return (uint32_t)total;
 }
 
-static inline limb_t adc0(limb_t *carry, limb_t acc)
+static uint32_t adc0(uint32_t *carry, uint32_t acc)
 {
-    dlimb_t total = (dlimb_t)*carry + acc;
-    *carry = (limb_t)(total >> X25519_WBITS);
-    return (limb_t)total;
+    uint64_t total = (uint64_t)*carry + acc;
+    *carry = (uint32_t)(total >> X25519_WBITS);
+    return (uint32_t)total;
 }
 
 /*
@@ -114,13 +90,13 @@ static inline limb_t adc0(limb_t *carry, limb_t acc)
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
  */
-static void propagate(fe x, limb_t over)
+static void propagate(fe x, uint32_t over)
 {
     unsigned i;
     over = x[NLIMBS - 1] >> (X25519_WBITS - 1) | over << 1;
-    x[NLIMBS - 1] &= ~((limb_t)1 << (X25519_WBITS - 1));
+    x[NLIMBS - 1] &= ~((uint32_t)1 << (X25519_WBITS - 1));
 
-    limb_t carry = over * 19;
+    uint32_t carry = over * 19;
     for (i = 0; i < NLIMBS; i++)
     {
         x[i] = adc0(&carry, x[i]);
@@ -130,7 +106,7 @@ static void propagate(fe x, limb_t over)
 static void add(fe out, const fe a, const fe b)
 {
     unsigned i;
-    limb_t carry = 0;
+    uint32_t carry = 0;
     for (i = 0; i < NLIMBS; i++)
     {
         out[i] = adc(&carry, a[i], b[i]);
@@ -141,13 +117,13 @@ static void add(fe out, const fe a, const fe b)
 static void sub(fe out, const fe a, const fe b)
 {
     unsigned i;
-    sdlimb_t carry = -38;
+    int64_t carry = -38;
     for (i = 0; i < NLIMBS; i++)
     {
-        out[i] = (limb_t)(carry = carry + a[i] - b[i]);
+        out[i] = (uint32_t)(carry = carry + a[i] - b[i]);
         carry >>= X25519_WBITS;
     }
-    propagate(out, (limb_t)(1 + carry));
+    propagate(out, (uint32_t)(1 + carry));
 }
 
 static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
@@ -156,14 +132,14 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
      * GCC at least produces pretty decent asm for this, so don't need to have
      * dedicated asm.
      */
-    limb_t accum[2 * NLIMBS] = {0};
+    uint32_t accum[2 * NLIMBS] = {0};
     unsigned i, j;
 
-    limb_t carry2;
+    uint32_t carry2;
     for (i = 0; i < nb; i++)
     {
         carry2 = 0;
-        limb_t mand = b[i];
+        uint32_t mand = b[i];
         for (j = 0; j < NLIMBS; j++)
         {
             accum[i + j] = umaal(&carry2, accum[i + j], mand, a[j]);
@@ -172,7 +148,7 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
     }
 
     carry2 = 0;
-    const limb_t mand = 38;
+    const uint32_t mand = 38;
     for (j = 0; j < NLIMBS; j++)
     {
         out[j] = umaal(&carry2, accum[j], mand, accum[j + NLIMBS]);
@@ -193,18 +169,19 @@ static void sqr1(fe a)
     mul1(a, a);
 }
 
-static void condswap(limb_t a[2 * NLIMBS], limb_t b[2 * NLIMBS], limb_t doswap)
+static void condswap(uint32_t a[2 * NLIMBS], uint32_t b[2 * NLIMBS],
+                     uint32_t doswap)
 {
     unsigned i;
     for (i = 0; i < 2 * NLIMBS; i++)
     {
-        limb_t xor = (a[i] ^ b[i]) & doswap;
+        uint32_t xor = (a[i] ^ b[i]) & doswap;
         a[i] ^= xor;
         b[i] ^= xor;
     }
 }
 
-static limb_t canon(fe x)
+static uint32_t canon(fe x)
 {
     /*
      * Canonicalize a field element x, reducing it to the least residue which
@@ -215,7 +192,7 @@ static limb_t canon(fe x)
 
     /* First, add 19. */
     unsigned i;
-    limb_t carry0 = 19;
+    uint32_t carry0 = 19;
     for (i = 0; i < NLIMBS; i++)
     {
         x[i] = adc0(&carry0, x[i]);
@@ -235,21 +212,21 @@ static limb_t canon(fe x)
      *
      * So now, if we subtract 19, we will get back to something in [0,2^255-19).
      */
-    sdlimb_t carry = -19;
-    limb_t res = 0;
+    int64_t carry = -19;
+    uint32_t res = 0;
     for (i = 0; i < NLIMBS; i++)
     {
-        res |= x[i] = (limb_t)(carry += x[i]);
+        res |= x[i] = (uint32_t)(carry += x[i]);
         carry >>= X25519_WBITS;
     }
-    return (limb_t)(((dlimb_t)res - 1) >> X25519_WBITS);
+    return (uint32_t)(((uint64_t)res - 1) >> X25519_WBITS);
 }
 
-static const limb_t a24[1] = {121665};
+static const uint32_t a24[1] = {121665};
 
 static void ladder_part1(fe xs[5])
 {
-    limb_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
+    uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
     add(t1, x2, z2);                                // t1 = A
     sub(z2, x2, z2);                                // z2 = B
     add(x2, x3, z3);                                // x2 = C
@@ -266,7 +243,7 @@ static void ladder_part1(fe xs[5])
 }
 static void ladder_part2(fe xs[5], const fe x1)
 {
-    limb_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
+    uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
     sqr1(z3);        // z3 = (DA-CB)^2
     mul1(z3, x1);    // z3 = x1 * (DA-CB)^2
     sqr1(x3);        // x3 = (DA+CB)^2
@@ -283,8 +260,8 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
     fe_t x1;
     read_limbs(x1, base);
 
-    limb_t swap = 0;
-    limb_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
+    uint32_t swap = 0;
+    uint32_t *x2 = xs[0], *x3 = xs[2], *z3 = xs[3];
     memset(xs, 0, 4 * sizeof(fe_t));
     x2[0] = z3[0] = 1;
     memcpy(x3, x1, sizeof(fe_t));
@@ -304,7 +281,7 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
                 bytei |= 0x40U;
             }
         }
-        limb_t doswap = -(limb_t)((bytei >> (i % 8)) & 1);
+        uint32_t doswap = -(uint32_t)((bytei >> (i % 8)) & 1);
         condswap(x2, x3, swap ^ doswap);
         swap = doswap;
 
@@ -322,10 +299,10 @@ int x25519(unsigned char out[X25519_LEN],
     x25519_core(xs, scalar, base, clamp);
 
     /* Precomputed inversion chain */
-    limb_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];
+    uint32_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];
     int i;
 
-    limb_t *prev = z2;
+    uint32_t *prev = z2;
     /* Raise to the p-2 = 0x7f..ffeb */
     for (i = 253; i >= 0; i--)
     {
@@ -351,10 +328,10 @@ int x25519(unsigned char out[X25519_LEN],
 
 const unsigned char x25519_base_point[X25519_LEN] = {9};
 
-static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
-                                 const unsigned char other2[X25519_LEN])
+static uint32_t x25519_verify_core(fe xs[5], const uint32_t *other1,
+                                   const unsigned char other2[X25519_LEN])
 {
-    limb_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
+    uint32_t *z2 = xs[1], *x3 = xs[2], *z3 = xs[3];
 
     fe xo2;
     read_fe(xo2, other2);
@@ -367,7 +344,7 @@ static limb_t x25519_verify_core(fe xs[5], const limb_t *other1,
     mul1(z2, other1);
     mul1(z2, other1 + NLIMBS);
     mul1(z2, xo2);
-    const limb_t sixteen = 16;
+    const uint32_t sixteen = 16;
     mul(z2, z2, &sixteen, 1);
 
     mul1(z3, xo2);
@@ -409,14 +386,14 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
      * Mp)/M = 2p, subtract p, < p, done.
      */
     unsigned i, j;
-    limb_t hic = 0;
+    uint32_t hic = 0;
     for (i = 0; i < NLIMBS; i++)
     {
-        limb_t carry = 0, carry2 = 0, mand = a[i], mand2 = MONTGOMERY_FACTOR;
+        uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = MONTGOMERY_FACTOR;
 
         for (j = 0; j < NLIMBS; j++)
         {
-            limb_t acc = out[j];
+            uint32_t acc = out[j];
             acc = umaal(&carry, acc, mand, b[j]);
             if (j == 0)
                 mand2 *= acc;
@@ -430,15 +407,15 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     }
 
     /* Reduce */
-    sdlimb_t scarry = 0;
+    int64_t scarry = 0;
     for (i = 0; i < NLIMBS; i++)
     {
-        out[i] = (limb_t)(scarry = scarry + out[i] - sc_p[i]);
+        out[i] = (uint32_t)(scarry = scarry + out[i] - sc_p[i]);
         scarry >>= X25519_WBITS;
     }
-    limb_t need_add = (limb_t)(-(scarry + hic));
+    uint32_t need_add = (uint32_t)(-(scarry + hic));
 
-    limb_t carry = 0;
+    uint32_t carry = 0;
     for (i = 0; i < NLIMBS; i++)
     {
         out[i] = umaal(&carry, out[i], need_add, sc_p[i]);
