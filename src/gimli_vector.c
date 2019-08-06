@@ -16,7 +16,7 @@ static row_t rol(row_t x, int n)
     {
         return x;
     }
-    return x << n | x >> (32 - n);
+    return (x << n) | (x >> (32 - n));
 }
 
 static row_t rol24(row_t x)
