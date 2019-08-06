@@ -31,8 +31,7 @@ static void write_limb(unsigned char *p, uint32_t x)
 
 static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
-    unsigned i;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         x[i] = read_limb(in + i * X25519_WOCTETS);
     }
@@ -40,8 +39,7 @@ static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 
 static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
-    unsigned i;
-    for (i = 0; i < NLIMBS; i++)
+    for (unsigned i = 0; i < NLIMBS; i++)
     {
         write_limb(out + i * X25519_WOCTETS, x[i]);
     }
