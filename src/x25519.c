@@ -66,17 +66,9 @@ static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
     return (uint32_t)tmp;
 }
 
-/* These functions are implemented in terms of umaal on ARM */
 static uint32_t adc(uint32_t *carry, uint32_t acc, uint32_t mand)
 {
     uint64_t total = (uint64_t)*carry + acc + mand;
-    *carry = (uint32_t)(total >> X25519_WBITS);
-    return (uint32_t)total;
-}
-
-static uint32_t adc0(uint32_t *carry, uint32_t acc)
-{
-    uint64_t total = (uint64_t)*carry + acc;
     *carry = (uint32_t)(total >> X25519_WBITS);
     return (uint32_t)total;
 }
@@ -95,7 +87,7 @@ static void propagate(fe_t x, uint32_t over)
     uint32_t carry = over * 19;
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        x[i] = adc0(&carry, x[i]);
+        x[i] = adc(&carry, x[i], 0);
     }
 }
 
@@ -189,7 +181,7 @@ static uint32_t canon(fe_t x)
     uint32_t carry0 = 19;
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        x[i] = adc0(&carry0, x[i]);
+        x[i] = adc(&carry0, x[i], 0);
     }
     propagate(x, carry0);
 
