@@ -67,7 +67,6 @@ void gimli(uint32_t *state)
     row_t x = load(&state[0]);
     row_t y = load(&state[4]);
     row_t z = load(&state[8]);
-
     for (int round = 24; round > 0; round -= 4)
     {
         sp(&x, &y, &z);
@@ -77,7 +76,6 @@ void gimli(uint32_t *state)
         x = big_swap(x);
         sp(&x, &y, &z);
     }
-
     store(&state[0], x);
     store(&state[4], y);
     store(&state[8], z);
