@@ -267,10 +267,10 @@ static void x25519_core(fe_t xs[5], const unsigned char scalar[X25519_LEN],
 
 void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
-            const unsigned char base[X25519_LEN])
+            const unsigned char point[X25519_LEN])
 {
     fe_t xs[5];
-    x25519_core(xs, scalar, base);
+    x25519_core(xs, scalar, point);
 
     /* Precomputed inversion chain */
     uint32_t *x2 = xs[0], *z2 = xs[1], *z3 = xs[3];

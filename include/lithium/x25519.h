@@ -10,16 +10,18 @@
 #define X25519_LEN (X25519_BITS / 8)
 
 /*
- * x25519 scalar multiplication. Sets out to scalar*base.
+ * x25519 scalar multiplication. Sets out to scalar*point.
  *
- * Scalar should be clamped like a Curve25519 secret key.
+ * scalar should be clamped like a Curve25519 secret key.
  */
 void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
-            const unsigned char base[X25519_LEN]);
+            const unsigned char point[X25519_LEN]);
 
 /*
  * Scalar multiplication of the curve's base point.
+ *
+ * scalar should be clamped like a Curve25519 secret key.
  */
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN]);
