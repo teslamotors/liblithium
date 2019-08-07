@@ -6,7 +6,8 @@
 
 #pragma once
 
-#define X25519_LEN (256 / 8)
+#define X25519_BITS 256
+#define X25519_LEN (X25519_BITS / 8)
 
 /*
  * x25519 scalar multiplication. Sets out to scalar*base.

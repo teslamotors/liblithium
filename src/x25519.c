@@ -9,10 +9,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#define X25519_WBITS 32
-#define X25519_WOCTETS (X25519_WBITS / 8)
+#define WBITS 32
+#define WLEN (WBITS / 8)
 #define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
-#define NLIMBS (256 / X25519_WBITS)
+#define NLIMBS (X25519_BITS / WBITS)
 
 static uint32_t read_limb(const unsigned char *p)
 {
@@ -32,7 +32,7 @@ static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        x[i] = read_limb(in + i * X25519_WOCTETS);
+        x[i] = read_limb(in + i * WLEN);
     }
 }
 
@@ -40,7 +40,7 @@ static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
     for (unsigned i = 0; i < NLIMBS; i++)
     {
-        write_limb(out + i * X25519_WOCTETS, x[i]);
+        write_limb(out + i * WLEN, x[i]);
     }
 }
 
@@ -61,14 +61,14 @@ static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
                       uint32_t mier)
 {
     uint64_t tmp = (uint64_t)mand * mier + acc + *carry;
-    *carry = (uint32_t)(tmp >> X25519_WBITS);
+    *carry = (uint32_t)(tmp >> WBITS);
     return (uint32_t)tmp;
 }
 
 static uint32_t adc(uint32_t *carry, uint32_t acc, uint32_t mand)
 {
     uint64_t total = (uint64_t)*carry + acc + mand;
-    *carry = (uint32_t)(total >> X25519_WBITS);
+    *carry = (uint32_t)(total >> WBITS);
     return (uint32_t)total;
 }
 
@@ -80,8 +80,8 @@ static uint32_t adc(uint32_t *carry, uint32_t acc, uint32_t mand)
  */
 static void propagate(fe_t x, uint32_t over)
 {
-    over = x[NLIMBS - 1] >> (X25519_WBITS - 1) | over << 1;
-    x[NLIMBS - 1] &= ~((uint32_t)1 << (X25519_WBITS - 1));
+    over = x[NLIMBS - 1] >> (WBITS - 1) | over << 1;
+    x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
 
     uint32_t carry = over * 19;
     for (unsigned i = 0; i < NLIMBS; i++)
@@ -107,7 +107,7 @@ static void sub(fe_t out, const fe_t a, const fe_t b)
     {
         carry = carry + a[i] - b[i];
         out[i] = (uint32_t)carry;
-        carry >>= X25519_WBITS;
+        carry >>= WBITS;
     }
     propagate(out, (uint32_t)(1 + carry));
 }
@@ -204,9 +204,9 @@ static uint32_t canon(fe_t x)
         carry += x[i];
         x[i] = (uint32_t)carry;
         res |= x[i];
-        carry >>= X25519_WBITS;
+        carry >>= WBITS;
     }
-    return (uint32_t)(((uint64_t)res - 1) >> X25519_WBITS);
+    return (uint32_t)(((uint64_t)res - 1) >> WBITS);
 }
 
 static const uint32_t a24[1] = {121665};
@@ -385,7 +385,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     {
         scarry = scarry + out[i] - sc_p[i];
         out[i] = (uint32_t)scarry;
-        scarry >>= X25519_WBITS;
+        scarry >>= WBITS;
     }
     uint32_t need_add = (uint32_t)(-(scarry + hic));
 
