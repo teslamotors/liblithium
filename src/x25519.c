@@ -30,7 +30,7 @@ static void write_limb(unsigned char *p, uint32_t x)
 
 static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         x[i] = read_limb(in + i * WLEN);
     }
@@ -38,7 +38,7 @@ static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 
 static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         write_limb(out + i * WLEN, x[i]);
     }
@@ -84,7 +84,7 @@ static void propagate(fe_t x, uint32_t over)
     x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
 
     uint32_t carry = over * 19;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         x[i] = adc(&carry, x[i], 0);
     }
@@ -93,7 +93,7 @@ static void propagate(fe_t x, uint32_t over)
 static void add(fe_t out, const fe_t a, const fe_t b)
 {
     uint32_t carry = 0;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         out[i] = adc(&carry, a[i], b[i]);
     }
@@ -103,7 +103,7 @@ static void add(fe_t out, const fe_t a, const fe_t b)
 static void sub(fe_t out, const fe_t a, const fe_t b)
 {
     int64_t carry = -38;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         carry = carry + a[i] - b[i];
         out[i] = (uint32_t)carry;
@@ -112,7 +112,7 @@ static void sub(fe_t out, const fe_t a, const fe_t b)
     propagate(out, (uint32_t)(1 + carry));
 }
 
-static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
+static void mul(fe_t out, const fe_t a, const fe_t b, int nb)
 {
     /*
      * GCC at least produces pretty decent asm for this, so don't need to have
@@ -121,11 +121,11 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
     uint32_t accum[2 * NLIMBS] = {0};
     uint32_t carry2;
 
-    for (unsigned i = 0; i < nb; i++)
+    for (int i = 0; i < nb; i++)
     {
         carry2 = 0;
         uint32_t mand = b[i];
-        for (unsigned j = 0; j < NLIMBS; j++)
+        for (int j = 0; j < NLIMBS; j++)
         {
             accum[i + j] = umaal(&carry2, accum[i + j], mand, a[j]);
         }
@@ -134,7 +134,7 @@ static void mul(fe_t out, const fe_t a, const fe_t b, unsigned nb)
 
     carry2 = 0;
     const uint32_t mand = 38;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         out[i] = umaal(&carry2, accum[i], mand, accum[i + NLIMBS]);
     }
@@ -159,7 +159,7 @@ static void sqr1(fe_t a)
 static void condswap(uint32_t a[2 * NLIMBS], uint32_t b[2 * NLIMBS],
                      uint32_t doswap)
 {
-    for (unsigned i = 0; i < 2 * NLIMBS; i++)
+    for (int i = 0; i < 2 * NLIMBS; i++)
     {
         uint32_t xor = (a[i] ^ b[i]) & doswap;
         a[i] ^= xor;
@@ -178,7 +178,7 @@ static uint32_t canon(fe_t x)
 
     /* First, add 19. */
     uint32_t carry0 = 19;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         x[i] = adc(&carry0, x[i], 0);
     }
@@ -199,7 +199,7 @@ static uint32_t canon(fe_t x)
      */
     int64_t carry = -19;
     uint32_t res = 0;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         carry += x[i];
         x[i] = (uint32_t)carry;
@@ -360,11 +360,11 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
      * Mp)/M = 2p, subtract p, < p, done.
      */
     uint32_t hic = 0;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = MONTGOMERY_FACTOR;
 
-        for (unsigned j = 0; j < NLIMBS; j++)
+        for (int j = 0; j < NLIMBS; j++)
         {
             uint32_t acc = out[j];
             acc = umaal(&carry, acc, mand, b[j]);
@@ -381,7 +381,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
 
     /* Reduce */
     int64_t scarry = 0;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         scarry = scarry + out[i] - sc_p[i];
         out[i] = (uint32_t)scarry;
@@ -390,7 +390,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     uint32_t need_add = (uint32_t)(-(scarry + hic));
 
     uint32_t carry = 0;
-    for (unsigned i = 0; i < NLIMBS; i++)
+    for (int i = 0; i < NLIMBS; i++)
     {
         out[i] = umaal(&carry, out[i], need_add, sc_p[i]);
     }
