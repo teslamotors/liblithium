@@ -12,11 +12,7 @@ typedef uint32_t row_t __attribute__((vector_size(16)));
 
 static row_t rol(row_t x, int n)
 {
-    if (n == 0)
-    {
-        return x;
-    }
-    return (x << n) | (x >> (32 - n));
+    return (x << (n % 32)) | (x >> ((32 - n) % 32));
 }
 
 static row_t rol24(row_t x)

@@ -2,11 +2,7 @@
 
 static uint32_t rol(uint32_t x, int n)
 {
-    if (n == 0)
-    {
-        return x;
-    }
-    return (x << n) | (x >> (32 - n));
+    return (x << (n % 32)) | (x >> ((32 - n) % 32));
 }
 
 static void swap(uint32_t *x, uint32_t *y)
@@ -25,7 +21,6 @@ void gimli(uint32_t *state)
             const uint32_t x = rol(state[column], 24);
             const uint32_t y = rol(state[column + 4], 9);
             const uint32_t z = state[column + 8];
-
             state[column + 8] = x ^ (z << 1) ^ ((y & z) << 2);
             state[column + 4] = y ^ x ^ ((x | z) << 1);
             state[column] = z ^ y ^ ((x & y) << 3);
@@ -40,7 +35,6 @@ void gimli(uint32_t *state)
             // add constant: pattern c...c...c... etc.
             state[0] ^= UINT32_C(0x9e377900) | (uint32_t)round;
             break;
-
         case 2:
             // big swap: pattern ..S...S...S. etc.
             swap(&state[0], &state[2]);
