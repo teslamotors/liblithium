@@ -10,12 +10,16 @@
 #include <string.h>
 
 #define X25519_WBITS 32
-typedef uint32_t uint32_t;
+#define X25519_WOCTETS (X25519_WBITS / 8)
+#define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
+#define NLIMBS (256 / X25519_WBITS)
+
 static uint32_t read_limb(const unsigned char *p)
 {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 |
            (uint32_t)p[3] << 24;
 }
+
 static void write_limb(unsigned char *p, uint32_t x)
 {
     p[0] = (unsigned char)x & 0xFFU;
@@ -23,11 +27,6 @@ static void write_limb(unsigned char *p, uint32_t x)
     p[2] = (unsigned char)(x >> 16) & 0xFFU;
     p[3] = (unsigned char)(x >> 24) & 0xFFU;
 }
-#define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
-
-#define X25519_WOCTETS (X25519_WBITS / 8)
-
-#define NLIMBS (256 / X25519_WBITS)
 
 static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
