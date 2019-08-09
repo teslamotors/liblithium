@@ -40,19 +40,18 @@ if platform == "darwin":
     # SCons invokes 'gcc' normally on OS X.
     # Usually this is just clang but with options that we don't need.
     host_env["CC"] = "clang"
-    host_env.Append(
-        CCFLAGS=[
-            "-Weverything",
-            "-Werror",
-            "-O3",
-            "-g",
-            "-flto",
-            "-ffunction-sections",
-            "-fdata-sections",
-            "-march=native",
-        ],
-        LINKFLAGS=["-O3", "-g", "-flto", "-dead_strip"],
-    )
+    flags = [
+        "-Weverything",
+        "-Werror",
+        "-O3",
+        "-g",
+        "-flto",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-march=native",
+        "-fsanitize=address,undefined",
+    ]
+    host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-dead_strip"])
 elif platform == "posix":
     host_env.Append(
         CCFLAGS=[
@@ -80,8 +79,11 @@ else:
 build_with_env("dist", host_env)
 
 arm_env = env.Clone()
-
-GCCFLAGS = [
+arm_env["CC"] = "arm-none-eabi-gcc"
+arm_env["LINK"] = "arm-none-eabi-gcc"
+arm_env["AR"] = "arm-none-eabi-gcc-ar"
+arm_env["RANLIB"] = "arm-none-eabi-gcc-ranlib"
+flags = [
     "-specs=nosys.specs",
     "-specs=nano.specs",
     "-mcpu=cortex-m4",
@@ -89,15 +91,10 @@ GCCFLAGS = [
     "-flto",
     "-ffat-lto-objects",
     "-g",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Wl,--gc-sections",
 ]
-
-arm_env["CC"] = "arm-none-eabi-gcc"
-arm_env["LINK"] = "arm-none-eabi-gcc"
-arm_env["AR"] = "arm-none-eabi-gcc-ar"
-arm_env["RANLIB"] = "arm-none-eabi-gcc-ranlib"
-arm_env.Append(
-    CCFLAGS=GCCFLAGS + ["-ffunction-sections", "-fdata-sections"],
-    LINKFLAGS=GCCFLAGS + ["-Wl,--gc-sections"],
-)
+arm_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
 
 build_with_env("dist/arm", arm_env, test=False)
