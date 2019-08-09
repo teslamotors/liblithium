@@ -53,24 +53,21 @@ if platform == "darwin":
     ]
     host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-dead_strip"])
 elif platform == "posix":
-    host_env.Append(
-        CCFLAGS=[
-            "-Wall",
-            "-Wextra",
-            "-Wpedantic",
-            "-Wconversion",
-            "-Werror",
-            "-O3",
-            "-g",
-            "-flto",
-            "-ffunction-sections",
-            "-fdata-sections",
-            "-fsanitize=address,undefined",
-            "-march=native",
-        ],
-        LINKFLAGS=["-O3", "-g", "-flto", "-Wl,--gc-sections"],
-        LIBS=["asan", "ubsan"],
-    )
+    flags = [
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Werror",
+        "-O3",
+        "-g",
+        "-flto",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-march=native",
+        "-fsanitize=address,undefined",
+    ]
+    host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-Wl,--gc-sections"])
 elif platform == "win32":
     host_env.Append(CCFLAGS=["/W4", "/WX", "/Ox"], CPPDEFINES=["_CRT_RAND_S"])
 else:
