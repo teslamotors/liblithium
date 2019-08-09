@@ -1,0 +1,10 @@
+# SConscript
+
+Import("env")
+
+libhydrogen = env.StaticLibrary(
+    target="hydrogen",
+    source=["hydrogen.c"],
+)
+
+Return("libhydrogen")

@@ -4,15 +4,19 @@ import os
 
 
 def build_with_env(path, env, test=True):
+    lith_env = env.Clone()
+    lith_env.Append(CPPPATH=[Dir("include")])
     liblithium = SConscript(
         dirs="src",
         variant_dir=os.path.join(path, "lib"),
-        exports=["env"],
+        exports={"env": lith_env},
         duplicate=False,
     )
-
-    lith_env = env.Clone()
     lith_env.Append(LIBS=[liblithium])
+
+    SConscript(
+        dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
+    )
 
     if test:
         SConscript(
@@ -22,12 +26,25 @@ def build_with_env(path, env, test=True):
             duplicate=False,
         )
 
+    hydro_env = env.Clone()
+    hydro_env.Append(CPPPATH=[Dir("hydro"), Dir("include")])
+    libhydrogen = SConscript(
+        dirs="hydro",
+        variant_dir=os.path.join(path, "hydro", "lib"),
+        exports={"env": hydro_env},
+        duplicate=False,
+    )
+    hydro_env.Append(LIBS=[libhydrogen, liblithium])
+
     SConscript(
-        dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
+        dirs="hydro/examples",
+        variant_dir=os.path.join(path, "hydro"),
+        exports={"env": hydro_env},
+        duplicate=False,
     )
 
 
-env = Environment(CPPPATH=[Dir("include")])
+env = Environment()
 # for color terminal output when available
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]

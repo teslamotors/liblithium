@@ -1,0 +1,8 @@
+Import("env")
+
+env.Program("hydro-hash.c")
+env.Program(["hydro-keygen.c", "random.c"])
+env.Program(["hydro-sign.c", "random.c"])
+env.Program("hydro-verify.c")
+env.Program("null-hydro-hash.c")
+env.Program("null-hydro-verify.c")
