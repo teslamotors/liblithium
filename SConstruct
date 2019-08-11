@@ -90,6 +90,7 @@ flags = [
     "-g",
     "-ffunction-sections",
     "-fdata-sections",
+    "-fstack-usage",
     "-Wl,--gc-sections",
 ]
 arm_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
