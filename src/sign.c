@@ -8,13 +8,18 @@
 #define PREHASH_LEN 64
 #define AZ_LEN 64
 
+static void clamp(unsigned char s[X25519_LEN])
+{
+    s[0] &= 0xF8U;
+    s[X25519_LEN - 1] &= 0x7FU;
+    s[X25519_LEN - 1] |= 0x40U;
+}
+
 static void gen_az(unsigned char az[AZ_LEN],
                    const unsigned char secret_key[X25519_LEN])
 {
     gimli_hash(az, AZ_LEN, secret_key, X25519_LEN);
-    az[0] &= 0xF8U;
-    az[X25519_LEN - 1] &= 0x7FU;
-    az[X25519_LEN - 1] |= 0x40U;
+    clamp(az);
 }
 
 void lith_sign_keygen(unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
@@ -71,6 +76,7 @@ void lith_sign_final_create(
     gimli_hash_update(state, &az[X25519_LEN], X25519_LEN);
     gimli_hash_update(state, prehash, PREHASH_LEN);
     gimli_hash_final(state, eph_secret, X25519_LEN);
+    clamp(eph_secret);
 
     x25519_base(R, eph_secret);
 
