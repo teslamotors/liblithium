@@ -2,7 +2,7 @@
 
 set -xe
 
-scons
+scons --jobs $(nproc)
 
 testdir="dist/test/signtest"
 PATH="$(pwd)/dist:$PATH"
