@@ -36,37 +36,25 @@ platform = env["PLATFORM"]
 
 host_env = env.Clone()
 
+nixflags = [
+    "-Werror",
+    "-O3",
+    "-g",
+    "-flto",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-march=native",
+    "-fsanitize=address,undefined",
+]
+
 if platform == "darwin":
     # SCons invokes 'gcc' normally on OS X.
     # Usually this is just clang but with options that we don't need.
     host_env["CC"] = "clang"
-    flags = [
-        "-Weverything",
-        "-Werror",
-        "-O3",
-        "-g",
-        "-flto",
-        "-ffunction-sections",
-        "-fdata-sections",
-        "-march=native",
-        "-fsanitize=address,undefined",
-    ]
+    flags = ["-Weverything"] + nixflags
     host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-dead_strip"])
 elif platform == "posix":
-    flags = [
-        "-Wall",
-        "-Wextra",
-        "-Wpedantic",
-        "-Wconversion",
-        "-Werror",
-        "-O3",
-        "-g",
-        "-flto",
-        "-ffunction-sections",
-        "-fdata-sections",
-        "-march=native",
-        "-fsanitize=address,undefined",
-    ]
+    flags = ["-Wall", "-Wextra", "-Wpedantic", "-Wconversion"] + nixflags
     host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-Wl,--gc-sections"])
 elif platform == "win32":
     host_env.Append(CCFLAGS=["/W4", "/WX", "/Ox"], CPPDEFINES=["_CRT_RAND_S"])
