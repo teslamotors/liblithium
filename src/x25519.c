@@ -199,24 +199,24 @@ static uint32_t canon(fe_t x)
     return (uint32_t)(((uint64_t)res - 1) >> WBITS);
 }
 
-static const uint32_t a24[1] = {121665};
+static const uint32_t a24 = 121665;
 
 static void ladder_part1(fe_t xs[5])
 {
     uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
-    add(t1, x2, z2);                                // t1 = A
-    sub(z2, x2, z2);                                // z2 = B
-    add(x2, x3, z3);                                // x2 = C
-    sub(z3, x3, z3);                                // z3 = D
-    mul1(z3, t1);                                   // z3 = DA
-    mul1(x2, z2);                                   // x3 = BC
-    add(x3, z3, x2);                                // x3 = DA+CB
-    sub(z3, z3, x2);                                // z3 = DA-CB
-    sqr1(t1);                                       // t1 = AA
-    sqr1(z2);                                       // z2 = BB
-    sub(x2, t1, z2);                                // x2 = E = AA-BB
-    mul(z2, x2, a24, sizeof(a24) / sizeof(a24[0])); // z2 = E*a24
-    add(z2, z2, t1);                                // z2 = E*a24 + AA
+    add(t1, x2, z2);      // t1 = A
+    sub(z2, x2, z2);      // z2 = B
+    add(x2, x3, z3);      // x2 = C
+    sub(z3, x3, z3);      // z3 = D
+    mul1(z3, t1);         // z3 = DA
+    mul1(x2, z2);         // x3 = BC
+    add(x3, z3, x2);      // x3 = DA+CB
+    sub(z3, z3, x2);      // z3 = DA-CB
+    sqr1(t1);             // t1 = AA
+    sqr1(z2);             // z2 = BB
+    sub(x2, t1, z2);      // x2 = E = AA-BB
+    mul(z2, x2, &a24, 1); // z2 = E*a24
+    add(z2, z2, t1);      // z2 = E*a24 + AA
 }
 
 static void ladder_part2(fe_t xs[5], const fe_t x1)
