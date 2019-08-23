@@ -47,16 +47,6 @@ static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 typedef uint32_t fe_t[NLIMBS];
 typedef uint32_t scalar_t[NLIMBS];
 
-static const uint32_t MONTGOMERY_FACTOR =
-    (uint32_t)UINT64_C(0xd2b51da312547e1b);
-static const scalar_t sc_p = {LIMB(0x5812631a5cf5d3ed),
-                              LIMB(0x14def9dea2f79cd6),
-                              LIMB(0x0000000000000000),
-                              LIMB(0x1000000000000000)},
-                      sc_r2 = {
-                          LIMB(0xa40611e3449c0f01), LIMB(0xd00e1ba768859347),
-                          LIMB(0xceec73d217f5be65), LIMB(0x0399411b7c309a3d)};
-
 static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
                       uint32_t mier)
 {
@@ -359,6 +349,15 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
      * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp +
      * Mp)/M = 2p, subtract p, < p, done.
      */
+    static const scalar_t sc_p = {
+        LIMB(0x5812631a5cf5d3ed),
+        LIMB(0x14def9dea2f79cd6),
+        LIMB(0x0000000000000000),
+        LIMB(0x1000000000000000),
+    };
+    static const uint32_t MONTGOMERY_FACTOR =
+        (uint32_t)UINT64_C(0xd2b51da312547e1b);
+
     uint32_t hic = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
@@ -401,6 +400,12 @@ void x25519_sign_p2(unsigned char response[X25519_LEN],
                     const unsigned char eph_secret[X25519_LEN],
                     const unsigned char secret[X25519_LEN])
 {
+    static const scalar_t sc_r2 = {
+        LIMB(0xa40611e3449c0f01),
+        LIMB(0xd00e1ba768859347),
+        LIMB(0xceec73d217f5be65),
+        LIMB(0x0399411b7c309a3d),
+    };
     /* FUTURE memory/code size: just make eph_secret non-const? */
     scalar_t scalar1, scalar2, scalar3;
     read_limbs(scalar1, eph_secret);
