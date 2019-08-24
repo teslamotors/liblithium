@@ -47,17 +47,16 @@ static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 typedef uint32_t fe_t[NLIMBS];
 typedef uint32_t scalar_t[NLIMBS];
 
-static uint32_t umaal(uint32_t *carry, uint32_t acc, uint32_t mand,
-                      uint32_t mier)
+static uint32_t mac(uint32_t *carry, uint32_t a, uint32_t b, uint32_t c)
 {
-    uint64_t tmp = (uint64_t)mand * mier + acc + *carry;
+    uint64_t tmp = (uint64_t)b * c + a + *carry;
     *carry = (uint32_t)(tmp >> WBITS);
     return (uint32_t)tmp;
 }
 
-static uint32_t adc(uint32_t *carry, uint32_t acc, uint32_t mand)
+static uint32_t adc(uint32_t *carry, uint32_t a, uint32_t b)
 {
-    uint64_t total = (uint64_t)*carry + acc + mand;
+    uint64_t total = (uint64_t)a + b + *carry;
     *carry = (uint32_t)(total >> WBITS);
     return (uint32_t)total;
 }
@@ -117,7 +116,7 @@ static void mul(fe_t out, const fe_t a, const fe_t b, int nb)
         uint32_t mand = b[i];
         for (int j = 0; j < NLIMBS; ++j)
         {
-            accum[i + j] = umaal(&carry2, accum[i + j], mand, a[j]);
+            accum[i + j] = mac(&carry2, accum[i + j], mand, a[j]);
         }
         accum[i + NLIMBS] = carry2;
     }
@@ -126,7 +125,7 @@ static void mul(fe_t out, const fe_t a, const fe_t b, int nb)
     const uint32_t mand = 38;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        out[i] = umaal(&carry2, accum[i], mand, accum[i + NLIMBS]);
+        out[i] = mac(&carry2, accum[i], mand, accum[i + NLIMBS]);
     }
     propagate(out, carry2);
 }
@@ -366,10 +365,10 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
         for (int j = 0; j < NLIMBS; ++j)
         {
             uint32_t acc = out[j];
-            acc = umaal(&carry, acc, mand, b[j]);
+            acc = mac(&carry, acc, mand, b[j]);
             if (j == 0)
                 mand2 *= acc;
-            acc = umaal(&carry2, acc, mand2, sc_p[j]);
+            acc = mac(&carry2, acc, mand2, sc_p[j]);
             if (j > 0)
                 out[j - 1] = acc;
         }
@@ -391,7 +390,7 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     uint32_t carry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        out[i] = umaal(&carry, out[i], need_add, sc_p[i]);
+        out[i] = mac(&carry, out[i], need_add, sc_p[i]);
     }
 }
 
