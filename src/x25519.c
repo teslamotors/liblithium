@@ -198,10 +198,10 @@ static uint32_t canon(fe_t x)
     return (uint32_t)(((uint64_t)res - 1) >> WBITS);
 }
 
-static const uint32_t a24 = 121665;
-
 static void ladder_part1(fe_t xs[5])
 {
+    static const uint32_t a24 = 121665;
+
     uint32_t *x2 = xs[0], *z2 = xs[1], *x3 = xs[2], *z3 = xs[3], *t1 = xs[4];
     add(t1, x2, z2);      // t1 = A
     sub(z2, x2, z2);      // z2 = B
