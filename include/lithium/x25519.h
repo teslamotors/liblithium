@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #define X25519_BITS 256
 #define X25519_LEN (X25519_BITS / 8)
 
@@ -43,9 +45,9 @@ void x25519_sign_p2(unsigned char response[X25519_LEN],
  * This function is the public equivalent x25519_sign_p2, taking the long-term
  * and ephemeral public keys instead of secret ones.
  *
- * Returns -1 on failure and 0 on success.
+ * Returns true for a matching signature.
  */
-int x25519_verify_p2(const unsigned char response[X25519_LEN],
-                     const unsigned char challenge[X25519_LEN],
-                     const unsigned char eph[X25519_LEN],
-                     const unsigned char pub[X25519_LEN]);
+bool x25519_verify_p2(const unsigned char response[X25519_LEN],
+                      const unsigned char challenge[X25519_LEN],
+                      const unsigned char eph[X25519_LEN],
+                      const unsigned char pub[X25519_LEN]);

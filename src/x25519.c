@@ -144,7 +144,7 @@ static uint32_t canon(fe_t x)
 {
     /*
      * Canonicalize a field element x, reducing it to the least residue which
-     * is congruent to it mod 2^255-19.
+     * is congruent to it mod 2^255-19. Returns 0 if the residue is nonzero.
      *
      * Precondition: x < 2^255 + 1 word
      */
@@ -292,10 +292,10 @@ void x25519_base(unsigned char out[X25519_LEN],
     xz_to_bytes(out, &p2);
 }
 
-int x25519_verify_p2(const unsigned char response[X25519_LEN],
-                     const unsigned char challenge[X25519_LEN],
-                     const unsigned char eph[X25519_LEN],
-                     const unsigned char pub[X25519_LEN])
+bool x25519_verify_p2(const unsigned char response[X25519_LEN],
+                      const unsigned char challenge[X25519_LEN],
+                      const unsigned char eph[X25519_LEN],
+                      const unsigned char pub[X25519_LEN])
 {
     struct xz hA, sB, p2 = {.z = {1}}, p3 = base_point;
     read_limbs(p2.x, pub);
@@ -324,12 +324,12 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
 
     /*
      * If canon(sB.z) then both sides are zero.
-     * If canon(z3) then the two sides are equal.
+     * If canon(p3.z) then the two sides are equal.
      *
      * Reject sigs where both sides are zero, because that can happen if an
      * input causes the ladder to return 0/0.
      */
-    return (int)(canon(sB.z) | ~canon(p3.z));
+    return ~canon(sB.z) & canon(p3.z);
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)

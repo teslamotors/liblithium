@@ -53,14 +53,14 @@ int main(void)
         x25519_base(eph_public, eph_secret);
         randomize(challenge);
         x25519_sign_p2(response, challenge, eph_secret, secret1);
-        if (0 != x25519_verify_p2(response, challenge, eph_public, public1))
+        if (!x25519_verify_p2(response, challenge, eph_public, public1))
         {
             fprintf(stderr, "FAIL sign %d\n", i);
             return EXIT_FAILURE;
         }
 
         challenge[4] ^= 1;
-        if (0 == x25519_verify_p2(response, challenge, eph_public, public1))
+        if (x25519_verify_p2(response, challenge, eph_public, public1))
         {
             fprintf(stderr, "FAIL unsign %d\n", i);
             return EXIT_FAILURE;

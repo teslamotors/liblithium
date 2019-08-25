@@ -100,7 +100,7 @@ bool lith_sign_final_verify(lith_sign_state *state,
     unsigned char *const challenge = prehash;
     gen_challenge(state, challenge, R, public_key, prehash);
 
-    return x25519_verify_p2(S, challenge, R, public_key) == 0;
+    return x25519_verify_p2(S, challenge, R, public_key);
 }
 
 void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
