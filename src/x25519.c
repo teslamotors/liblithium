@@ -244,46 +244,50 @@ static void ladder_part2(struct xz *p2, struct xz *p3, const fe_t t1,
 }
 
 static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
-                      const unsigned char base[X25519_LEN])
+                      struct xz *p3)
 {
     fe_t x1;
-    read_limbs(x1, base);
+    memcpy(x1, p3->x, sizeof(fe_t));
     memset(p2, 0, sizeof *p2);
     p2->x[0] = 1;
-    struct xz p3 = {.z = {1}};
-    memcpy(p3.x, x1, sizeof(fe_t));
 
     uint32_t swap = 0;
-    fe_t t1;
     for (int t = 255; t >= 0; --t)
     {
         const uint32_t kt = -(((uint32_t)k[t / 8] >> (t % 8)) & 1);
-        cswap(swap ^ kt, p2, &p3);
+        cswap(swap ^ kt, p2, p3);
         swap = kt;
-        ladder_part1(p2, &p3, t1);
-        ladder_part2(p2, &p3, t1, x1);
+        fe_t t1;
+        ladder_part1(p2, p3, t1);
+        ladder_part2(p2, p3, t1, x1);
     }
-    cswap(swap, p2, &p3);
+    cswap(swap, p2, p3);
 }
 
 void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
-    struct xz p2;
-    x25519_xz(&p2, scalar, point);
+    struct xz p2, p3 = {.z = {1}};
+    read_limbs(p3.x, point);
+    x25519_xz(&p2, scalar, &p3);
     inv(p2.z, p2.z);
     mul1(p2.x, p2.z);
     canon(p2.x);
     write_limbs(out, p2.x);
 }
 
-static const unsigned char base_point[X25519_LEN] = {9};
+static const struct xz base_point = {.x = {9}, .z = {1}};
 
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
 {
-    x25519(out, scalar, base_point);
+    struct xz p2, p3 = base_point;
+    x25519_xz(&p2, scalar, &p3);
+    inv(p2.z, p2.z);
+    mul1(p2.x, p2.z);
+    canon(p2.x);
+    write_limbs(out, p2.x);
 }
 
 int x25519_verify_p2(const unsigned char response[X25519_LEN],
@@ -291,9 +295,10 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
                      const unsigned char eph[X25519_LEN],
                      const unsigned char pub[X25519_LEN])
 {
-    struct xz hA, sB;
-    x25519_xz(&hA, challenge, pub);
-    x25519_xz(&sB, response, base_point);
+    struct xz hA, sB, A = {.z = {1}}, B = base_point;
+    read_limbs(A.x, pub);
+    x25519_xz(&hA, challenge, &A);
+    x25519_xz(&sB, response, &B);
 
     fe_t R;
     read_limbs(R, eph);
