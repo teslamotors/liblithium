@@ -264,6 +264,14 @@ static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
     cswap(swap, p2, p3);
 }
 
+static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
+{
+    inv(p->z, p->z);
+    mul1(p->x, p->z);
+    canon(p->x);
+    write_limbs(out, p->x);
+}
+
 void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
@@ -271,10 +279,7 @@ void x25519(unsigned char out[X25519_LEN],
     struct xz p2, p3 = {.z = {1}};
     read_limbs(p3.x, point);
     x25519_xz(&p2, scalar, &p3);
-    inv(p2.z, p2.z);
-    mul1(p2.x, p2.z);
-    canon(p2.x);
-    write_limbs(out, p2.x);
+    xz_to_bytes(out, &p2);
 }
 
 static const struct xz base_point = {.x = {9}, .z = {1}};
@@ -284,10 +289,7 @@ void x25519_base(unsigned char out[X25519_LEN],
 {
     struct xz p2, p3 = base_point;
     x25519_xz(&p2, scalar, &p3);
-    inv(p2.z, p2.z);
-    mul1(p2.x, p2.z);
-    canon(p2.x);
-    write_limbs(out, p2.x);
+    xz_to_bytes(out, &p2);
 }
 
 int x25519_verify_p2(const unsigned char response[X25519_LEN],
