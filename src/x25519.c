@@ -297,39 +297,39 @@ bool x25519_verify_p2(const unsigned char response[X25519_LEN],
                       const unsigned char eph[X25519_LEN],
                       const unsigned char pub[X25519_LEN])
 {
-    struct xz hA, sB, p2 = {.z = {1}}, p3 = base_point;
-    read_limbs(p2.x, pub);
-    x25519_xz(&hA, challenge, &p2);
-    x25519_xz(&sB, response, &p3);
+    struct xz hA, sB, p = {.z = {1}};
+    read_limbs(p.x, pub);
+    x25519_xz(&hA, challenge, &p);
+    p = base_point;
+    x25519_xz(&sB, response, &p);
 
-    uint32_t *R = p2.x;
-    read_limbs(R, eph);
+    memcpy(&p, &hA, sizeof(p));
+    fe_t t;
+    ladder_part1(&sB, &p, t);
 
-    memcpy(&p3, &hA, sizeof(p3));
-
-    ladder_part1(&sB, &p3, p2.z);
+    read_limbs(t, eph);
 
     mul1(sB.z, hA.x);
     mul1(sB.z, hA.z);
-    mul1(sB.z, R);
+    mul1(sB.z, t);
     const uint32_t sixteen = 16;
     mul(sB.z, sB.z, &sixteen, 1);
 
-    mul1(p3.z, R);
-    sub(p3.z, p3.z, p3.x);
-    sqr1(p3.z);
+    mul1(p.z, t);
+    sub(p.z, p.z, p.x);
+    sqr1(p.z);
 
     /* check equality */
-    sub(p3.z, p3.z, sB.z);
+    sub(p.z, p.z, sB.z);
 
     /*
      * If canon(sB.z) then both sides are zero.
-     * If canon(p3.z) then the two sides are equal.
+     * If canon(p.z) then the two sides are equal.
      *
      * Reject sigs where both sides are zero, because that can happen if an
      * input causes the ladder to return 0/0.
      */
-    return ~canon(sB.z) & canon(p3.z);
+    return ~canon(sB.z) & canon(p.z);
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
