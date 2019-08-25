@@ -302,7 +302,8 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
     x25519_xz(&hA, challenge, &p2);
     x25519_xz(&sB, response, &p3);
 
-    read_limbs(p2.x, eph);
+    uint32_t *R = p2.x;
+    read_limbs(R, eph);
 
     memcpy(&p3, &hA, sizeof(p3));
 
@@ -310,11 +311,11 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
 
     mul1(sB.z, hA.x);
     mul1(sB.z, hA.z);
-    mul1(sB.z, p2.x);
+    mul1(sB.z, R);
     const uint32_t sixteen = 16;
     mul(sB.z, sB.z, &sixteen, 1);
 
-    mul1(p3.z, p2.x);
+    mul1(p3.z, R);
     sub(p3.z, p3.z, p3.x);
     sqr1(p3.z);
 
