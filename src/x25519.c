@@ -232,7 +232,8 @@ static void ladder_part1(struct xz *p2, struct xz *p3, fe_t t1)
     add(p2->z, p2->z, t1);      // p2->z = E*a24 + AA
 }
 
-static void ladder_part2(struct xz *p2, struct xz *p3, fe_t t1, const fe_t x1)
+static void ladder_part2(struct xz *p2, struct xz *p3, const fe_t t1,
+                         const fe_t x1)
 {
     sqr1(p3->z);           // p3->z = (DA-CB)^2
     mul1(p3->z, x1);       // p3->z = x1 * (DA-CB)^2
@@ -249,9 +250,7 @@ static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
     read_limbs(x1, base);
     memset(p2, 0, sizeof *p2);
     p2->x[0] = 1;
-    struct xz p3 = {
-        .z = {1},
-    };
+    struct xz p3 = {.z = {1}};
     memcpy(p3.x, x1, sizeof(fe_t));
 
     uint32_t swap = 0;
@@ -287,42 +286,6 @@ void x25519_base(unsigned char out[X25519_LEN],
     x25519(out, scalar, base_point);
 }
 
-static uint32_t x25519_verify_core(struct xz *p2, const struct xz *other1,
-                                   const unsigned char other2[X25519_LEN])
-{
-    fe_t xo2;
-    read_limbs(xo2, other2);
-
-    struct xz p3;
-    memcpy(&p3, other1, sizeof(p3));
-
-    fe_t t1;
-    ladder_part1(p2, &p3, t1);
-
-    /* Here z2 = t2^2 */
-    mul1(p2->z, other1->x);
-    mul1(p2->z, other1->z);
-    mul1(p2->z, xo2);
-    const uint32_t sixteen = 16;
-    mul(p2->z, p2->z, &sixteen, 1);
-
-    mul1(p3.z, xo2);
-    sub(p3.z, p3.z, p3.x);
-    sqr1(p3.z);
-
-    /* check equality */
-    sub(p3.z, p3.z, p2->z);
-
-    /*
-     * If canon(z2) then both sides are zero.
-     * If canon(z3) then the two sides are equal.
-     *
-     * Reject sigs where both sides are zero, because that can happen if an
-     * input causes the ladder to return 0/0.
-     */
-    return canon(p2->z) | ~canon(p3.z);
-}
-
 int x25519_verify_p2(const unsigned char response[X25519_LEN],
                      const unsigned char challenge[X25519_LEN],
                      const unsigned char eph[X25519_LEN],
@@ -331,7 +294,38 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
     struct xz hA, sB;
     x25519_xz(&hA, challenge, pub);
     x25519_xz(&sB, response, base_point);
-    return (int)x25519_verify_core(&sB, &hA, eph);
+
+    fe_t R;
+    read_limbs(R, eph);
+
+    struct xz p3;
+    memcpy(&p3, &hA, sizeof(p3));
+
+    fe_t t1;
+    ladder_part1(&sB, &p3, t1);
+
+    /* Here z2 = t2^2 */
+    mul1(sB.z, hA.x);
+    mul1(sB.z, hA.z);
+    mul1(sB.z, R);
+    const uint32_t sixteen = 16;
+    mul(sB.z, sB.z, &sixteen, 1);
+
+    mul1(p3.z, R);
+    sub(p3.z, p3.z, p3.x);
+    sqr1(p3.z);
+
+    /* check equality */
+    sub(p3.z, p3.z, sB.z);
+
+    /*
+     * If canon(sB.z) then both sides are zero.
+     * If canon(z3) then the two sides are equal.
+     *
+     * Reject sigs where both sides are zero, because that can happen if an
+     * input causes the ladder to return 0/0.
+     */
+    return (int)(canon(sB.z) | ~canon(p3.z));
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
