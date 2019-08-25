@@ -297,28 +297,24 @@ int x25519_verify_p2(const unsigned char response[X25519_LEN],
                      const unsigned char eph[X25519_LEN],
                      const unsigned char pub[X25519_LEN])
 {
-    struct xz hA, sB, A = {.z = {1}}, B = base_point;
-    read_limbs(A.x, pub);
-    x25519_xz(&hA, challenge, &A);
-    x25519_xz(&sB, response, &B);
+    struct xz hA, sB, p2 = {.z = {1}}, p3 = base_point;
+    read_limbs(p2.x, pub);
+    x25519_xz(&hA, challenge, &p2);
+    x25519_xz(&sB, response, &p3);
 
-    fe_t R;
-    read_limbs(R, eph);
+    read_limbs(p2.x, eph);
 
-    struct xz p3;
     memcpy(&p3, &hA, sizeof(p3));
 
-    fe_t t1;
-    ladder_part1(&sB, &p3, t1);
+    ladder_part1(&sB, &p3, p2.z);
 
-    /* Here z2 = t2^2 */
     mul1(sB.z, hA.x);
     mul1(sB.z, hA.z);
-    mul1(sB.z, R);
+    mul1(sB.z, p2.x);
     const uint32_t sixteen = 16;
     mul(sB.z, sB.z, &sixteen, 1);
 
-    mul1(p3.z, R);
+    mul1(p3.z, p2.x);
     sub(p3.z, p3.z, p3.x);
     sqr1(p3.z);
 
