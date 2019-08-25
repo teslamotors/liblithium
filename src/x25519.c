@@ -11,7 +11,6 @@
 
 #define WBITS 32
 #define WLEN (WBITS / 8)
-#define LIMB(x) ((uint32_t)UINT64_C(x)), ((uint32_t)(UINT64_C(x) >> 32))
 #define NLIMBS (X25519_BITS / WBITS)
 
 static uint32_t read_limb(const unsigned char *p)
@@ -343,18 +342,15 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
      * Mp)/M = 2p, subtract p, < p, done.
      */
     static const scalar_t sc_p = {
-        LIMB(0x5812631a5cf5d3ed),
-        LIMB(0x14def9dea2f79cd6),
-        LIMB(0x0000000000000000),
-        LIMB(0x1000000000000000),
+        0x5cf5d3edU, 0x5812631aU, 0xa2f79cd6U, 0x14def9deU,
+        0x00000000U, 0x00000000U, 0x00000000U, 0x10000000U,
     };
-    static const uint32_t MONTGOMERY_FACTOR =
-        (uint32_t)UINT64_C(0xd2b51da312547e1b);
+    static const uint32_t montgomery_factor = 0x12547e1bU;
 
     uint32_t hic = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = MONTGOMERY_FACTOR;
+        uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = montgomery_factor;
 
         for (int j = 0; j < NLIMBS; ++j)
         {
@@ -394,10 +390,8 @@ void x25519_sign_p2(unsigned char response[X25519_LEN],
                     const unsigned char secret[X25519_LEN])
 {
     static const scalar_t sc_r2 = {
-        LIMB(0xa40611e3449c0f01),
-        LIMB(0xd00e1ba768859347),
-        LIMB(0xceec73d217f5be65),
-        LIMB(0x0399411b7c309a3d),
+        0x449c0f01U, 0xa40611e3U, 0x68859347U, 0xd00e1ba7U,
+        0x17f5be65U, 0xceec73d2U, 0x7c309a3dU, 0x0399411bU,
     };
     /* FUTURE memory/code size: just make eph_secret non-const? */
     scalar_t scalar1, scalar2, scalar3;
