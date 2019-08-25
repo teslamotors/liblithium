@@ -37,7 +37,6 @@ platform = env["PLATFORM"]
 host_env = env.Clone()
 
 nixflags = [
-    "-Werror",
     "-O3",
     "-g",
     "-flto",
@@ -47,14 +46,16 @@ nixflags = [
     "-fsanitize=address,undefined",
 ]
 
+gnuwflags = ["-Wall", "-Wextra", "-Wpedantic", "-Wconversion", "-Werror"]
+
 if platform == "darwin":
     # SCons invokes 'gcc' normally on OS X.
     # Usually this is just clang but with options that we don't need.
     host_env["CC"] = "clang"
-    flags = ["-Weverything"] + nixflags
+    flags = ["-Weverything", "-Werror"] + nixflags
     host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-dead_strip"])
 elif platform == "posix":
-    flags = ["-Wall", "-Wextra", "-Wpedantic", "-Wconversion"] + nixflags
+    flags = gnuwflags + nixflags
     host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-Wl,--gc-sections"])
 elif platform == "win32":
     host_env.Append(CCFLAGS=["/W4", "/WX", "/Ox"], CPPDEFINES=["_CRT_RAND_S"])
@@ -68,7 +69,7 @@ arm_env["CC"] = "arm-none-eabi-gcc"
 arm_env["LINK"] = "arm-none-eabi-gcc"
 arm_env["AR"] = "arm-none-eabi-gcc-ar"
 arm_env["RANLIB"] = "arm-none-eabi-gcc-ranlib"
-flags = [
+flags = gnuwflags + [
     "-specs=nosys.specs",
     "-specs=nano.specs",
     "-mcpu=cortex-m4",
