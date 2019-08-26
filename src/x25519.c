@@ -243,10 +243,10 @@ static void ladder_part2(struct xz *p2, struct xz *p3, const fe_t t1,
 }
 
 static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
-                      struct xz *p3)
+                      const fe_t x1)
 {
-    fe_t x1;
-    memcpy(x1, p3->x, sizeof(fe_t));
+    struct xz p3 = {.z = {1}};
+    memcpy(p3.x, x1, sizeof(fe_t));
     memset(p2, 0, sizeof *p2);
     p2->x[0] = 1;
 
@@ -254,13 +254,13 @@ static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
     for (int t = 255; t >= 0; --t)
     {
         const uint32_t kt = -(((uint32_t)k[t / 8] >> (t % 8)) & 1);
-        cswap(swap ^ kt, p2, p3);
+        cswap(swap ^ kt, p2, &p3);
         swap = kt;
         fe_t t1;
-        ladder_part1(p2, p3, t1);
-        ladder_part2(p2, p3, t1, x1);
+        ladder_part1(p2, &p3, t1);
+        ladder_part2(p2, &p3, t1, x1);
     }
-    cswap(swap, p2, p3);
+    cswap(swap, p2, &p3);
 }
 
 static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
@@ -275,19 +275,21 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
-    struct xz p2, p3 = {.z = {1}};
-    read_limbs(p3.x, point);
-    x25519_xz(&p2, scalar, &p3);
+    struct xz p2;
+    fe_t x1;
+    read_limbs(x1, point);
+    x25519_xz(&p2, scalar, x1);
     xz_to_bytes(out, &p2);
 }
 
-static const struct xz base_point = {.x = {9}, .z = {1}};
+#define BASE_POINT 9
 
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
 {
-    struct xz p2, p3 = base_point;
-    x25519_xz(&p2, scalar, &p3);
+    struct xz p2;
+    fe_t B = {BASE_POINT};
+    x25519_xz(&p2, scalar, B);
     xz_to_bytes(out, &p2);
 }
 
@@ -296,39 +298,37 @@ bool x25519_verify_p2(const unsigned char response[X25519_LEN],
                       const unsigned char eph[X25519_LEN],
                       const unsigned char pub[X25519_LEN])
 {
-    struct xz hA, sB, p = {.z = {1}};
-    read_limbs(p.x, pub);
-    x25519_xz(&hA, challenge, &p);
-    p = base_point;
-    x25519_xz(&sB, response, &p);
+    struct xz P, Q;
+    fe_t A, B = {BASE_POINT};
+    read_limbs(A, pub);
+    x25519_xz(&P, challenge, A);
+    x25519_xz(&Q, response, B);
 
-    memcpy(&p, &hA, sizeof(p));
-    fe_t t;
-    ladder_part1(&sB, &p, t);
-
-    read_limbs(t, eph);
-
-    mul1(sB.z, hA.x);
-    mul1(sB.z, hA.z);
-    mul1(sB.z, t);
+    mul(B, P.x, P.z, NLIMBS);
     const uint32_t sixteen = 16;
-    mul(sB.z, sB.z, &sixteen, 1);
+    mul(B, B, &sixteen, 1);
 
-    mul1(p.z, t);
-    sub(p.z, p.z, p.x);
-    sqr1(p.z);
+    ladder_part1(&Q, &P, A);
+
+    read_limbs(A, eph);
+    mul1(Q.z, A);
+    mul1(Q.z, B);
+
+    mul1(P.z, A);
+    sub(P.z, P.z, P.x);
+    sqr1(P.z);
 
     /* check equality */
-    sub(p.z, p.z, sB.z);
+    sub(P.z, P.z, Q.z);
 
     /*
-     * If canon(sB.z) then both sides are zero.
-     * If canon(p.z) then the two sides are equal.
+     * If canon(P.z) then the two sides are equal.
+     * If canon(Q.z) then both sides are zero.
      *
      * Reject sigs where both sides are zero, because that can happen if an
      * input causes the ladder to return 0/0.
      */
-    return ~canon(sB.z) & canon(p.z);
+    return canon(P.z) & ~canon(Q.z);
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
