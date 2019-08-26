@@ -212,55 +212,55 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
     }
 }
 
-static void ladder_part1(struct xz *p2, struct xz *p3, fe_t t1)
+static void ladder_part1(struct xz *P, struct xz *Q, fe_t t1)
 {
     static const uint32_t a24 = 121665;
 
-    add(t1, p2->x, p2->z);      // t1 = A
-    sub(p2->z, p2->x, p2->z);   // p2->z = B
-    add(p2->x, p3->x, p3->z);   // p2->x = C
-    sub(p3->z, p3->x, p3->z);   // p3->z = D
-    mul1(p3->z, t1);            // p3->z = DA
-    mul1(p2->x, p2->z);         // p3->x = BC
-    add(p3->x, p3->z, p2->x);   // p3->x = DA+CB
-    sub(p3->z, p3->z, p2->x);   // p3->z = DA-CB
-    sqr1(t1);                   // t1 = AA
-    sqr1(p2->z);                // p2->z = BB
-    sub(p2->x, t1, p2->z);      // p2->x = E = AA-BB
-    mul(p2->z, p2->x, &a24, 1); // p2->z = E*a24
-    add(p2->z, p2->z, t1);      // p2->z = E*a24 + AA
+    add(t1, P->x, P->z);      // t1 = A
+    sub(P->z, P->x, P->z);    // P->z = B
+    add(P->x, Q->x, Q->z);    // P->x = C
+    sub(Q->z, Q->x, Q->z);    // Q->z = D
+    mul1(Q->z, t1);           // Q->z = DA
+    mul1(P->x, P->z);         // Q->x = BC
+    add(Q->x, Q->z, P->x);    // Q->x = DA+CB
+    sub(Q->z, Q->z, P->x);    // Q->z = DA-CB
+    sqr1(t1);                 // t1 = AA
+    sqr1(P->z);               // P->z = BB
+    sub(P->x, t1, P->z);      // P->x = E = AA-BB
+    mul(P->z, P->x, &a24, 1); // P->z = E*a24
+    add(P->z, P->z, t1);      // P->z = E*a24 + AA
 }
 
-static void ladder_part2(struct xz *p2, struct xz *p3, const fe_t t1,
+static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t1,
                          const fe_t x1)
 {
-    sqr1(p3->z);           // p3->z = (DA-CB)^2
-    mul1(p3->z, x1);       // p3->z = x1 * (DA-CB)^2
-    sqr1(p3->x);           // p3->x = (DA+CB)^2
-    mul1(p2->z, p2->x);    // p2->z = AA*(E*a24+AA)
-    sub(p2->x, t1, p2->x); // p2->x = BB again
-    mul1(p2->x, t1);       // p2->x = AA*BB
+    sqr1(Q->z);          // Q->z = (DA-CB)^2
+    mul1(Q->z, x1);      // Q->z = x1 * (DA-CB)^2
+    sqr1(Q->x);          // Q->x = (DA+CB)^2
+    mul1(P->z, P->x);    // P->z = AA*(E*a24+AA)
+    sub(P->x, t1, P->x); // P->x = BB again
+    mul1(P->x, t1);      // P->x = AA*BB
 }
 
-static void x25519_xz(struct xz *p2, const unsigned char k[X25519_LEN],
+static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
                       const fe_t x1)
 {
-    struct xz p3 = {.z = {1}};
-    memcpy(p3.x, x1, sizeof(fe_t));
-    memset(p2, 0, sizeof *p2);
-    p2->x[0] = 1;
+    struct xz Q = {.z = {1}};
+    memcpy(Q.x, x1, sizeof(fe_t));
+    memset(P, 0, sizeof *P);
+    P->x[0] = 1;
 
     uint32_t swap = 0;
     for (int t = 255; t >= 0; --t)
     {
         const uint32_t kt = -(((uint32_t)k[t / 8] >> (t % 8)) & 1);
-        cswap(swap ^ kt, p2, &p3);
+        cswap(swap ^ kt, P, &Q);
         swap = kt;
         fe_t t1;
-        ladder_part1(p2, &p3, t1);
-        ladder_part2(p2, &p3, t1, x1);
+        ladder_part1(P, &Q, t1);
+        ladder_part2(P, &Q, t1, x1);
     }
-    cswap(swap, p2, &p3);
+    cswap(swap, P, &Q);
 }
 
 static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
@@ -275,11 +275,11 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
-    struct xz p2;
+    struct xz P;
     fe_t x1;
     read_limbs(x1, point);
-    x25519_xz(&p2, scalar, x1);
-    xz_to_bytes(out, &p2);
+    x25519_xz(&P, scalar, x1);
+    xz_to_bytes(out, &P);
 }
 
 #define BASE_POINT 9
@@ -287,10 +287,10 @@ void x25519(unsigned char out[X25519_LEN],
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
 {
-    struct xz p2;
+    struct xz P;
     fe_t B = {BASE_POINT};
-    x25519_xz(&p2, scalar, B);
-    xz_to_bytes(out, &p2);
+    x25519_xz(&P, scalar, B);
+    xz_to_bytes(out, &P);
 }
 
 bool x25519_verify_p2(const unsigned char response[X25519_LEN],
@@ -301,34 +301,34 @@ bool x25519_verify_p2(const unsigned char response[X25519_LEN],
     struct xz P, Q;
     fe_t A, B = {BASE_POINT};
     read_limbs(A, pub);
-    x25519_xz(&P, challenge, A);
-    x25519_xz(&Q, response, B);
+    x25519_xz(&P, response, B);
+    x25519_xz(&Q, challenge, A);
 
-    mul(B, P.x, P.z, NLIMBS);
+    mul(B, Q.x, Q.z, NLIMBS);
     const uint32_t sixteen = 16;
     mul(B, B, &sixteen, 1);
 
-    ladder_part1(&Q, &P, A);
+    ladder_part1(&P, &Q, A);
 
     read_limbs(A, eph);
-    mul1(Q.z, A);
-    mul1(Q.z, B);
-
     mul1(P.z, A);
-    sub(P.z, P.z, P.x);
-    sqr1(P.z);
+    mul1(P.z, B);
+
+    mul1(Q.z, A);
+    sub(Q.z, Q.z, Q.x);
+    sqr1(Q.z);
 
     /* check equality */
-    sub(P.z, P.z, Q.z);
+    sub(Q.z, Q.z, P.z);
 
     /*
-     * If canon(P.z) then the two sides are equal.
-     * If canon(Q.z) then both sides are zero.
+     * If canon(Q.z) then the two sides are equal.
+     * If canon(P.z) then both sides are zero.
      *
      * Reject sigs where both sides are zero, because that can happen if an
      * input causes the ladder to return 0/0.
      */
-    return canon(P.z) & ~canon(Q.z);
+    return canon(Q.z) & ~canon(P.z);
 }
 
 static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
