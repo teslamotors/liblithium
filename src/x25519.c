@@ -293,10 +293,10 @@ void x25519_base(unsigned char out[X25519_LEN],
     xz_to_bytes(out, &P);
 }
 
-bool x25519_verify_p2(const unsigned char response[X25519_LEN],
-                      const unsigned char challenge[X25519_LEN],
-                      const unsigned char eph[X25519_LEN],
-                      const unsigned char pub[X25519_LEN])
+bool x25519_verify(const unsigned char response[X25519_LEN],
+                   const unsigned char challenge[X25519_LEN],
+                   const unsigned char eph[X25519_LEN],
+                   const unsigned char pub[X25519_LEN])
 {
     struct xz P, Q;
     fe_t A, B = {BASE_POINT};
@@ -384,10 +384,10 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     }
 }
 
-void x25519_sign_p2(unsigned char response[X25519_LEN],
-                    const unsigned char challenge[X25519_LEN],
-                    const unsigned char eph_secret[X25519_LEN],
-                    const unsigned char secret[X25519_LEN])
+void x25519_sign(unsigned char response[X25519_LEN],
+                 const unsigned char challenge[X25519_LEN],
+                 const unsigned char eph_secret[X25519_LEN],
+                 const unsigned char secret[X25519_LEN])
 {
     static const scalar_t sc_r2 = {
         0x449c0f01U, 0xa40611e3U, 0x68859347U, 0xd00e1ba7U,

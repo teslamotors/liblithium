@@ -35,19 +35,19 @@ void x25519_base(unsigned char out[X25519_LEN],
  * ephemeral secret key. They then call a Schnorr oracle to get a challenge,
  * and compute the response using this function.
  */
-void x25519_sign_p2(unsigned char response[X25519_LEN],
-                    const unsigned char challenge[X25519_LEN],
-                    const unsigned char eph_secret[X25519_LEN],
-                    const unsigned char secret[X25519_LEN]);
+void x25519_sign(unsigned char response[X25519_LEN],
+                 const unsigned char challenge[X25519_LEN],
+                 const unsigned char eph_secret[X25519_LEN],
+                 const unsigned char secret[X25519_LEN]);
 
 /*
  * STROBE-compatible signature verification using curve25519 (not ed25519).
- * This function is the public equivalent x25519_sign_p2, taking the long-term
+ * This function is the public equivalent x25519_sign, taking the long-term
  * and ephemeral public keys instead of secret ones.
  *
  * Returns true for a matching signature.
  */
-bool x25519_verify_p2(const unsigned char response[X25519_LEN],
-                      const unsigned char challenge[X25519_LEN],
-                      const unsigned char eph[X25519_LEN],
-                      const unsigned char pub[X25519_LEN]);
+bool x25519_verify(const unsigned char response[X25519_LEN],
+                   const unsigned char challenge[X25519_LEN],
+                   const unsigned char eph[X25519_LEN],
+                   const unsigned char pub[X25519_LEN]);
