@@ -54,6 +54,7 @@ gen_challenge(gimli_hash_state *state, unsigned char challenge[X25519_LEN],
     gimli_hash_update(state, public_key, LITH_SIGN_PUBLIC_KEY_LEN);
     gimli_hash_update(state, prehash, PREHASH_LEN);
     gimli_hash_final(state, challenge, X25519_LEN);
+    clamp(challenge);
 }
 
 void lith_sign_final_create(
