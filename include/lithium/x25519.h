@@ -31,14 +31,14 @@ void x25519_base(unsigned char out[X25519_LEN],
 /*
  * STROBE-compatible Schnorr signatures using curve25519 (not ed25519).
  *
- * The user will call x25519_base(eph, eph_secret) to schedule a random
- * ephemeral secret key. They then call a Schnorr oracle to get a challenge,
- * and compute the response using this function.
+ * The user will call x25519_base(public_nonce, secret_nonce) to schedule a
+ * random ephemeral secret key. They then call a Schnorr oracle to get a
+ * challenge, and compute the response using this function.
  */
 void x25519_sign(unsigned char response[X25519_LEN],
                  const unsigned char challenge[X25519_LEN],
-                 const unsigned char eph_secret[X25519_LEN],
-                 const unsigned char secret[X25519_LEN]);
+                 const unsigned char secret_nonce[X25519_LEN],
+                 const unsigned char secret_key[X25519_LEN]);
 
 /*
  * STROBE-compatible signature verification using curve25519 (not ed25519).
@@ -49,5 +49,5 @@ void x25519_sign(unsigned char response[X25519_LEN],
  */
 bool x25519_verify(const unsigned char response[X25519_LEN],
                    const unsigned char challenge[X25519_LEN],
-                   const unsigned char eph[X25519_LEN],
-                   const unsigned char pub[X25519_LEN]);
+                   const unsigned char public_nonce[X25519_LEN],
+                   const unsigned char public_key[X25519_LEN]);

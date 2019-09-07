@@ -295,26 +295,26 @@ void x25519_base(unsigned char out[X25519_LEN],
 
 bool x25519_verify(const unsigned char response[X25519_LEN],
                    const unsigned char challenge[X25519_LEN],
-                   const unsigned char eph[X25519_LEN],
-                   const unsigned char pub[X25519_LEN])
+                   const unsigned char public_nonce[X25519_LEN],
+                   const unsigned char public_key[X25519_LEN])
 {
     struct xz P, Q;
     fe_t A, B = {BASE_POINT};
-    read_limbs(A, pub);
+    read_limbs(A, public_key);
     x25519_xz(&P, response, B);
     x25519_xz(&Q, challenge, A);
 
-    mul(B, Q.x, Q.z, NLIMBS);
+    mul(A, Q.x, Q.z, NLIMBS);
     const uint32_t sixteen = 16;
-    mul(B, B, &sixteen, 1);
+    mul(A, A, &sixteen, 1);
 
-    ladder_part1(&P, &Q, A);
+    ladder_part1(&P, &Q, B);
 
-    read_limbs(A, eph);
+    read_limbs(B, public_nonce);
     mul1(P.z, A);
     mul1(P.z, B);
 
-    mul1(Q.z, A);
+    mul1(Q.z, B);
     sub(Q.z, Q.z, Q.x);
     sqr1(Q.z);
 
@@ -386,17 +386,17 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
 
 void x25519_sign(unsigned char response[X25519_LEN],
                  const unsigned char challenge[X25519_LEN],
-                 const unsigned char eph_secret[X25519_LEN],
-                 const unsigned char secret[X25519_LEN])
+                 const unsigned char secret_nonce[X25519_LEN],
+                 const unsigned char secret_key[X25519_LEN])
 {
     static const scalar_t sc_r2 = {
         0x449c0f01U, 0xa40611e3U, 0x68859347U, 0xd00e1ba7U,
         0x17f5be65U, 0xceec73d2U, 0x7c309a3dU, 0x0399411bU,
     };
-    /* FUTURE memory/code size: just make eph_secret non-const? */
+    /* FUTURE memory/code size: just make secret_nonce non-const? */
     scalar_t scalar1, scalar2, scalar3;
-    read_limbs(scalar1, eph_secret);
-    read_limbs(scalar2, secret);
+    read_limbs(scalar1, secret_nonce);
+    read_limbs(scalar2, secret_key);
     read_limbs(scalar3, challenge);
     sc_montmul(scalar1, scalar2, scalar3);
     memset(scalar2, 0, sizeof(scalar2));
