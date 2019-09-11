@@ -143,12 +143,8 @@ static uint32_t canon(fe_t x)
      */
 
     /* First, add 19. */
-    uint32_t carry0 = 19;
-    for (int i = 0; i < NLIMBS; ++i)
-    {
-        x[i] = adc(&carry0, x[i], 0);
-    }
-    propagate(x, carry0);
+    const fe_t nineteen = {19};
+    add(x, x, nineteen);
 
     /*
      * Here, 19 <= x2 < 2^255
