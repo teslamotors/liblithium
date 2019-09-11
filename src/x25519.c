@@ -68,7 +68,7 @@ static uint32_t adc(uint32_t *carry, uint32_t a, uint32_t b)
  */
 static void propagate(fe_t x, uint32_t over)
 {
-    over = x[NLIMBS - 1] >> (WBITS - 1) | over << 1;
+    over = (over << 1) | (x[NLIMBS - 1] >> (WBITS - 1));
     x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
 
     uint32_t carry = over * 19;
@@ -100,33 +100,27 @@ static void sub(fe_t out, const fe_t a, const fe_t b)
     propagate(out, (uint32_t)(1 + carry));
 }
 
-static void mul(fe_t out, const fe_t a, const fe_t b, int nb)
+static void mul(fe_t out, const fe_t a, const uint32_t *b, int nb)
 {
-    /*
-     * GCC at least produces pretty decent asm for this, so don't need to have
-     * dedicated asm.
-     */
-    uint32_t accum[2 * NLIMBS] = {0};
-    uint32_t carry2;
+    uint32_t accum[NLIMBS * 2] = {0};
+    uint32_t carry;
 
     for (int i = 0; i < nb; ++i)
     {
-        carry2 = 0;
-        uint32_t mand = b[i];
+        carry = 0;
         for (int j = 0; j < NLIMBS; ++j)
         {
-            accum[i + j] = mac(&carry2, accum[i + j], mand, a[j]);
+            accum[i + j] = mac(&carry, accum[i + j], b[i], a[j]);
         }
-        accum[i + NLIMBS] = carry2;
+        accum[i + NLIMBS] = carry;
     }
 
-    carry2 = 0;
-    const uint32_t mand = 38;
+    carry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        out[i] = mac(&carry2, accum[i], mand, accum[i + NLIMBS]);
+        out[i] = mac(&carry, accum[i], 38, accum[i + NLIMBS]);
     }
-    propagate(out, carry2);
+    propagate(out, carry);
 }
 
 static void mul1(fe_t out, const fe_t a)
