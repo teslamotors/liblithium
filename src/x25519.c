@@ -204,21 +204,21 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
 
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t1)
 {
-    static const uint32_t a24 = 121665;
+    static const uint32_t a24 = (486662 - 2) / 4;
 
-    add(t1, P->x, P->z);      // t1 = A
-    sub(P->z, P->x, P->z);    // P->z = B
-    add(P->x, Q->x, Q->z);    // P->x = C
-    sub(Q->z, Q->x, Q->z);    // Q->z = D
-    mul1(Q->z, t1);           // Q->z = DA
-    mul1(P->x, P->z);         // Q->x = BC
-    add(Q->x, Q->z, P->x);    // Q->x = DA+CB
-    sub(Q->z, Q->z, P->x);    // Q->z = DA-CB
-    sqr1(t1);                 // t1 = AA
-    sqr1(P->z);               // P->z = BB
-    sub(P->x, t1, P->z);      // P->x = E = AA-BB
-    mul(P->z, P->x, &a24, 1); // P->z = E*a24
-    add(P->z, P->z, t1);      // P->z = E*a24 + AA
+    add(t1, P->x, P->z);      // t1 = A = x + z
+    sub(P->z, P->x, P->z);    // P->z = B = x - z
+    add(P->x, Q->x, Q->z);    // P->x = C = u + w
+    sub(Q->z, Q->x, Q->z);    // Q->z = D = u - w
+    mul1(Q->z, t1);           // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
+    mul1(P->x, P->z);         // Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw
+    add(Q->x, Q->z, P->x);    // Q->x = DA + CB = 2xu - 2zw
+    sub(Q->z, Q->z, P->x);    // Q->z = DA - CB = 2zu - 2xw
+    sqr1(t1);                 // t1 = AA = (x + z)^2 = xx + 2xz + zz
+    sqr1(P->z);               // P->z = BB = (x - z)^2 = xx - 2xz + zz
+    sub(P->x, t1, P->z);      // P->x = E = AA - BB = 4xz
+    mul(P->z, P->x, &a24, 1); // P->z = E*(a - 2)/4 = 4xz*(a - 2)/4 = axz - 2xz
+    add(P->z, P->z, t1);      // P->z = E*(a - 2)/4 + AA = xx + axz + zz
 }
 
 static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t1,
@@ -288,35 +288,51 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
                    const unsigned char public_nonce[X25519_LEN],
                    const unsigned char public_key[X25519_LEN])
 {
+    /*
+     * See doc/verify.tex for a derivation of signature verification using only
+     * x-coordinates based on "Fast and compact elliptic-curve cryptography".
+     * https://www.shiftleft.org/papers/fff/
+     * https://eprint.iacr.org/2012/309.pdf
+     */
     struct xz P, Q;
     fe_t A, B = {BASE_POINT};
     read_limbs(A, public_key);
     x25519_xz(&P, response, B);
     x25519_xz(&Q, challenge, A);
+    // P = x/z = response*base_point
+    // Q = u/w = challenge*public_key
 
     mul(A, Q.x, Q.z, NLIMBS);
     static const uint32_t sixteen = 16;
     mul(A, A, &sixteen, 1);
+    // A = 16uw
 
     ladder_part1(&P, &Q, B);
+    // Q.x = 2xu - 2zw
+    // Q.z = 2zu - 2xw
+    // P.z = xx + axz + zz
 
     read_limbs(B, public_nonce);
+    // B = R
+
     mul1(P.z, A);
     mul1(P.z, B);
+    // P.z = left = 16uwR(xx + axz + zz)
 
     mul1(Q.z, B);
     sub(Q.z, Q.z, Q.x);
     sqr1(Q.z);
+    // Q.z = right = (R(2zu - 2xw) - (2xu - 2zw))^2
 
-    /* check equality */
+    // check equality
     sub(Q.z, Q.z, P.z);
 
     /*
      * If canon(Q.z) then the two sides are equal.
-     * If canon(P.z) then both sides are zero.
+     * If canon(P.z) also, then both sides are zero.
      *
-     * Reject sigs where both sides are zero, because that can happen if an
-     * input causes the ladder to return 0/0.
+     * Reject signatures where both sides are zero, because that can happen if
+     * an input causes the ladder to return 0/0.
      */
     return canon(Q.z) & ~canon(P.z);
 }

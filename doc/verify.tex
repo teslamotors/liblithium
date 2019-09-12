@@ -1,0 +1,85 @@
+\documentclass[fleqn]{amsart}
+
+\usepackage{amsmath}
+
+\setlength{\textwidth}{\paperwidth}
+\setlength{\textheight}{\paperheight}
+\addtolength{\textwidth}{-2in}
+\addtolength{\textheight}{-1in}
+\calclayout
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\mathindent}{0pt}
+
+From "Fast and compact elliptic-curve cryptography"
+
+https://www.shiftleft.org/papers/fff/
+
+https://eprint.iacr.org/2012/309.pdf
+
+$$P = response*base\_point$$
+$$Q = challenge*public\_key$$
+$$R = public\_nonce$$
+$$\mathcal{E}: y^2 = x^3 + ax^2 + x$$
+$$\mathcal{L}: y = mx + b$$
+
+We need to check that some $\mathcal{L}$ intersects $\mathcal{E}$ with three points having the x-coordinates of $P$, $Q$, and $R$.
+$$y^2 = (mx + b)^2 = x^3 + ax^2 + x$$
+
+We want this equation to have three zeros:
+$$x^3 + ax^2 + x - (mx + b)^2 = (x - P)(x - Q)(x - R)$$
+$$x^3 + (a - m^2)x^2 + (1 - 2mb)x - b^2 =
+x^3 - (P + Q + R)x^2 + (PQ + PR + QR)x - PQR$$
+$$(a + P + Q + R - m^2)x^2 + (1 - PQ - PR - QR - 2mb)x + PQR - b^2 = 0$$
+
+This equation is satisfied for all x when each polynomial
+coefficient is zero.
+$$m^2 = a + P + Q + R$$
+$$2mb = 1 - PQ - PR - QR$$
+$$b^2 = PQR$$
+
+Solving:
+$$4m^2b^2 = 4PQR(a + P + Q + R) = (1 - PQ - PR - QR)^2 = (2mb)^2 = 4m^2b^2$$
+$$4PQR(a + P + Q + R) = (1 - PQ - PR - QR)^2$$
+
+With $P$, $Q$ in quotient form as $P = x/z$ and $Q = u/w$:
+$$4(x/z)(u/w)R(a + x/z + u/w + R) = (1 - (x/z)(u/w) - R(x/z) - R(u/w))^2$$
+
+Multiply both sides by $(zw)^2$
+$$4xzuwR(a + x/z + u/w + R) = (zw(1 - (x/z)(u/w) - R(x/z) - R(u/w)))^2$$
+
+Distribute
+$$4axzuwR + 4x^2uwR + 4xzu^2R + 4xzuwR^2 = (zw - xu - xwR - zuR)^2$$
+
+Expand
+\begin{multline*}
+4axzuwR + 4x^2uwR + 4xzu^2R + 4xzuwR^2 = \\
+z^2w^2 + x^2u^2 + x^2w^2R^2 + z^2u^2R^2 - 2xzuw - 2xzw^2R - 2z^2uwR + 2x^2uwR + 2xzu^2R + 2xzuwR^2
+\end{multline*}
+
+Add $4z^2uwR - 4xzu^2R - 4xzuwR^2$ to both sides
+\begin{multline*}
+4axzuwR + 4x^2uwR + 4z^2uwR = \\
+z^2w^2 + x^2u^2 + x^2w^2R^2 + z^2u^2R^2 - 2xzuw - 2xzw^2R + 2z^2uwR + 2x^2uwR - 2xzu^2R - 2xzuwR^2
+\end{multline*}
+
+Factor
+$$4uwR(x^2 + axz + z^2) = (zw - xu - xwR + zuR)^2$$
+
+Multiply by 4 and rearrange terms
+$$16uwR(x^2 + axz + z^2) = (R(2zu - 2xw) - (2xu - 2zw))^2$$
+
+After $ladder\_part1$
+$$Q_x = 2xu - 2zw$$
+$$Q_z = 2zu - 2xw$$
+$$P_z = x^2 + axz + z^2$$
+$$left = 16uwR(x^2 + axz + z^2) = 16uwR(P_z)$$
+$$right = (R(2zu - 2xw) - (2xu - 2zw))^2 = (RQ_z - Q_x)^2$$
+
+Verification consists of checking
+
+$$16uwR(P_z) = (RQ_z - Q_x)^2 \neq 0$$
+
+\end{document}
