@@ -202,41 +202,40 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
     }
 }
 
-static void ladder_part1(struct xz *P, struct xz *Q, fe_t t1)
+static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
     static const uint32_t a24 = (486662 - 2) / 4;
 
-    add(t1, P->x, P->z);      // t1 = A = x + z
+    add(t, P->x, P->z);       // t = A = x + z
     sub(P->z, P->x, P->z);    // P->z = B = x - z
     add(P->x, Q->x, Q->z);    // P->x = C = u + w
     sub(Q->z, Q->x, Q->z);    // Q->z = D = u - w
-    mul1(Q->z, t1);           // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
+    mul1(Q->z, t);            // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
     mul1(P->x, P->z);         // Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw
     add(Q->x, Q->z, P->x);    // Q->x = DA + CB = 2xu - 2zw
     sub(Q->z, Q->z, P->x);    // Q->z = DA - CB = 2zu - 2xw
-    sqr1(t1);                 // t1 = AA = (x + z)^2 = xx + 2xz + zz
+    sqr1(t);                  // t = AA = (x + z)^2 = xx + 2xz + zz
     sqr1(P->z);               // P->z = BB = (x - z)^2 = xx - 2xz + zz
-    sub(P->x, t1, P->z);      // P->x = E = AA - BB = 4xz
-    mul(P->z, P->x, &a24, 1); // P->z = E*(a - 2)/4 = 4xz*(a - 2)/4 = axz - 2xz
-    add(P->z, P->z, t1);      // P->z = E*(a - 2)/4 + AA = xx + axz + zz
+    sub(P->x, t, P->z);       // P->x = E = AA - BB = 4xz
+    mul(P->z, P->x, &a24, 1); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
+    add(P->z, P->z, t);       // P->z = E(a - 2)/4 + AA = xx + axz + zz
 }
 
-static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t1,
-                         const fe_t x1)
+static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t, const fe_t x)
 {
-    sqr1(Q->z);          // Q->z = (DA-CB)^2
-    mul1(Q->z, x1);      // Q->z = x1 * (DA-CB)^2
-    sqr1(Q->x);          // Q->x = (DA+CB)^2
-    mul1(P->z, P->x);    // P->z = AA*(E*a24+AA)
-    sub(P->x, t1, P->x); // P->x = BB again
-    mul1(P->x, t1);      // P->x = AA*BB
+    sqr1(Q->z);         // Q->z = (DA - CB)^2
+    mul1(Q->z, x);      // Q->z = x(DA - CB)^2
+    sqr1(Q->x);         // Q->x = (DA + CB)^2
+    mul1(P->z, P->x);   // P->z = E(E(a - 2)/4 + AA)
+    sub(P->x, t, P->x); // P->x = AA - E = AA - (AA - BB) = BB
+    mul1(P->x, t);      // P->x = AABB
 }
 
 static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
-                      const fe_t x1)
+                      const fe_t x)
 {
     struct xz Q = {.z = {1}};
-    memcpy(Q.x, x1, sizeof(fe_t));
+    memcpy(Q.x, x, sizeof(fe_t));
     memset(P, 0, sizeof *P);
     P->x[0] = 1;
 
@@ -248,7 +247,7 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
         swap = kt;
         fe_t t1;
         ladder_part1(P, &Q, t1);
-        ladder_part2(P, &Q, t1, x1);
+        ladder_part2(P, &Q, t1, x);
     }
     cswap(swap, P, &Q);
 }
@@ -266,9 +265,9 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
     struct xz P;
-    fe_t x1;
-    read_limbs(x1, point);
-    x25519_xz(&P, scalar, x1);
+    fe_t x;
+    read_limbs(x, point);
+    x25519_xz(&P, scalar, x);
     xz_to_bytes(out, &P);
 }
 
