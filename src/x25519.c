@@ -295,7 +295,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     x25519_xz(&Q, challenge, A);
 
     mul(A, Q.x, Q.z, NLIMBS);
-    const uint32_t sixteen = 16;
+    static const uint32_t sixteen = 16;
     mul(A, A, &sixteen, 1);
 
     ladder_part1(&P, &Q, B);
