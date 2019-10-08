@@ -25,3 +25,6 @@ env.Command(
 
 test_x25519 = env.Program("test_x25519.c")
 env.Command(target="test_x25519_output", source=test_x25519, action="$SOURCE ")
+
+test_fe = env.Program("test_fe.c")
+env.Command(target="test_fe_output", source=test_fe, action="$SOURCE ")

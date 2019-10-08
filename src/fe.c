@@ -34,14 +34,14 @@ void add(fe_t out, const fe_t a, const fe_t b)
 
 void sub(fe_t out, const fe_t a, const fe_t b)
 {
-    int64_t carry = -38;
+    int64_t carry = -76;
     for (int i = 0; i < NLIMBS; ++i)
     {
         carry = carry + a[i] - b[i];
         out[i] = (uint32_t)carry;
         carry >>= WBITS;
     }
-    propagate(out, (uint32_t)(1 + carry));
+    propagate(out, (uint32_t)(carry + 2));
 }
 
 void mul(fe_t out, const fe_t a, const uint32_t *b, int nb)
