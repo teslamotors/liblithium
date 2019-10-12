@@ -65,7 +65,7 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
 
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
-    static const uint32_t a24 = (486662 - 2) / 4;
+    const uint32_t a24 = (486662 - 2) / 4;
 
     add(t, P->x, P->z);       // t = A = x + z
     sub(P->z, P->x, P->z);    // P->z = B = x - z
@@ -138,7 +138,7 @@ void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
 {
     struct xz P;
-    fe_t B = {BASE_POINT};
+    const fe_t B = {BASE_POINT};
     x25519_xz(&P, scalar, B);
     xz_to_bytes(out, &P);
 }
@@ -163,7 +163,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     // Q = u/w = challenge*public_key
 
     mul(A, Q.x, Q.z, NLIMBS);
-    static const uint32_t sixteen = 16;
+    const uint32_t sixteen = 16;
     mul(A, A, &sixteen, 1);
     // A = 16uw
 
