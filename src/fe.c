@@ -44,7 +44,7 @@ void sub(fe_t out, const fe_t a, const fe_t b)
     propagate(out, (uint32_t)(carry + 2));
 }
 
-void mul(fe_t out, const fe_t a, const uint32_t *b, int nb)
+static void mul_n(fe_t out, const fe_t a, const uint32_t *b, int nb)
 {
     uint32_t accum[NLIMBS * 2] = {0};
     uint32_t carry;
@@ -67,9 +67,19 @@ void mul(fe_t out, const fe_t a, const uint32_t *b, int nb)
     propagate(out, carry);
 }
 
+void mul(fe_t out, const fe_t a, const fe_t b)
+{
+    mul_n(out, a, b, NLIMBS);
+}
+
+void mul_word(fe_t out, const fe_t a, uint32_t b)
+{
+    mul_n(out, a, &b, 1);
+}
+
 void mul1(fe_t a, const fe_t b)
 {
-    mul(a, b, a, NLIMBS);
+    mul(a, b, a);
 }
 
 void sqr1(fe_t a)

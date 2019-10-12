@@ -67,19 +67,19 @@ static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
     const uint32_t a24 = (486662 - 2) / 4;
 
-    add(t, P->x, P->z);       // t = A = x + z
-    sub(P->z, P->x, P->z);    // P->z = B = x - z
-    add(P->x, Q->x, Q->z);    // P->x = C = u + w
-    sub(Q->z, Q->x, Q->z);    // Q->z = D = u - w
-    mul1(Q->z, t);            // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
-    mul1(P->x, P->z);         // Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw
-    add(Q->x, Q->z, P->x);    // Q->x = DA + CB = 2xu - 2zw
-    sub(Q->z, Q->z, P->x);    // Q->z = DA - CB = 2zu - 2xw
-    sqr1(t);                  // t = AA = (x + z)^2 = xx + 2xz + zz
-    sqr1(P->z);               // P->z = BB = (x - z)^2 = xx - 2xz + zz
-    sub(P->x, t, P->z);       // P->x = E = AA - BB = 4xz
-    mul(P->z, P->x, &a24, 1); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
-    add(P->z, P->z, t);       // P->z = E(a - 2)/4 + AA = xx + axz + zz
+    add(t, P->x, P->z);        // t = A = x + z
+    sub(P->z, P->x, P->z);     // P->z = B = x - z
+    add(P->x, Q->x, Q->z);     // P->x = C = u + w
+    sub(Q->z, Q->x, Q->z);     // Q->z = D = u - w
+    mul1(Q->z, t);             // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
+    mul1(P->x, P->z);          // Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw
+    add(Q->x, Q->z, P->x);     // Q->x = DA + CB = 2xu - 2zw
+    sub(Q->z, Q->z, P->x);     // Q->z = DA - CB = 2zu - 2xw
+    sqr1(t);                   // t = AA = (x + z)^2 = xx + 2xz + zz
+    sqr1(P->z);                // P->z = BB = (x - z)^2 = xx - 2xz + zz
+    sub(P->x, t, P->z);        // P->x = E = AA - BB = 4xz
+    mul_word(P->z, P->x, a24); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
+    add(P->z, P->z, t);        // P->z = E(a - 2)/4 + AA = xx + axz + zz
 }
 
 static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t, const fe_t x)
@@ -162,9 +162,8 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     // P = x/z = response*base_point
     // Q = u/w = challenge*public_key
 
-    mul(A, Q.x, Q.z, NLIMBS);
-    const uint32_t sixteen = 16;
-    mul(A, A, &sixteen, 1);
+    mul(A, Q.x, Q.z);
+    mul_word(A, A, 16);
     // A = 16uw
 
     ladder_part1(&P, &Q, B);

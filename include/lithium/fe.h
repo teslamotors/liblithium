@@ -13,9 +13,11 @@ void add(fe_t out, const fe_t a, const fe_t b);
 
 void sub(fe_t out, const fe_t a, const fe_t b);
 
-void mul(fe_t out, const fe_t a, const uint32_t *b, int nb);
+void mul(fe_t out, const fe_t a, const fe_t b);
 
 void mul1(fe_t a, const fe_t b);
+
+void mul_word(fe_t out, const fe_t a, uint32_t b);
 
 void sqr1(fe_t a);
 
