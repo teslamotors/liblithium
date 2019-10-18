@@ -215,15 +215,15 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     uint32_t hic = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        uint32_t carry = 0, carry2 = 0, mand = a[i], mand2 = montgomery_factor;
+        uint32_t carry = 0, carry2 = 0, mand = montgomery_factor;
 
         for (int j = 0; j < NLIMBS; ++j)
         {
             uint32_t acc = out[j];
-            acc = mac(&carry, acc, mand, b[j]);
+            acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
-                mand2 *= acc;
-            acc = mac(&carry2, acc, mand2, sc_p[j]);
+                mand *= acc;
+            acc = mac(&carry2, acc, mand, sc_p[j]);
             if (j > 0)
                 out[j - 1] = acc;
         }
