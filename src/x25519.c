@@ -63,10 +63,12 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
     }
 }
 
+// Curve constant a = 486662
+// (a - 2)/4
+#define A24 UINT32_C(121665)
+
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
-    const uint32_t a24 = (486662 - 2) / 4;
-
     add(t, P->x, P->z);        // t = A = x + z
     sub(P->z, P->x, P->z);     // P->z = B = x - z
     add(P->x, Q->x, Q->z);     // P->x = C = u + w
@@ -78,7 +80,7 @@ static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
     sqr1(t);                   // t = AA = (x + z)^2 = xx + 2xz + zz
     sqr1(P->z);                // P->z = BB = (x - z)^2 = xx - 2xz + zz
     sub(P->x, t, P->z);        // P->x = E = AA - BB = 4xz
-    mul_word(P->z, P->x, a24); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
+    mul_word(P->z, P->x, A24); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
     add(P->z, P->z, t);        // P->z = E(a - 2)/4 + AA = xx + axz + zz
 }
 
@@ -132,7 +134,7 @@ void x25519(unsigned char out[X25519_LEN],
     xz_to_bytes(out, &P);
 }
 
-#define BASE_POINT 9
+#define BASE_POINT UINT32_C(9)
 
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
@@ -196,7 +198,12 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     return canon(Q.z) & ~canon(P.z);
 }
 
-static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
+#define MONTGOMERY_FACTOR UINT32_C(0x12547e1b)
+
+/*
+ * Set t = t + ab mod l
+ */
+static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
 {
     /*
      * OK, so carry bounding. We're using a high carry, so that the inputs
@@ -210,34 +217,33 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
         0x5cf5d3edU, 0x5812631aU, 0xa2f79cd6U, 0x14def9deU,
         0x00000000U, 0x00000000U, 0x00000000U, 0x10000000U,
     };
-    static const uint32_t montgomery_factor = 0x12547e1bU;
 
     uint32_t hic = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        uint32_t carry = 0, carry2 = 0, mand = montgomery_factor;
+        uint32_t carry = 0, carry2 = 0, mand = MONTGOMERY_FACTOR;
 
         for (int j = 0; j < NLIMBS; ++j)
         {
-            uint32_t acc = out[j];
+            uint32_t acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
                 mand *= acc;
             acc = mac(&carry2, acc, mand, sc_p[j]);
             if (j > 0)
-                out[j - 1] = acc;
+                t[j - 1] = acc;
         }
 
         /* Add two carry registers and high carry */
-        out[NLIMBS - 1] = adc(&hic, carry, carry2);
+        t[NLIMBS - 1] = adc(&hic, carry, carry2);
     }
 
     /* Reduce */
     int64_t scarry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        scarry = scarry + out[i] - sc_p[i];
-        out[i] = (uint32_t)scarry;
+        scarry = scarry + t[i] - sc_p[i];
+        t[i] = (uint32_t)scarry;
         scarry >>= WBITS;
     }
     uint32_t need_add = (uint32_t)(-(scarry + hic));
@@ -245,10 +251,18 @@ static void sc_montmul(scalar_t out, const scalar_t a, const scalar_t b)
     uint32_t carry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        out[i] = mac(&carry, out[i], need_add, sc_p[i]);
+        t[i] = mac(&carry, t[i], need_add, sc_p[i]);
     }
 }
 
+/*
+ * compute response = secret_nonce + secret_key * challenge
+ *
+ * verifier will check
+ * response * base = (secret_nonce + secret_key * challenge) * base
+ * response * base = secret_nonce * base + secret_key * challenge * base
+ * response * base = public_nonce + challenge * public_key
+ */
 void x25519_sign(unsigned char response[X25519_LEN],
                  const unsigned char challenge[X25519_LEN],
                  const unsigned char secret_nonce[X25519_LEN],
