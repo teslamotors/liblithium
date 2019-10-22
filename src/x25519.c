@@ -103,14 +103,14 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
     P->x[0] = 1;
 
     uint32_t swap = 0;
-    for (int t = X25519_BITS - 1; t >= 0; --t)
+    for (int i = X25519_BITS - 1; i >= 0; --i)
     {
-        const uint32_t kt = -(((uint32_t)k[t / 8] >> (t % 8)) & 1);
-        cswap(swap ^ kt, P, &Q);
-        swap = kt;
-        fe_t t1;
-        ladder_part1(P, &Q, t1);
-        ladder_part2(P, &Q, t1, x);
+        const uint32_t ki = -(((uint32_t)k[i / 8] >> (i % 8)) & 1);
+        cswap(swap ^ ki, P, &Q);
+        swap = ki;
+        fe_t t;
+        ladder_part1(P, &Q, t);
+        ladder_part2(P, &Q, t, x);
     }
     cswap(swap, P, &Q);
 }
