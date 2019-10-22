@@ -103,7 +103,7 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
     P->x[0] = 1;
 
     uint32_t swap = 0;
-    for (int t = 255; t >= 0; --t)
+    for (int t = X25519_BITS - 1; t >= 0; --t)
     {
         const uint32_t kt = -(((uint32_t)k[t / 8] >> (t % 8)) & 1);
         cswap(swap ^ kt, P, &Q);
