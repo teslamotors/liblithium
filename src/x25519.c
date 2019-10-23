@@ -278,7 +278,7 @@ void x25519_sign(unsigned char response[X25519_LEN],
     read_limbs(scalar2, secret_key);
     read_limbs(scalar3, challenge);
     sc_montmul(scalar1, scalar2, scalar3);
-    memset(scalar2, 0, sizeof(scalar2));
+    memset(scalar2, 0, sizeof(scalar_t));
     sc_montmul(scalar2, scalar1, sc_r2);
     write_limbs(response, scalar2);
 }

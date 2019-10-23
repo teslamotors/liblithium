@@ -44,7 +44,7 @@ static void gimli_xor8(uint32_t *state, size_t i, unsigned char x)
 
 void gimli_hash_init(gimli_hash_state *g)
 {
-    memset(g, 0, sizeof(*g));
+    memset(g, 0, sizeof *g);
 }
 
 static void update(gimli_hash_state *g, const unsigned char *input, size_t len)
