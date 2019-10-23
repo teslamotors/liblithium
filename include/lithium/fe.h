@@ -9,6 +9,10 @@
 
 typedef uint32_t fe_t[NLIMBS];
 
+void read_limbs(uint32_t x[NLIMBS], const unsigned char *in);
+
+void write_limbs(unsigned char *out, const uint32_t x[NLIMBS]);
+
 void add(fe_t out, const fe_t a, const fe_t b);
 
 void sub(fe_t out, const fe_t a, const fe_t b);

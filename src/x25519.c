@@ -13,38 +13,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define WLEN (WBITS / 8)
-
-static uint32_t read_limb(const unsigned char *p)
-{
-    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 |
-           (uint32_t)p[3] << 24;
-}
-
-static void write_limb(unsigned char *p, uint32_t x)
-{
-    p[0] = (unsigned char)x & 0xFFU;
-    p[1] = (unsigned char)(x >> 8) & 0xFFU;
-    p[2] = (unsigned char)(x >> 16) & 0xFFU;
-    p[3] = (unsigned char)(x >> 24) & 0xFFU;
-}
-
-static void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
-{
-    for (int i = 0; i < NLIMBS; ++i)
-    {
-        x[i] = read_limb(in + i * WLEN);
-    }
-}
-
-static void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
-{
-    for (int i = 0; i < NLIMBS; ++i)
-    {
-        write_limb(out + i * WLEN, x[i]);
-    }
-}
-
 typedef uint32_t scalar_t[NLIMBS];
 
 struct xz
@@ -121,6 +89,13 @@ static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
     mul1(p->x, p->z);
     canon(p->x);
     write_limbs(out, p->x);
+}
+
+void x25519_clamp(unsigned char scalar[X25519_LEN])
+{
+    scalar[0] &= 0xF8U;
+    scalar[X25519_LEN - 1] &= 0x7FU;
+    scalar[X25519_LEN - 1] |= 0x40U;
 }
 
 void x25519(unsigned char out[X25519_LEN],

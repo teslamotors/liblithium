@@ -12,6 +12,11 @@
 #define X25519_LEN (X25519_BITS / 8)
 
 /*
+ * Clamp an arbitrary 256 bit value to be a legal x25519 scalar.
+ */
+void x25519_clamp(unsigned char scalar[X25519_LEN]);
+
+/*
  * x25519 scalar multiplication. Sets out to scalar*point.
  *
  * scalar should be clamped like a Curve25519 secret key.
