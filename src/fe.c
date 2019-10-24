@@ -42,12 +42,10 @@ void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
  */
-static void propagate(fe_t x, uint32_t over)
+static void propagate(fe_t x, uint32_t carry)
 {
-    over = (over << 1) | (x[NLIMBS - 1] >> (WBITS - 1));
+    carry = ((carry << 1) | (x[NLIMBS - 1] >> (WBITS - 1))) * 19;
     x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
-
-    uint32_t carry = over * 19;
     for (int i = 0; i < NLIMBS; ++i)
     {
         x[i] = adc(&carry, x[i], 0);
