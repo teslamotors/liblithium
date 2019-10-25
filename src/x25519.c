@@ -203,10 +203,14 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
             uint32_t acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
+            {
                 u *= acc;
+            }
             acc = mac(&carry2, acc, u, L[j]);
             if (j > 0)
+            {
                 t[j - 1] = acc;
+            }
         }
 
         /* Add two carry registers and high carry */
