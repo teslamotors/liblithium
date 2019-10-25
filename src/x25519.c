@@ -176,7 +176,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
 #define MONTGOMERY_FACTOR UINT32_C(0x12547e1b)
 
 /*
- * Set t = t + ab mod l
+ * Set t = (t + ab)R^-1 mod l
  */
 static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
 {
@@ -188,7 +188,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
      * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp +
      * Mp)/M = 2p, subtract p, < p, done.
      */
-    static const scalar_t sc_p = {
+    static const scalar_t L = {
         0x5cf5d3edU, 0x5812631aU, 0xa2f79cd6U, 0x14def9deU,
         0x00000000U, 0x00000000U, 0x00000000U, 0x10000000U,
     };
@@ -196,15 +196,15 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     uint32_t hic = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        uint32_t carry = 0, carry2 = 0, mand = MONTGOMERY_FACTOR;
+        uint32_t carry = 0, carry2 = 0, u = MONTGOMERY_FACTOR;
 
         for (int j = 0; j < NLIMBS; ++j)
         {
             uint32_t acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
-                mand *= acc;
-            acc = mac(&carry2, acc, mand, sc_p[j]);
+                u *= acc;
+            acc = mac(&carry2, acc, u, L[j]);
             if (j > 0)
                 t[j - 1] = acc;
         }
@@ -217,7 +217,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     int64_t scarry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        scarry = scarry + t[i] - sc_p[i];
+        scarry = scarry + t[i] - L[i];
         t[i] = (uint32_t)scarry;
         scarry >>= WBITS;
     }
@@ -226,7 +226,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     uint32_t carry = 0;
     for (int i = 0; i < NLIMBS; ++i)
     {
-        t[i] = mac(&carry, t[i], need_add, sc_p[i]);
+        t[i] = mac(&carry, t[i], need_add, L[i]);
     }
 }
 
@@ -243,17 +243,21 @@ void x25519_sign(unsigned char response[X25519_LEN],
                  const unsigned char secret_nonce[X25519_LEN],
                  const unsigned char secret_key[X25519_LEN])
 {
-    static const scalar_t sc_r2 = {
+    /*
+     * R = 2^256
+     * Doing a Montgomery multiply by R^2 mod L undoes the Montgomery
+     * reductions.
+     */
+    static const scalar_t R2modL = {
         0x449c0f01U, 0xa40611e3U, 0x68859347U, 0xd00e1ba7U,
         0x17f5be65U, 0xceec73d2U, 0x7c309a3dU, 0x0399411bU,
     };
-    /* FUTURE memory/code size: just make secret_nonce non-const? */
-    scalar_t scalar1, scalar2, scalar3;
-    read_limbs(scalar1, secret_nonce);
-    read_limbs(scalar2, secret_key);
-    read_limbs(scalar3, challenge);
-    sc_montmul(scalar1, scalar2, scalar3);
-    memset(scalar2, 0, sizeof(scalar_t));
-    sc_montmul(scalar2, scalar1, sc_r2);
-    write_limbs(response, scalar2);
+    scalar_t r, a, h;
+    read_limbs(r, secret_nonce);
+    read_limbs(a, secret_key);
+    read_limbs(h, challenge);
+    sc_montmul(r, a, h); // r = (secret_nonce + secret_key * challenge)R^-1
+    memset(a, 0, sizeof(scalar_t));
+    sc_montmul(a, r, R2modL); // a = (secret_nonce + secret_key * challenge)
+    write_limbs(response, a);
 }
