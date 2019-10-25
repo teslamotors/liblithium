@@ -173,6 +173,9 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     return canon(Q.z) & ~canon(P.z);
 }
 
+/*
+ * Montgomery factor: -L^-1 mod 2^32
+ */
 #define MONTGOMERY_FACTOR UINT32_C(0x12547e1b)
 
 /*
