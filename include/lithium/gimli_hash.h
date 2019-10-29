@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define GIMLI_HASH_DEFAULT_LEN 32
+
 typedef struct
 {
     uint32_t state[GIMLI_WORDS];
