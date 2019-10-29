@@ -7,9 +7,12 @@
 
 #define GIMLI_HASH_DEFAULT_LEN 32
 
+#define GIMLI_RATE 16
+
 typedef struct
 {
     uint32_t state[GIMLI_WORDS];
+    unsigned char buf[GIMLI_RATE];
     size_t offset;
 } gimli_hash_state;
 

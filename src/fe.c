@@ -1,30 +1,17 @@
 #include <lithium/fe.h>
 
+#include "bytes.h"
 #include "carry.h"
 
 #include <string.h>
 
 #define WLEN (WBITS / 8)
 
-static uint32_t read_limb(const unsigned char *p)
-{
-    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 |
-           (uint32_t)p[3] << 24;
-}
-
-static void write_limb(unsigned char *p, uint32_t x)
-{
-    p[0] = (unsigned char)x & 0xFFU;
-    p[1] = (unsigned char)(x >> 8) & 0xFFU;
-    p[2] = (unsigned char)(x >> 16) & 0xFFU;
-    p[3] = (unsigned char)(x >> 24) & 0xFFU;
-}
-
 void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
     for (int i = 0; i < NLIMBS; ++i)
     {
-        x[i] = read_limb(in + i * WLEN);
+        x[i] = bytes_to_u32(in + i * WLEN);
     }
 }
 
@@ -32,7 +19,7 @@ void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
     for (int i = 0; i < NLIMBS; ++i)
     {
-        write_limb(out + i * WLEN, x[i]);
+        bytes_from_u32(out + i * WLEN, x[i]);
     }
 }
 
