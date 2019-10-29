@@ -46,17 +46,6 @@ static row_t big_swap(row_t x)
     return SHUFFLE(x, 2, 3, 0, 1);
 }
 
-static void sp(row_t *x, row_t *y, row_t *z)
-{
-    *x = rol24(*x);
-    *y = rol(*y, 9);
-    const row_t newz = *x ^ (*z << 1) ^ ((*y & *z) << 2);
-    const row_t newy = *y ^ *x ^ ((*x | *z) << 1);
-    *x = *z ^ *y ^ ((*x & *y) << 3);
-    *y = newy;
-    *z = newz;
-}
-
 static row_t coeff(int round)
 {
     return (row_t){UINT32_C(0x9e377900) | (uint32_t)round, 0, 0, 0};
@@ -67,14 +56,24 @@ void gimli(uint32_t *state)
     row_t x = load(&state[0]);
     row_t y = load(&state[4]);
     row_t z = load(&state[8]);
-    for (int round = 24; round > 0; round -= 4)
+    for (int round = 24; round > 0; --round)
     {
-        sp(&x, &y, &z);
-        x = small_swap(x) ^ coeff(round);
-        sp(&x, &y, &z);
-        sp(&x, &y, &z);
-        x = big_swap(x);
-        sp(&x, &y, &z);
+        x = rol24(x);
+        y = rol(y, 9);
+        const row_t newz = x ^ (z << 1) ^ ((y & z) << 2);
+        const row_t newy = y ^ x ^ ((x | z) << 1);
+        x = z ^ y ^ ((x & y) << 3);
+        y = newy;
+        z = newz;
+        switch (round % 4)
+        {
+        case 0:
+            x = small_swap(x) ^ coeff(round);
+            break;
+        case 2:
+            x = big_swap(x);
+            break;
+        }
     }
     store(&state[0], x);
     store(&state[4], y);

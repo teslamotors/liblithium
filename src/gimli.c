@@ -25,7 +25,7 @@ void gimli(uint32_t *state)
             state[column + 4] = y ^ x ^ ((x | z) << 1);
             state[column] = z ^ y ^ ((x & y) << 3);
         }
-        switch (round & 3)
+        switch (round % 4)
         {
         case 0:
             // small swap: pattern s...s...s... etc.
