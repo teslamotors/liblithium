@@ -2,8 +2,7 @@
 
 set -xe
 
-scons --jobs $(nproc)
-
+scons --no-sanitize --jobs $(nproc)
 
 testdir="dist/test/hydrotest"
 PATH="$(pwd)/dist/hydro:$PATH"

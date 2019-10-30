@@ -60,8 +60,17 @@ nixflags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-march=native",
-    "-fsanitize=address,undefined",
 ]
+
+AddOption(
+    "--no-sanitize",
+    dest="sanitize",
+    default="true",
+    action="store_false",
+    help="disable sanitizers",
+)
+if GetOption("sanitize"):
+    nixflags.append("-fsanitize=address,undefined")
 
 gnuwflags = ["-Wall", "-Wextra", "-Wpedantic", "-Wconversion", "-Werror"]
 
