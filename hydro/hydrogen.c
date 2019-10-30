@@ -58,6 +58,13 @@ int hydro_hash_final(hydro_hash_state *state, uint8_t *out, size_t out_len)
         [3] = 0x00U,
     };
     gimli_hash_update(state, suffix, hash_len_len + 2U);
+
+    // apply different padding to match libhydrogen
+    state->state[state->offset / 4] ^= UINT32_C(0x1E)
+                                       << ((state->offset % 4) * 8);
+    state->state[3] ^= UINT32_C(0x80000000);
+    state->state[GIMLI_WORDS - 1] ^= UINT32_C(0x01000000);
+
     gimli_hash_final(state, out, out_len);
     return 0;
 }
