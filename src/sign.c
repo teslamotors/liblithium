@@ -37,12 +37,12 @@ void lith_sign_update(lith_sign_state *state, const unsigned char *msg,
 
 static void
 gen_challenge(gimli_hash_state *state, unsigned char challenge[X25519_LEN],
-              const unsigned char R[X25519_LEN],
+              const unsigned char public_nonce[X25519_LEN],
               const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
               const unsigned char prehash[LITH_SIGN_PREHASH_LEN])
 {
     gimli_hash_init(state);
-    gimli_hash_update(state, R, X25519_LEN);
+    gimli_hash_update(state, public_nonce, X25519_LEN);
     gimli_hash_update(state, public_key, LITH_SIGN_PUBLIC_KEY_LEN);
     gimli_hash_update(state, prehash, LITH_SIGN_PREHASH_LEN);
     gimli_hash_final(state, challenge, X25519_LEN);
