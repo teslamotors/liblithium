@@ -18,8 +18,8 @@ hydro-verify testkey.pub input.bin input.sig
 
 [ -d libhydrogen ] || git clone https://github.com/jedisct1/libhydrogen.git
 
-clang -O3 -flto -o libhydrogen-sign -Ilibhydrogen libhydrogen/hydrogen.c ../../../hydro/examples/hydro-sign.c
-clang -O3 -flto -o libhydrogen-verify -Ilibhydrogen libhydrogen/hydrogen.c ../../../hydro/examples/hydro-verify.c
+clang -O3 -flto -march=native -o libhydrogen-sign -Ilibhydrogen libhydrogen/hydrogen.c ../../../hydro/examples/hydro-sign.c
+clang -O3 -flto -march=native -o libhydrogen-verify -Ilibhydrogen libhydrogen/hydrogen.c ../../../hydro/examples/hydro-verify.c
 
 # check that libhydrogen can verify signatures from hydro
 ./libhydrogen-verify testkey.pub input.bin input.sig

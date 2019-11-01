@@ -53,7 +53,9 @@ platform = env["PLATFORM"]
 
 host_env = env.Clone()
 
-nixflags = [
+llvm_flags = [
+    "-Weverything",
+    "-Werror",
     "-O3",
     "-g",
     "-flto",
@@ -70,23 +72,22 @@ AddOption(
     help="disable sanitizers",
 )
 if GetOption("sanitize"):
-    nixflags.append("-fsanitize=address,undefined")
+    llvm_flags.append("-fsanitize=address,undefined")
 
-gnuwflags = ["-Wall", "-Wextra", "-Wpedantic", "-Wconversion", "-Werror"]
+host_env["CC"] = "clang"
+host_env["CXX"] = "clang++"
 
 if platform == "darwin":
-    # SCons invokes 'gcc' normally on OS X.
-    # Usually this is just clang but with options that we don't need.
-    host_env["CC"] = "clang"
-    flags = ["-Weverything", "-Werror"] + nixflags
-    host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-dead_strip"])
+    link_flags = ["-dead_strip"]
 elif platform == "posix":
-    flags = gnuwflags + nixflags
-    host_env.Append(CCFLAGS=flags, LINKFLAGS=flags + ["-Wl,--gc-sections"])
-elif platform == "win32":
-    host_env.Append(CCFLAGS=["/W4", "/WX", "/Ox"], CPPDEFINES=["_CRT_RAND_S"])
+    link_flags = ["-Wl,--gc-sections"]
+    # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
+    host_env["AR"] = "llvm-ar"
+    host_env["RANLIB"] = "llvm-ranlib"
 else:
     raise Exception("unsupported platform")
+
+host_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags + link_flags)
 
 build_with_env("dist", host_env)
 
@@ -95,7 +96,12 @@ arm_env["CC"] = "arm-none-eabi-gcc"
 arm_env["LINK"] = "arm-none-eabi-gcc"
 arm_env["AR"] = "arm-none-eabi-gcc-ar"
 arm_env["RANLIB"] = "arm-none-eabi-gcc-ranlib"
-flags = gnuwflags + [
+flags = [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Wconversion",
+    "-Werror",
     "-specs=nosys.specs",
     "-specs=nano.specs",
     "-mcpu=cortex-m4",
