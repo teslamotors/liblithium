@@ -28,19 +28,35 @@ static void squeeze(uint32_t *state, unsigned char h[GIMLI_RATE])
     }
 }
 
+static void xor8(uint32_t *state, size_t i, unsigned char x)
+{
+    state[i / 4] ^= (uint32_t)x << ((i % 4) * 8);
+}
+
 void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
                        size_t len)
 {
     size_t offset = g->offset;
-    for (size_t i = 0; i < len; ++i)
+    while (len > 0)
     {
-        g->buf[offset] = input[i];
-        ++offset;
-        if (offset == GIMLI_RATE)
+        if ((len >= GIMLI_RATE) && (offset == 0))
         {
-            absorb(g->state, g->buf);
+            absorb(g->state, input);
             gimli(g->state);
-            offset = 0;
+            input += GIMLI_RATE;
+            len -= GIMLI_RATE;
+        }
+        else
+        {
+            xor8(g->state, offset, *input);
+            ++offset;
+            ++input;
+            --len;
+            if (offset == GIMLI_RATE)
+            {
+                gimli(g->state);
+                offset = 0;
+            }
         }
     }
     g->offset = offset;
@@ -49,25 +65,21 @@ void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
 void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len)
 {
     // Apply padding.
-    g->buf[g->offset] = 0x01;
-    for (size_t i = g->offset + 1; i < GIMLI_RATE; ++i)
-    {
-        g->buf[i] = 0;
-    }
+    xor8(g->state, g->offset, 0x01);
     g->state[GIMLI_WORDS - 1] ^= UINT32_C(0x01000000);
-    absorb(g->state, g->buf);
 
     // Switch to the squeezing phase.
     size_t offset = GIMLI_RATE;
+    unsigned char buf[GIMLI_RATE];
     for (size_t i = 0; i < len; ++i)
     {
         if (offset == GIMLI_RATE)
         {
             gimli(g->state);
-            squeeze(g->state, g->buf);
+            squeeze(g->state, buf);
             offset = 0;
         }
-        output[i] = g->buf[offset];
+        output[i] = buf[offset];
         ++offset;
     }
 }
