@@ -1,86 +1,51 @@
 #include <lithium/gimli_hash.h>
 
-#include "bytes.h"
-
-#include <limits.h>
 #include <string.h>
-
-#define GIMLI_RATE_WORDS (GIMLI_RATE / 4)
 
 void gimli_hash_init(gimli_hash_state *g)
 {
     memset(g, 0, sizeof *g);
 }
 
-static void absorb(uint32_t *state, const unsigned char m[GIMLI_RATE])
+static void advance(gimli_hash_state *g)
 {
-    for (size_t i = 0; i < GIMLI_RATE_WORDS; ++i)
+    ++g->offset;
+    if (g->offset == GIMLI_RATE)
     {
-        state[i] ^= bytes_to_u32(&m[4 * i]);
+        gimli(g->state);
+        g->offset = 0;
     }
 }
 
-static void squeeze(uint32_t *state, unsigned char h[GIMLI_RATE])
+static void absorb_byte(gimli_hash_state *g, unsigned char x)
 {
-    for (size_t i = 0; i < GIMLI_RATE_WORDS; ++i)
-    {
-        bytes_from_u32(&h[4 * i], state[i]);
-    }
+    g->state[g->offset / 4] ^= (uint32_t)x << ((g->offset % 4) * 8);
 }
 
-static void xor8(uint32_t *state, size_t i, unsigned char x)
+static unsigned char squeeze_byte(const gimli_hash_state *g)
 {
-    state[i / 4] ^= (uint32_t)x << ((i % 4) * 8);
+    return (g->state[g->offset / 4] >> ((g->offset % 4) * 8)) & 0xFFU;
 }
 
 void gimli_hash_update(gimli_hash_state *g, const unsigned char *input,
                        size_t len)
 {
-    size_t offset = g->offset;
-    while (len > 0)
+    for (size_t i = 0; i < len; ++i)
     {
-        if ((len >= GIMLI_RATE) && (offset == 0))
-        {
-            absorb(g->state, input);
-            gimli(g->state);
-            input += GIMLI_RATE;
-            len -= GIMLI_RATE;
-        }
-        else
-        {
-            xor8(g->state, offset, *input);
-            ++offset;
-            ++input;
-            --len;
-            if (offset == GIMLI_RATE)
-            {
-                gimli(g->state);
-                offset = 0;
-            }
-        }
+        absorb_byte(g, input[i]);
+        advance(g);
     }
-    g->offset = offset;
 }
 
 void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len)
 {
-    // Apply padding.
-    xor8(g->state, g->offset, 0x01);
+    absorb_byte(g, 0x01);
     g->state[GIMLI_WORDS - 1] ^= UINT32_C(0x01000000);
-
-    // Switch to the squeezing phase.
-    size_t offset = GIMLI_RATE;
-    unsigned char buf[GIMLI_RATE];
+    g->offset = GIMLI_RATE - 1;
     for (size_t i = 0; i < len; ++i)
     {
-        if (offset == GIMLI_RATE)
-        {
-            gimli(g->state);
-            squeeze(g->state, buf);
-            offset = 0;
-        }
-        output[i] = buf[offset];
-        ++offset;
+        advance(g);
+        output[i] = squeeze_byte(g);
     }
 }
 
