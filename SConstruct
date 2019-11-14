@@ -100,7 +100,6 @@ flags = [
     "-Wall",
     "-Wextra",
     "-Wpedantic",
-    "-Wconversion",
     "-Werror",
     "-specs=nosys.specs",
     "-specs=nano.specs",

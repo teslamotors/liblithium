@@ -4,12 +4,16 @@ Import("env")
 
 test_gimli = env.Program("test_gimli.c")
 test_lwc_hash_kat = env.Program("test_lwc_hash_kat.c")
+test_lwc_aead_kat = env.Program("test_lwc_aead_kat.c")
 
 test_gimli_out = env.Command(
     target="test_gimli.txt", source=test_gimli, action="$SOURCE > $TARGET"
 )
 test_lwc_hash_kat_out = env.Command(
     target="test_lwc_hash_kat.txt", source=test_lwc_hash_kat, action="$SOURCE > $TARGET"
+)
+test_lwc_aead_kat_out = env.Command(
+    target="test_lwc_aead_kat.txt", source=test_lwc_aead_kat, action="$SOURCE > $TARGET"
 )
 
 env.Command(
@@ -20,6 +24,11 @@ env.Command(
 env.Command(
     target="test_lwc_hash_kat.diff",
     source=[test_lwc_hash_kat_out, "LWC_HASH_KAT_256.txt"],
+    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+)
+env.Command(
+    target="test_lwc_aead_kat.diff",
+    source=[test_lwc_aead_kat_out, "LWC_AEAD_KAT_256_128.txt"],
     action="diff ${SOURCES[0]} ${SOURCES[1]}",
 )
 

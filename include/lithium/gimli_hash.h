@@ -1,19 +1,12 @@
 #pragma once
 
-#include "gimli.h"
+#include <lithium/gimli_state.h>
 
 #include <stddef.h>
-#include <stdint.h>
 
 #define GIMLI_HASH_DEFAULT_LEN 32
 
-#define GIMLI_RATE 16
-
-typedef struct
-{
-    uint32_t state[GIMLI_WORDS];
-    size_t offset;
-} gimli_hash_state;
+typedef gimli_state gimli_hash_state;
 
 void gimli_hash_init(gimli_hash_state *g);
 
