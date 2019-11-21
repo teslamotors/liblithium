@@ -33,6 +33,11 @@
 // November 13, 2019 to use the liblithium interface to gimli_aead, use stdout
 // instead of outputting to a file, and remove unused code.
 
+// This file was modified on November 20, 2019 to add a test for whether
+// the decrypt operation will fail if any of the ciphertext, tag, associated
+// data, nonce, or key is modified, and that the message output is zeroed out
+// in this case.
+
 #include <stdio.h>
 #include <string.h>
 
@@ -71,15 +76,14 @@ int generate_test_vectors(void)
     unsigned char ad[MAX_ASSOCIATED_DATA_LENGTH];
     unsigned char ct[MAX_MESSAGE_LENGTH + GIMLI_AEAD_TAG_DEFAULT_LEN];
     int count = 1;
-    int func_ret, ret_val = KAT_SUCCESS;
+    int func_ret;
 
     init_buffer(key, sizeof(key));
     init_buffer(nonce, sizeof(nonce));
     init_buffer(msg, sizeof(msg));
     init_buffer(ad, sizeof(ad));
 
-    for (size_t mlen = 0;
-         (mlen <= MAX_MESSAGE_LENGTH) && (ret_val == KAT_SUCCESS); mlen++)
+    for (size_t mlen = 0; mlen <= MAX_MESSAGE_LENGTH; mlen++)
     {
 
         for (size_t adlen = 0; adlen <= MAX_ASSOCIATED_DATA_LENGTH; adlen++)
@@ -99,20 +103,51 @@ int generate_test_vectors(void)
                                                 adlen, nonce, key)))
             {
                 printf("gimli_aead_decrypt returned <%d>\n", func_ret);
-                ret_val = KAT_CRYPTO_FAILURE;
-                break;
+                return KAT_CRYPTO_FAILURE;
             }
 
             if (memcmp(msg, msg2, mlen))
             {
                 printf("gimli_aead_decrypt did not recover the plaintext\n");
-                ret_val = KAT_CRYPTO_FAILURE;
-                break;
+                return KAT_CRYPTO_FAILURE;
+            }
+
+            unsigned char *const p[] = {
+                mlen > 0 ? ct : NULL,
+                &ct[mlen],
+                adlen > 0 ? ad : NULL,
+                nonce,
+                key,
+            };
+            for (size_t i = 0; i < sizeof(p) / sizeof(p[0]); ++i)
+            {
+                if (p[i] != NULL)
+                {
+                    *p[i] ^= 0xffU;
+                    if (gimli_aead_decrypt(msg2, ct, mlen, &ct[mlen],
+                                           GIMLI_AEAD_TAG_DEFAULT_LEN, ad,
+                                           adlen, nonce, key))
+                    {
+                        printf("gimli_aead_decrypt succeeded on an invalid "
+                               "input\n");
+                        return KAT_CRYPTO_FAILURE;
+                    }
+                    for (size_t j = 0; j < mlen; ++j)
+                    {
+                        if (msg2[j] != 0)
+                        {
+                            printf("gimli_aead_decrypt did not clear the "
+                                   "plaintext on authentication failure\n");
+                            return KAT_CRYPTO_FAILURE;
+                        }
+                    }
+                    *p[i] ^= 0xffU;
+                }
             }
         }
     }
 
-    return ret_val;
+    return KAT_SUCCESS;
 }
 
 void print_bstr(const char *label, const unsigned char *data, size_t length)
