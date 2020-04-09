@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2015-2016 Cryptography Research, Inc.
+ * Released under the MIT License.
+ * See LICENSE for license information.
+ */
+
 #pragma once
 
 #include <stdint.h>

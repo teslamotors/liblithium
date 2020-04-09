@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 Cryptography Research, Inc.
+ * Released under the MIT License.
+ * See LICENSE for license information.
+ */
+
 #pragma once
 
 #include <lithium/x25519.h>
