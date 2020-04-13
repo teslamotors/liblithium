@@ -1,31 +1,31 @@
 #include "gimli_common.h"
 
-#include <limits.h>
-#include <string.h>
+#include "lith_endian.h"
 
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) &&             \
-    (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) && (CHAR_BIT == 8)
-#define GIMLI_LITTLE_ENDIAN 1
-#else
-#define GIMLI_LITTLE_ENDIAN 0
-#endif
+#include <string.h>
 
 void gimli_absorb_byte(gimli_state *g, unsigned char x)
 {
-#if (GIMLI_LITTLE_ENDIAN)
-    ((unsigned char *)g->state)[g->offset] ^= x;
-#else
-    g->state[g->offset / 4] ^= (uint32_t)x << ((g->offset % 4) * 8);
-#endif
+    if (LITH_LITTLE_ENDIAN)
+    {
+        ((unsigned char *)g->state)[g->offset] ^= x;
+    }
+    else
+    {
+        g->state[g->offset / 4] ^= (uint32_t)x << ((g->offset % 4) * 8);
+    }
 }
 
 unsigned char gimli_squeeze_byte(const gimli_state *g)
 {
-#if (GIMLI_LITTLE_ENDIAN)
-    return ((const unsigned char *)g->state)[g->offset];
-#else
-    return (g->state[g->offset / 4] >> ((g->offset % 4) * 8)) & 0xFFU;
-#endif
+    if (LITH_LITTLE_ENDIAN)
+    {
+        return ((const unsigned char *)g->state)[g->offset];
+    }
+    else
+    {
+        return (g->state[g->offset / 4] >> ((g->offset % 4) * 8)) & 0xFFU;
+    }
 }
 
 #define GIMLI_RATE 16
