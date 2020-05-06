@@ -6,10 +6,12 @@ import os
 def build_with_env(path, env, test=True):
     lith_env = env.Clone()
     lith_env.Append(CPPPATH=[Dir("include")])
+    liblith_env = lith_env.Clone()
+    liblith_env.Append(CFLAGS=["-ansi"])
     liblithium = SConscript(
         dirs="src",
         variant_dir=os.path.join(path, "lib"),
-        exports={"env": lith_env},
+        exports={"env": liblith_env},
         duplicate=False,
     )
     lith_env.Append(LIBS=[liblithium])
@@ -26,15 +28,15 @@ def build_with_env(path, env, test=True):
             duplicate=False,
         )
 
-    hydro_env = env.Clone()
-    hydro_env.Append(CPPPATH=[Dir("hydro"), Dir("include")])
+    hydro_env = lith_env.Clone()
+    hydro_env.Append(CPPPATH=[Dir("hydro")])
     libhydrogen = SConscript(
         dirs="hydro",
         variant_dir=os.path.join(path, "hydro", "lib"),
         exports={"env": hydro_env},
         duplicate=False,
     )
-    hydro_env.Append(LIBS=[libhydrogen, liblithium])
+    hydro_env.Prepend(LIBS=[libhydrogen])
 
     SConscript(
         dirs="hydro/examples",

@@ -23,7 +23,8 @@ struct xz
 static void cswap(uint32_t swap, struct xz *a, struct xz *b)
 {
     uint32_t *ap = &a->x[0], *bp = &b->x[0];
-    for (int i = 0; i < NLIMBS * 2; ++i)
+    int i;
+    for (i = 0; i < NLIMBS * 2; ++i)
     {
         const uint32_t d = (ap[i] ^ bp[i]) & swap;
         ap[i] ^= d;
@@ -31,52 +32,56 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
     }
 }
 
-// Curve constant a = 486662
-// (a - 2)/4
+/*
+ * Curve constant a = 486662
+ * (a - 2)/4 = 121665
+ */
 #define A24 UINT32_C(121665)
 
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
-    add(t, P->x, P->z);        // t = A = x + z
-    sub(P->z, P->x, P->z);     // P->z = B = x - z
-    add(P->x, Q->x, Q->z);     // P->x = C = u + w
-    sub(Q->z, Q->x, Q->z);     // Q->z = D = u - w
-    mul1(Q->z, t);             // Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw
-    mul1(P->x, P->z);          // Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw
-    add(Q->x, Q->z, P->x);     // Q->x = DA + CB = 2xu - 2zw
-    sub(Q->z, Q->z, P->x);     // Q->z = DA - CB = 2zu - 2xw
-    sqr1(t);                   // t = AA = (x + z)^2 = xx + 2xz + zz
-    sqr1(P->z);                // P->z = BB = (x - z)^2 = xx - 2xz + zz
-    sub(P->x, t, P->z);        // P->x = E = AA - BB = 4xz
-    mul_word(P->z, P->x, A24); // P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz
-    add(P->z, P->z, t);        // P->z = E(a - 2)/4 + AA = xx + axz + zz
+    add(t, P->x, P->z);    /* t = A = x + z */
+    sub(P->z, P->x, P->z); /* P->z = B = x - z */
+    add(P->x, Q->x, Q->z); /* P->x = C = u + w */
+    sub(Q->z, Q->x, Q->z); /* Q->z = D = u - w */
+    mul1(Q->z, t);         /* Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw */
+    mul1(P->x, P->z);      /* Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw */
+    add(Q->x, Q->z, P->x); /* Q->x = DA + CB = 2xu - 2zw */
+    sub(Q->z, Q->z, P->x); /* Q->z = DA - CB = 2zu - 2xw */
+    sqr1(t);               /* t = AA = (x + z)^2 = xx + 2xz + zz */
+    sqr1(P->z);            /* P->z = BB = (x - z)^2 = xx - 2xz + zz */
+    sub(P->x, t, P->z);    /* P->x = E = AA - BB = 4xz */
+    mul_word(P->z, P->x,
+             A24);      /* P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
+    add(P->z, P->z, t); /* P->z = E(a - 2)/4 + AA = xx + axz + zz */
 }
 
 static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t, const fe_t x)
 {
-    sqr1(Q->z);         // Q->z = (DA - CB)^2
-    mul1(Q->z, x);      // Q->z = x(DA - CB)^2
-    sqr1(Q->x);         // Q->x = (DA + CB)^2
-    mul1(P->z, P->x);   // P->z = E(E(a - 2)/4 + AA)
-    sub(P->x, t, P->x); // P->x = AA - E = AA - (AA - BB) = BB
-    mul1(P->x, t);      // P->x = AABB
+    sqr1(Q->z);         /* Q->z = (DA - CB)^2 */
+    mul1(Q->z, x);      /* Q->z = x(DA - CB)^2 */
+    sqr1(Q->x);         /* Q->x = (DA + CB)^2 */
+    mul1(P->z, P->x);   /* P->z = E(E(a - 2)/4 + AA) */
+    sub(P->x, t, P->x); /* P->x = AA - E = AA - (AA - BB) = BB */
+    mul1(P->x, t);      /* P->x = AABB */
 }
 
 static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
                       const fe_t x)
 {
-    struct xz Q = {.z = {1}};
+    struct xz Q = {{0}, {1}};
+    uint32_t swap = 0;
+    int i;
     memcpy(Q.x, x, sizeof(fe_t));
     memset(P, 0, sizeof *P);
     P->x[0] = 1;
 
-    uint32_t swap = 0;
-    for (int i = X25519_BITS - 1; i >= 0; --i)
+    for (i = X25519_BITS - 1; i >= 0; --i)
     {
         const uint32_t ki = -(((uint32_t)k[i / 8] >> (i % 8)) & 1);
+        fe_t t;
         cswap(swap ^ ki, P, &Q);
         swap = ki;
-        fe_t t;
         ladder_part1(P, &Q, t);
         ladder_part2(P, &Q, t, x);
     }
@@ -136,31 +141,31 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     read_limbs(A, public_key);
     x25519_xz(&P, response, B);
     x25519_xz(&Q, challenge, A);
-    // P = x/z = response*base_point
-    // Q = u/w = challenge*public_key
+    /* P = x/z = response*base_point */
+    /* Q = u/w = challenge*public_key */
 
     mul(A, Q.x, Q.z);
     mul_word(A, A, 16);
-    // A = 16uw
+    /* A = 16uw */
 
     ladder_part1(&P, &Q, B);
-    // Q.x = 2xu - 2zw
-    // Q.z = 2zu - 2xw
-    // P.z = xx + axz + zz
+    /* Q.x = 2xu - 2zw */
+    /* Q.z = 2zu - 2xw */
+    /* P.z = xx + axz + zz */
 
     read_limbs(B, public_nonce);
-    // B = R
+    /* B = R */
 
     mul1(P.z, A);
     mul1(P.z, B);
-    // P.z = left = 16uwR(xx + axz + zz)
+    /* P.z = left = 16uwR(xx + axz + zz) */
 
     mul1(Q.z, B);
     sub(Q.z, Q.z, Q.x);
     sqr1(Q.z);
-    // Q.z = right = (R(2zu - 2xw) - (2xu - 2zw))^2
+    /* Q.z = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
 
-    // check equality
+    /* check equality */
     sub(Q.z, Q.z, P.z);
 
     /*
@@ -196,12 +201,16 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
         0x00000000U, 0x00000000U, 0x00000000U, 0x10000000U,
     };
 
-    uint32_t hic = 0;
-    for (int i = 0; i < NLIMBS; ++i)
-    {
-        uint32_t carry = 0, carry2 = 0, u = MONTGOMERY_FACTOR;
+    uint32_t hic = 0, need_add, carry, carry2, u;
+    int64_t scarry = 0;
+    int i, j;
 
-        for (int j = 0; j < NLIMBS; ++j)
+    for (i = 0; i < NLIMBS; ++i)
+    {
+        carry = 0;
+        carry2 = 0;
+        u = MONTGOMERY_FACTOR;
+        for (j = 0; j < NLIMBS; ++j)
         {
             uint32_t acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
@@ -221,17 +230,16 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     }
 
     /* Reduce */
-    int64_t scarry = 0;
-    for (int i = 0; i < NLIMBS; ++i)
+    for (i = 0; i < NLIMBS; ++i)
     {
         scarry = scarry + t[i] - L[i];
         t[i] = (uint32_t)scarry;
         scarry >>= WBITS;
     }
-    uint32_t need_add = (uint32_t)(-(scarry + hic));
+    need_add = (uint32_t)(-(scarry + hic));
 
-    uint32_t carry = 0;
-    for (int i = 0; i < NLIMBS; ++i)
+    carry = 0;
+    for (i = 0; i < NLIMBS; ++i)
     {
         t[i] = mac(&carry, t[i], need_add, L[i]);
     }
@@ -263,8 +271,8 @@ void x25519_sign(unsigned char response[X25519_LEN],
     read_limbs(r, secret_nonce);
     read_limbs(a, secret_key);
     read_limbs(h, challenge);
-    sc_montmul(r, a, h); // r = (secret_nonce + secret_key * challenge)R^-1
+    sc_montmul(r, a, h); /* r = (secret_nonce + secret_key * challenge)R^-1 */
     memset(a, 0, sizeof(scalar_t));
-    sc_montmul(a, r, R2modL); // a = (secret_nonce + secret_key * challenge)
+    sc_montmul(a, r, R2modL); /* a = (secret_nonce + secret_key * challenge) */
     write_limbs(response, a);
 }

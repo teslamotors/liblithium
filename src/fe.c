@@ -15,7 +15,8 @@
 
 void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 {
-    for (int i = 0; i < NLIMBS; ++i)
+    int i;
+    for (i = 0; i < NLIMBS; ++i)
     {
         x[i] = bytes_to_u32(in + i * WLEN);
     }
@@ -23,7 +24,8 @@ void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
 
 void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
 {
-    for (int i = 0; i < NLIMBS; ++i)
+    int i;
+    for (i = 0; i < NLIMBS; ++i)
     {
         bytes_from_u32(out + i * WLEN, x[i]);
     }
@@ -37,9 +39,10 @@ void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
  */
 static void propagate(fe_t x, uint32_t carry)
 {
+    int i;
     carry = ((carry << 1) | (x[NLIMBS - 1] >> (WBITS - 1))) * 19;
     x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
-    for (int i = 0; i < NLIMBS; ++i)
+    for (i = 0; i < NLIMBS; ++i)
     {
         x[i] = adc(&carry, x[i], 0);
     }
@@ -48,7 +51,8 @@ static void propagate(fe_t x, uint32_t carry)
 void add(fe_t out, const fe_t a, const fe_t b)
 {
     uint32_t carry = 0;
-    for (int i = 0; i < NLIMBS; ++i)
+    int i;
+    for (i = 0; i < NLIMBS; ++i)
     {
         out[i] = adc(&carry, a[i], b[i]);
     }
@@ -58,7 +62,8 @@ void add(fe_t out, const fe_t a, const fe_t b)
 void sub(fe_t out, const fe_t a, const fe_t b)
 {
     int64_t carry = -76;
-    for (int i = 0; i < NLIMBS; ++i)
+    int i;
+    for (i = 0; i < NLIMBS; ++i)
     {
         carry = carry + a[i] - b[i];
         out[i] = (uint32_t)carry;
@@ -72,10 +77,11 @@ static void mul_n(fe_t out, const fe_t a, const uint32_t *b, int nb)
     uint32_t accum[NLIMBS * 2] = {0};
     uint32_t carry;
 
-    for (int i = 0; i < nb; ++i)
+    int i, j;
+    for (i = 0; i < nb; ++i)
     {
         carry = 0;
-        for (int j = 0; j < NLIMBS; ++j)
+        for (j = 0; j < NLIMBS; ++j)
         {
             accum[i + j] = mac(&carry, accum[i + j], b[i], a[j]);
         }
@@ -83,7 +89,7 @@ static void mul_n(fe_t out, const fe_t a, const uint32_t *b, int nb)
     }
 
     carry = 0;
-    for (int i = 0; i < NLIMBS; ++i)
+    for (i = 0; i < NLIMBS; ++i)
     {
         out[i] = mac(&carry, accum[i], 38, accum[i + NLIMBS]);
     }
@@ -118,6 +124,9 @@ uint32_t canon(fe_t a)
      *
      * Precondition: x < 2^255 + 1 word
      */
+    int64_t carry;
+    uint32_t res;
+    int i;
 
     /* First, add 19. */
     const fe_t nineteen = {19};
@@ -136,9 +145,9 @@ uint32_t canon(fe_t a)
      *
      * So now, if we subtract 19, we will get back to something in [0,2^255-19).
      */
-    int64_t carry = -19;
-    uint32_t res = 0;
-    for (int i = 0; i < NLIMBS; ++i)
+    carry = -19;
+    res = 0;
+    for (i = 0; i < NLIMBS; ++i)
     {
         carry += a[i];
         a[i] = (uint32_t)carry;
@@ -151,8 +160,9 @@ uint32_t canon(fe_t a)
 void inv(fe_t out, const fe_t a)
 {
     fe_t t = {1};
+    int i;
     /* Raise to the p-2 = 0x7f..ffeb */
-    for (int i = 254; i >= 0; --i)
+    for (i = 254; i >= 0; --i)
     {
         sqr1(t);
         if (i >= 8 || ((0xeb >> i) & 1))

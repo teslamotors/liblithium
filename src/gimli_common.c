@@ -47,7 +47,8 @@ void gimli_init(gimli_state *g)
 
 void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 {
-    for (size_t i = 0; i < len; ++i)
+    size_t i;
+    for (i = 0; i < len; ++i)
     {
         gimli_absorb_byte(g, m[i]);
         gimli_advance(g);
@@ -56,7 +57,8 @@ void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 
 void gimli_squeeze(gimli_state *g, unsigned char *h, size_t len)
 {
-    for (size_t i = 0; i < len; ++i)
+    size_t i;
+    for (i = 0; i < len; ++i)
     {
         h[i] = gimli_squeeze_byte(g);
         gimli_advance(g);
