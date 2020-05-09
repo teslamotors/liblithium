@@ -13,20 +13,20 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef uint32_t scalar_t[NLIMBS];
+typedef limb_t scalar_t[NLIMBS];
 
 struct xz
 {
     fe_t x, z;
 };
 
-static void cswap(uint32_t swap, struct xz *a, struct xz *b)
+static void cswap(limb_t swap, struct xz *a, struct xz *b)
 {
-    uint32_t *ap = &a->x[0], *bp = &b->x[0];
+    limb_t *ap = &a->x[0], *bp = &b->x[0];
     int i;
     for (i = 0; i < NLIMBS * 2; ++i)
     {
-        const uint32_t d = (ap[i] ^ bp[i]) & swap;
+        const limb_t d = (ap[i] ^ bp[i]) & swap;
         ap[i] ^= d;
         bp[i] ^= d;
     }
@@ -40,6 +40,7 @@ static void cswap(uint32_t swap, struct xz *a, struct xz *b)
 
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
+    const fe_t a24 = {LIMB(A24)};
     add(t, P->x, P->z);    /* t = A = x + z */
     sub(P->z, P->x, P->z); /* P->z = B = x - z */
     add(P->x, Q->x, Q->z); /* P->x = C = u + w */
@@ -51,9 +52,8 @@ static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
     sqr1(t);               /* t = AA = (x + z)^2 = xx + 2xz + zz */
     sqr1(P->z);            /* P->z = BB = (x - z)^2 = xx - 2xz + zz */
     sub(P->x, t, P->z);    /* P->x = E = AA - BB = 4xz */
-    mul_word(P->z, P->x,
-             A24);      /* P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
-    add(P->z, P->z, t); /* P->z = E(a - 2)/4 + AA = xx + axz + zz */
+    mul(P->z, P->x, a24);  /* P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
+    add(P->z, P->z, t);    /* P->z = E(a - 2)/4 + AA = xx + axz + zz */
 }
 
 static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t, const fe_t x)
@@ -70,7 +70,7 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
                       const fe_t x)
 {
     struct xz Q = {{0}, {1}};
-    uint32_t swap = 0;
+    limb_t swap = 0;
     int i;
     memcpy(Q.x, x, sizeof(fe_t));
     memset(P, 0, sizeof *P);
@@ -78,7 +78,7 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
 
     for (i = X25519_BITS - 1; i >= 0; --i)
     {
-        const uint32_t ki = -(((uint32_t)k[i / 8] >> (i % 8)) & 1);
+        const limb_t ki = -(((limb_t)k[i / 8] >> (i % 8)) & 1);
         fe_t t;
         cswap(swap ^ ki, P, &Q);
         swap = ki;
@@ -114,7 +114,7 @@ void x25519(unsigned char out[X25519_LEN],
     xz_to_bytes(out, &P);
 }
 
-#define BASE_POINT UINT32_C(9)
+#define BASE_POINT ((limb_t)9U)
 
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
@@ -179,9 +179,9 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
 }
 
 /*
- * Montgomery factor: -L^-1 mod 2^32
+ * Montgomery factor: -L^-1 mod 2^LITH_X25519_WBITS
  */
-#define MONTGOMERY_FACTOR UINT32_C(0x12547e1b)
+#define MONTGOMERY_FACTOR ((limb_t)0x12547e1bU)
 
 /*
  * Set t = (t + ab)R^-1 mod l
@@ -197,12 +197,13 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
      * Mp)/M = 2p, subtract p, < p, done.
      */
     static const scalar_t L = {
-        0x5cf5d3edU, 0x5812631aU, 0xa2f79cd6U, 0x14def9deU,
-        0x00000000U, 0x00000000U, 0x00000000U, 0x10000000U,
+        LIMB(0x5cf5d3edU), LIMB(0x5812631aU), LIMB(0xa2f79cd6U),
+        LIMB(0x14def9deU), LIMB(0x00000000U), LIMB(0x00000000U),
+        LIMB(0x00000000U), LIMB(0x10000000U),
     };
 
-    uint32_t hic = 0, need_add, carry, carry2, u;
-    int64_t scarry = 0;
+    limb_t hic = 0, need_add, carry, carry2, u;
+    sdlimb_t scarry = 0;
     int i, j;
 
     for (i = 0; i < NLIMBS; ++i)
@@ -212,7 +213,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
         u = MONTGOMERY_FACTOR;
         for (j = 0; j < NLIMBS; ++j)
         {
-            uint32_t acc = t[j];
+            limb_t acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
             {
@@ -233,10 +234,10 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     for (i = 0; i < NLIMBS; ++i)
     {
         scarry = scarry + t[i] - L[i];
-        t[i] = (uint32_t)scarry;
-        scarry >>= WBITS;
+        t[i] = (limb_t)scarry;
+        scarry >>= LITH_X25519_WBITS;
     }
-    need_add = (uint32_t)(-(scarry + hic));
+    need_add = (limb_t)(-(scarry + hic));
 
     carry = 0;
     for (i = 0; i < NLIMBS; ++i)
@@ -264,8 +265,9 @@ void x25519_sign(unsigned char response[X25519_LEN],
      * reductions.
      */
     static const scalar_t R2modL = {
-        0x449c0f01U, 0xa40611e3U, 0x68859347U, 0xd00e1ba7U,
-        0x17f5be65U, 0xceec73d2U, 0x7c309a3dU, 0x0399411bU,
+        LIMB(0x449c0f01U), LIMB(0xa40611e3U), LIMB(0x68859347U),
+        LIMB(0xd00e1ba7U), LIMB(0x17f5be65U), LIMB(0xceec73d2U),
+        LIMB(0x7c309a3dU), LIMB(0x0399411bU),
     };
     scalar_t r, a, h;
     read_limbs(r, secret_nonce);

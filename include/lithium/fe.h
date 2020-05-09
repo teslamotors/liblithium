@@ -10,14 +10,35 @@
 
 #include <stdint.h>
 
-#define WBITS 32
-#define NLIMBS (X25519_BITS / WBITS)
+#ifndef LITH_X25519_WBITS
+#define LITH_X25519_WBITS 32
+#endif
 
-typedef uint32_t fe_t[NLIMBS];
+#if (LITH_X25519_WBITS == 16)
 
-void read_limbs(uint32_t x[NLIMBS], const unsigned char *in);
+typedef uint16_t limb_t;
+typedef uint32_t dlimb_t;
+typedef int32_t sdlimb_t;
+#define LIMB(x) ((limb_t)(x & 0xFFFFU)), ((limb_t)(x >> LITH_X25519_WBITS))
 
-void write_limbs(unsigned char *out, const uint32_t x[NLIMBS]);
+#elif (LITH_X25519_WBITS == 32)
+
+typedef uint32_t limb_t;
+typedef uint64_t dlimb_t;
+typedef int64_t sdlimb_t;
+#define LIMB(x) ((limb_t)(x))
+
+#else
+#error "Unsupported value for LITH_X25519_WBITS"
+#endif
+
+#define NLIMBS (X25519_BITS / LITH_X25519_WBITS)
+
+typedef limb_t fe_t[NLIMBS];
+
+void read_limbs(limb_t x[NLIMBS], const unsigned char *in);
+
+void write_limbs(unsigned char *out, const limb_t x[NLIMBS]);
 
 void add(fe_t out, const fe_t a, const fe_t b);
 
@@ -27,10 +48,10 @@ void mul(fe_t out, const fe_t a, const fe_t b);
 
 void mul1(fe_t a, const fe_t b);
 
-void mul_word(fe_t out, const fe_t a, uint32_t b);
+void mul_word(fe_t out, const fe_t a, limb_t b);
 
 void sqr1(fe_t a);
 
-uint32_t canon(fe_t a);
+limb_t canon(fe_t a);
 
 void inv(fe_t out, const fe_t a);

@@ -93,6 +93,10 @@ host_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags + link_flags)
 
 build_with_env("dist", host_env)
 
+half_env = host_env.Clone()
+half_env.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+build_with_env("dist/half", half_env)
+
 arm_env = env.Clone()
 arm_env["CC"] = "arm-none-eabi-gcc"
 arm_env["LINK"] = "arm-none-eabi-gcc"

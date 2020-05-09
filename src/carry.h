@@ -6,18 +6,18 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <lithium/fe.h>
 
-static uint32_t mac(uint32_t *carry, uint32_t a, uint32_t b, uint32_t c)
+static limb_t mac(limb_t *carry, limb_t a, limb_t b, limb_t c)
 {
-    uint64_t tmp = (uint64_t)b * c + a + *carry;
-    *carry = (uint32_t)(tmp >> 32);
-    return (uint32_t)tmp;
+    dlimb_t tmp = (dlimb_t)b * c + a + *carry;
+    *carry = (limb_t)(tmp >> LITH_X25519_WBITS);
+    return (limb_t)tmp;
 }
 
-static uint32_t adc(uint32_t *carry, uint32_t a, uint32_t b)
+static limb_t adc(limb_t *carry, limb_t a, limb_t b)
 {
-    uint64_t total = (uint64_t)a + b + *carry;
-    *carry = (uint32_t)(total >> 32);
-    return (uint32_t)total;
+    dlimb_t total = (dlimb_t)a + b + *carry;
+    *carry = (limb_t)(total >> LITH_X25519_WBITS);
+    return (limb_t)total;
 }

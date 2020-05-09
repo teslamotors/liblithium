@@ -6,28 +6,35 @@
 
 #include <lithium/fe.h>
 
-#include "bytes.h"
 #include "carry.h"
 
 #include <string.h>
 
-#define WLEN (WBITS / 8)
+#define WLEN (LITH_X25519_WBITS / 8)
 
-void read_limbs(uint32_t x[NLIMBS], const unsigned char *in)
+void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
 {
-    int i;
+    int i, j;
     for (i = 0; i < NLIMBS; ++i)
     {
-        x[i] = bytes_to_u32(in + i * WLEN);
+        x[i] = 0;
+        for (j = 0; j < WLEN; ++j)
+        {
+            x[i] |= (limb_t)in[(i * WLEN) + j] << (j * 8);
+        }
     }
 }
 
-void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
+void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
 {
-    int i;
+    int i, j;
     for (i = 0; i < NLIMBS; ++i)
     {
-        bytes_from_u32(out + i * WLEN, x[i]);
+        limb_t w = x[i];
+        for (j = 0; j < WLEN; ++j)
+        {
+            out[(i * WLEN) + j] = (w >> (j * 8)) & 0xFFU;
+        }
     }
 }
 
@@ -37,11 +44,12 @@ void write_limbs(unsigned char *out, const uint32_t x[NLIMBS])
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
  */
-static void propagate(fe_t x, uint32_t carry)
+static void propagate(fe_t x, limb_t carry)
 {
     int i;
-    carry = ((carry << 1) | (x[NLIMBS - 1] >> (WBITS - 1))) * 19;
-    x[NLIMBS - 1] &= ~((uint32_t)1 << (WBITS - 1));
+    carry = (limb_t)(
+        ((carry << 1) | (x[NLIMBS - 1] >> (LITH_X25519_WBITS - 1))) * 19);
+    x[NLIMBS - 1] &= ~((limb_t)1 << (LITH_X25519_WBITS - 1));
     for (i = 0; i < NLIMBS; ++i)
     {
         x[i] = adc(&carry, x[i], 0);
@@ -50,7 +58,7 @@ static void propagate(fe_t x, uint32_t carry)
 
 void add(fe_t out, const fe_t a, const fe_t b)
 {
-    uint32_t carry = 0;
+    limb_t carry = 0;
     int i;
     for (i = 0; i < NLIMBS; ++i)
     {
@@ -61,21 +69,21 @@ void add(fe_t out, const fe_t a, const fe_t b)
 
 void sub(fe_t out, const fe_t a, const fe_t b)
 {
-    int64_t carry = -76;
+    sdlimb_t carry = -76;
     int i;
     for (i = 0; i < NLIMBS; ++i)
     {
         carry = carry + a[i] - b[i];
-        out[i] = (uint32_t)carry;
-        carry >>= WBITS;
+        out[i] = (limb_t)carry;
+        carry >>= LITH_X25519_WBITS;
     }
-    propagate(out, (uint32_t)(carry + 2));
+    propagate(out, (limb_t)(carry + 2));
 }
 
-static void mul_n(fe_t out, const fe_t a, const uint32_t *b, int nb)
+static void mul_n(fe_t out, const fe_t a, const limb_t *b, int nb)
 {
-    uint32_t accum[NLIMBS * 2] = {0};
-    uint32_t carry;
+    limb_t accum[NLIMBS * 2] = {0};
+    limb_t carry;
 
     int i, j;
     for (i = 0; i < nb; ++i)
@@ -101,7 +109,7 @@ void mul(fe_t out, const fe_t a, const fe_t b)
     mul_n(out, a, b, NLIMBS);
 }
 
-void mul_word(fe_t out, const fe_t a, uint32_t b)
+void mul_word(fe_t out, const fe_t a, limb_t b)
 {
     mul_n(out, a, &b, 1);
 }
@@ -116,7 +124,7 @@ void sqr1(fe_t a)
     mul1(a, a);
 }
 
-uint32_t canon(fe_t a)
+limb_t canon(fe_t a)
 {
     /*
      * Canonicalize a field element a, reducing it to the least residue which
@@ -124,8 +132,8 @@ uint32_t canon(fe_t a)
      *
      * Precondition: x < 2^255 + 1 word
      */
-    int64_t carry;
-    uint32_t res;
+    sdlimb_t carry;
+    limb_t res;
     int i;
 
     /* First, add 19. */
@@ -150,11 +158,11 @@ uint32_t canon(fe_t a)
     for (i = 0; i < NLIMBS; ++i)
     {
         carry += a[i];
-        a[i] = (uint32_t)carry;
+        a[i] = (limb_t)carry;
         res |= a[i];
-        carry >>= WBITS;
+        carry >>= LITH_X25519_WBITS;
     }
-    return (uint32_t)(((uint64_t)res - 1) >> WBITS);
+    return (limb_t)(((dlimb_t)res - 1) >> LITH_X25519_WBITS);
 }
 
 void inv(fe_t out, const fe_t a)
