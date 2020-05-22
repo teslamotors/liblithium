@@ -1,7 +1,7 @@
 #ifndef LITHIUM_SIGN_H
 #define LITHIUM_SIGN_H
 
-#include "gimli_hash.h"
+#include <lithium/gimli_hash.h>
 
 #include <stdbool.h>
 
