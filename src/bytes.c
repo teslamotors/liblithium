@@ -9,7 +9,7 @@ uint32_t bytes_to_u32(const unsigned char *p)
     if (LITH_LITTLE_ENDIAN)
     {
         uint32_t x;
-        memcpy(&x, p, sizeof x);
+        (void)memcpy(&x, p, sizeof x);
         return x;
     }
     else
@@ -23,7 +23,7 @@ void bytes_from_u32(unsigned char *p, uint32_t x)
 {
     if (LITH_LITTLE_ENDIAN)
     {
-        memcpy(p, &x, sizeof x);
+        (void)memcpy(p, &x, sizeof x);
     }
     else
     {

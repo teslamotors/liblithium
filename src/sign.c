@@ -21,7 +21,7 @@ void lith_sign_keygen(unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
     lith_random_bytes(secret_key, X25519_LEN);
     gen_az(az, secret_key);
     x25519_base(public_key, az);
-    memcpy(&secret_key[X25519_LEN], public_key, X25519_LEN);
+    (void)memcpy(&secret_key[X25519_LEN], public_key, X25519_LEN);
 }
 
 void lith_sign_init(lith_sign_state *state)

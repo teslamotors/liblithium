@@ -178,5 +178,5 @@ void inv(fe_t out, const fe_t a)
             mul1(t, a);
         }
     }
-    memcpy(out, t, sizeof(fe_t));
+    (void)memcpy(out, t, sizeof(fe_t));
 }

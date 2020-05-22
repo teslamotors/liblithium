@@ -72,8 +72,8 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
     struct xz Q = {{0}, {1}};
     limb_t swap = 0;
     int i;
-    memcpy(Q.x, x, sizeof(fe_t));
-    memset(P, 0, sizeof *P);
+    (void)memcpy(Q.x, x, sizeof(fe_t));
+    (void)memset(P, 0, sizeof *P);
     P->x[0] = 1;
 
     for (i = X25519_BITS - 1; i >= 0; --i)
@@ -92,7 +92,7 @@ static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
 {
     inv(p->z, p->z);
     mul1(p->x, p->z);
-    canon(p->x);
+    (void)canon(p->x);
     write_limbs(out, p->x);
 }
 
@@ -274,7 +274,7 @@ void x25519_sign(unsigned char response[X25519_LEN],
     read_limbs(a, secret_key);
     read_limbs(h, challenge);
     sc_montmul(r, a, h); /* r = (secret_nonce + secret_key * challenge)R^-1 */
-    memset(a, 0, sizeof(scalar_t));
+    (void)memset(a, 0, sizeof(scalar_t));
     sc_montmul(a, r, R2modL); /* a = (secret_nonce + secret_key * challenge) */
     write_limbs(response, a);
 }
