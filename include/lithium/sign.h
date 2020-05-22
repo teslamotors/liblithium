@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LITHIUM_SIGN_H
+#define LITHIUM_SIGN_H
 
 #include "gimli_hash.h"
 
@@ -50,3 +51,5 @@ bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN], const void *msg,
                       size_t len,
                       const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
     __attribute__((warn_unused_result));
+
+#endif /* LITHIUM_SIGN_H */

@@ -4,7 +4,8 @@
  * See LICENSE for license information.
  */
 
-#pragma once
+#ifndef LITHIUM_CARRY_H
+#define LITHIUM_CARRY_H
 
 #include <lithium/fe.h>
 
@@ -21,3 +22,5 @@ static limb_t adc(limb_t *carry, limb_t a, limb_t b)
     *carry = (limb_t)(total >> LITH_X25519_WBITS);
     return (limb_t)total;
 }
+
+#endif /* LITHIUM_CARRY_H */

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LITHIUM_LITH_ENDIAN_H
+#define LITHIUM_LITH_ENDIAN_H
 
 #include <limits.h>
 
@@ -8,3 +9,5 @@
 #else
 #define LITH_LITTLE_ENDIAN 0
 #endif
+
+#endif /* LITHIUM_LITH_ENDIAN_H */

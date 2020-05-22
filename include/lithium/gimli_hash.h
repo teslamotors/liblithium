@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LITHIUM_GIMLI_HASH_H
+#define LITHIUM_GIMLI_HASH_H
 
 #include <lithium/gimli_state.h>
 
@@ -17,3 +18,5 @@ void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len);
 
 void gimli_hash(unsigned char *output, size_t output_len,
                 const unsigned char *input, size_t input_len);
+
+#endif /* LITHIUM_GIMLI_HASH_H */

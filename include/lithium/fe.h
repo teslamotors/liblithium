@@ -4,7 +4,8 @@
  * See LICENSE for license information.
  */
 
-#pragma once
+#ifndef LITHIUM_FE_H
+#define LITHIUM_FE_H
 
 #include <lithium/x25519.h>
 
@@ -55,3 +56,5 @@ void sqr1(fe_t a);
 limb_t canon(fe_t a);
 
 void inv(fe_t out, const fe_t a);
+
+#endif /* LITHIUM_FE_H */

@@ -4,7 +4,8 @@
  * See LICENSE for license information.
  */
 
-#pragma once
+#ifndef LITHIUM_X25519_H
+#define LITHIUM_X25519_H
 
 #include <stdbool.h>
 
@@ -56,3 +57,5 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
                    const unsigned char challenge[X25519_LEN],
                    const unsigned char public_nonce[X25519_LEN],
                    const unsigned char public_key[X25519_LEN]);
+
+#endif /* LITHIUM_X25519_H */

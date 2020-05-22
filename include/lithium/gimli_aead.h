@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LITHIUM_GIMLI_AEAD_H
+#define LITHIUM_GIMLI_AEAD_H
 
 #include <lithium/gimli_state.h>
 
@@ -40,3 +41,5 @@ bool gimli_aead_decrypt(unsigned char *m, const unsigned char *c, size_t clen,
                         const unsigned char n[GIMLI_AEAD_NONCE_LEN],
                         const unsigned char k[GIMLI_AEAD_KEY_LEN])
     __attribute__((warn_unused_result));
+
+#endif /* LITHIUM_GIMLI_AEAD_H */
