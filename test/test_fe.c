@@ -8,7 +8,7 @@
 int main(void)
 {
     fe_t m, z, a;
-    memset(m, 0xff, sizeof m);
+    memset(m, 0xFF, sizeof m);
     memset(z, 0, sizeof z);
     sub(a, z, m);
     add(a, a, m);

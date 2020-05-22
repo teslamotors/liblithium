@@ -8,7 +8,7 @@ int main()
     unsigned int i;
 
     for (i = 0; i < 12; ++i)
-        x[i] = i * i * i + i * 0x9e3779b9;
+        x[i] = i * i * i + i * 0x9E3779B9;
 
     gimli(x);
 
