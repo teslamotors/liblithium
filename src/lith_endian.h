@@ -3,10 +3,13 @@
 
 #include <limits.h>
 
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) &&             \
-    (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) && (CHAR_BIT == 8)
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) && (CHAR_BIT == 8)
 #define LITH_LITTLE_ENDIAN 1
-#else
+#endif
+#endif
+
+#ifndef LITH_LITTLE_ENDIAN
 #define LITH_LITTLE_ENDIAN 0
 #endif
 
