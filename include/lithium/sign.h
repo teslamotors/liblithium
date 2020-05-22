@@ -26,8 +26,7 @@ void lith_sign_final_create(
 
 bool lith_sign_final_verify(
     lith_sign_state *state, const unsigned char sig[LITH_SIGN_LEN],
-    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
-    __attribute__((warn_unused_result));
+    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 void lith_sign_final_prehash(lith_sign_state *state,
                              unsigned char prehash[LITH_SIGN_PREHASH_LEN]);
@@ -40,8 +39,7 @@ void lith_sign_create_from_prehash(
 bool lith_sign_verify_prehash(
     const unsigned char sig[LITH_SIGN_LEN],
     const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
-    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
-    __attribute__((warn_unused_result));
+    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
                       size_t len,
@@ -49,7 +47,6 @@ void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
 
 bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN], const void *msg,
                       size_t len,
-                      const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
-    __attribute__((warn_unused_result));
+                      const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 #endif /* LITHIUM_SIGN_H */
