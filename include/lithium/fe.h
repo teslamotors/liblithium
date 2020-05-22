@@ -20,14 +20,16 @@
 typedef uint16_t limb_t;
 typedef uint32_t dlimb_t;
 typedef int32_t sdlimb_t;
-#define LIMB(x) ((limb_t)(x & 0xFFFFU)), ((limb_t)(x >> LITH_X25519_WBITS))
+#define LIMB_MAX 0xFFFFU
+#define LIMBS(x) ((limb_t)((x) & LIMB_MAX)), ((limb_t)((x) >> LITH_X25519_WBITS))
 
 #elif (LITH_X25519_WBITS == 32)
 
 typedef uint32_t limb_t;
 typedef uint64_t dlimb_t;
 typedef int64_t sdlimb_t;
-#define LIMB(x) ((limb_t)(x))
+#define LIMB_MAX 0xFFFFFFFFU
+#define LIMBS(x) ((limb_t)(x))
 
 #else
 #error "Unsupported value for LITH_X25519_WBITS"

@@ -40,7 +40,7 @@ static void cswap(limb_t swap, struct xz *a, struct xz *b)
 
 static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
 {
-    const fe_t a24 = {LIMB(A24)};
+    const fe_t a24 = {LIMBS(A24)};
     add(t, P->x, P->z);    /* t = A = x + z */
     sub(P->z, P->x, P->z); /* P->z = B = x - z */
     add(P->x, Q->x, Q->z); /* P->x = C = u + w */
@@ -181,7 +181,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
 /*
  * Montgomery factor: -L^-1 mod 2^LITH_X25519_WBITS
  */
-#define MONTGOMERY_FACTOR ((limb_t)0x12547e1bU)
+#define MONTGOMERY_FACTOR ((limb_t)(0x12547E1BU & LIMB_MAX))
 
 /*
  * Set t = (t + ab)R^-1 mod l
@@ -197,9 +197,9 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
      * Mp)/M = 2p, subtract p, < p, done.
      */
     static const scalar_t L = {
-        LIMB(0x5cf5d3edU), LIMB(0x5812631aU), LIMB(0xa2f79cd6U),
-        LIMB(0x14def9deU), LIMB(0x00000000U), LIMB(0x00000000U),
-        LIMB(0x00000000U), LIMB(0x10000000U),
+        LIMBS(0x5CF5D3EDU), LIMBS(0x5812631AU), LIMBS(0xA2F79CD6U),
+        LIMBS(0x14DEF9DEU), LIMBS(0x00000000U), LIMBS(0x00000000U),
+        LIMBS(0x00000000U), LIMBS(0x10000000U),
     };
 
     limb_t hic = 0, need_add, carry, carry2, u;
@@ -265,9 +265,9 @@ void x25519_sign(unsigned char response[X25519_LEN],
      * reductions.
      */
     static const scalar_t R2modL = {
-        LIMB(0x449c0f01U), LIMB(0xa40611e3U), LIMB(0x68859347U),
-        LIMB(0xd00e1ba7U), LIMB(0x17f5be65U), LIMB(0xceec73d2U),
-        LIMB(0x7c309a3dU), LIMB(0x0399411bU),
+        LIMBS(0x449C0F01U), LIMBS(0xA40611E3U), LIMBS(0x68859347U),
+        LIMBS(0xD00E1BA7U), LIMBS(0x17F5BE65U), LIMBS(0xCEEC73D2U),
+        LIMBS(0x7C309A3DU), LIMBS(0x0399411BU),
     };
     scalar_t r, a, h;
     read_limbs(r, secret_nonce);
