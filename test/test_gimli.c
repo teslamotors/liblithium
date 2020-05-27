@@ -1,18 +1,18 @@
-#include <stdio.h>
+#include <lithium/gimli.h>
 
-extern void gimli(unsigned int *);
+#include <stdio.h>
 
 int main()
 {
-    unsigned int x[12];
+    uint32_t x[GIMLI_WORDS];
     unsigned int i;
 
-    for (i = 0; i < 12; ++i)
+    for (i = 0; i < GIMLI_WORDS; ++i)
         x[i] = i * i * i + i * 0x9E3779B9;
 
     gimli(x);
 
-    for (i = 0; i < 12; ++i)
+    for (i = 0; i < GIMLI_WORDS; ++i)
     {
         printf("%08x ", x[i]);
         if (i % 4 == 3)
