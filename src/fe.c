@@ -47,8 +47,9 @@ void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
 static void propagate(fe_t x, limb_t carry)
 {
     int i;
-    carry = (limb_t)(
-        ((carry << 1) | (x[NLIMBS - 1] >> (LITH_X25519_WBITS - 1))) * 19);
+    carry <<= 1;
+    carry |= x[NLIMBS - 1] >> (LITH_X25519_WBITS - 1);
+    carry *= 19;
     x[NLIMBS - 1] &= ~((limb_t)1 << (LITH_X25519_WBITS - 1));
     for (i = 0; i < NLIMBS; ++i)
     {
