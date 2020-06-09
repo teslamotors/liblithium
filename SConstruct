@@ -97,6 +97,10 @@ half_env = host_env.Clone()
 half_env.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
 build_with_env("dist/half", half_env)
 
+portable_asr_env = host_env.Clone()
+portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
+build_with_env("dist/portable_asr", portable_asr_env)
+
 arm_env = env.Clone()
 arm_env["CC"] = "arm-none-eabi-gcc"
 arm_env["LINK"] = "arm-none-eabi-gcc"

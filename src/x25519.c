@@ -235,7 +235,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     {
         scarry = scarry + t[i] - L[i];
         t[i] = (limb_t)scarry;
-        scarry >>= LITH_X25519_WBITS;
+        scarry = asr(scarry, LITH_X25519_WBITS);
     }
     need_add = (limb_t)(-(scarry + hic));
 

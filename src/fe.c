@@ -76,7 +76,7 @@ void sub(fe_t out, const fe_t a, const fe_t b)
     {
         carry = carry + a[i] - b[i];
         out[i] = (limb_t)carry;
-        carry >>= LITH_X25519_WBITS;
+        carry = asr(carry, LITH_X25519_WBITS);
     }
     propagate(out, (limb_t)(carry + 2));
 }
@@ -161,7 +161,7 @@ limb_t canon(fe_t a)
         carry += a[i];
         a[i] = (limb_t)carry;
         res |= a[i];
-        carry >>= LITH_X25519_WBITS;
+        carry = asr(carry, LITH_X25519_WBITS);
     }
     return (limb_t)(((dlimb_t)res - 1) >> LITH_X25519_WBITS);
 }
