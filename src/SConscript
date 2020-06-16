@@ -9,7 +9,6 @@ liblithium = env.StaticLibrary(
         "gimli_common.c",
         "gimli_hash.c",
         "gimli_aead.c",
-        "bytes.c",
         "fe.c",
         "x25519.c",
         "sign.c",

@@ -1,14 +1,25 @@
 #include <lithium/gimli_aead.h>
 
-#include "bytes.h"
 #include "gimli_common.h"
+#include "lith_endian.h"
+
+#include <string.h>
 
 static void load_words(uint32_t *s, const unsigned char *p, size_t nwords)
 {
     size_t i;
     for (i = 0; i < nwords; ++i)
     {
-        s[i] = bytes_to_u32(&p[4 * i]);
+        const unsigned char *pi = &p[4 * i];
+        if (LITH_LITTLE_ENDIAN)
+        {
+            (void)memcpy(&s[i], pi, sizeof s[i]);
+        }
+        else
+        {
+            s[i] = (uint32_t)pi[0] | (uint32_t)pi[1] << 8 |
+                   (uint32_t)pi[2] << 16 | (uint32_t)pi[3] << 24;
+        }
     }
 }
 
