@@ -5,6 +5,8 @@
 
 #include <stddef.h>
 
+/* cffi:begin */
+
 #define GIMLI_HASH_DEFAULT_LEN 32
 
 typedef gimli_state gimli_hash_state;
@@ -18,5 +20,7 @@ void gimli_hash_final(gimli_hash_state *g, unsigned char *output, size_t len);
 
 void gimli_hash(unsigned char *output, size_t output_len,
                 const unsigned char *input, size_t input_len);
+
+/* cffi:end */
 
 #endif /* LITHIUM_GIMLI_HASH_H */

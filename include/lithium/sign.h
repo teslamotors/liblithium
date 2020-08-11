@@ -5,6 +5,8 @@
 
 #include <stdbool.h>
 
+/* cffi:begin */
+
 #define LITH_SIGN_LEN 64
 #define LITH_SIGN_PUBLIC_KEY_LEN 32
 #define LITH_SIGN_SECRET_KEY_LEN 64
@@ -48,5 +50,7 @@ void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
 bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN], const void *msg,
                       size_t len,
                       const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
+
+/* cffi:end */
 
 #endif /* LITHIUM_SIGN_H */
