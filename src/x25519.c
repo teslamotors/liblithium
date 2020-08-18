@@ -175,7 +175,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
      * Reject signatures where both sides are zero, because that can happen if
      * an input causes the ladder to return 0/0.
      */
-    return canon(Q.z) & ~canon(P.z);
+    return (bool)(canon(Q.z) & ~canon(P.z));
 }
 
 /*

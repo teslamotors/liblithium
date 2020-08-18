@@ -24,7 +24,7 @@ unsigned char gimli_squeeze_byte(const gimli_state *g)
     }
     else
     {
-        return (g->state[g->offset / 4] >> ((g->offset % 4) * 8)) & 0xFFU;
+        return (unsigned char)((g->state[g->offset / 4] >> ((g->offset % 4) * 8)) & 0xFFU);
     }
 }
 

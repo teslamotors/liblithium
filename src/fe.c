@@ -33,7 +33,7 @@ void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
         limb_t w = x[i];
         for (j = 0; j < WLEN; ++j)
         {
-            out[(i * WLEN) + j] = (w >> (j * 8)) & 0xFFU;
+            out[(i * WLEN) + j] = (unsigned char)((w >> (j * 8)) & 0xFFU);
         }
     }
 }
