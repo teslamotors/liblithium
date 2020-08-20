@@ -46,12 +46,14 @@ def build_with_env(path, env, test=True):
     )
 
 
-env = Environment()
+env = Environment(tools=["cc", "c++", "ar", "link"])
 # for color terminal output when available
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]
 
 platform = env["PLATFORM"]
+if platform == "win32":
+    env["ENV"]["PATH"] = os.environ["PATH"]
 
 host_env = env.Clone()
 
@@ -76,20 +78,33 @@ AddOption(
 if GetOption("sanitize"):
     llvm_flags.append("-fsanitize=address,undefined")
 
-host_env["CC"] = "clang"
-host_env["CXX"] = "clang++"
+if platform == "win32":
+    host_env["CC"] = "x86_64-w64-mingw32-gcc"
+    host_env["CXX"] = "x86_64-w64-mingw32-g++"
+    host_env["AS"] = "x86_64-w64-mingw32-as"
+    host_env["AR"] = "x86_64-w64-mingw32-gcc-ar"
+    host_env["RANLIB"] = "x86_64-w64-mingw32-gcc-ranlib"
+else:
+    host_env["CC"] = "clang"
+    host_env["CXX"] = "clang++"
 
 if platform == "darwin":
+    cc_flags = llvm_flags
     link_flags = ["-dead_strip"]
 elif platform == "posix":
+    cc_flags = llvm_flags
     link_flags = ["-Wl,--gc-sections"]
     # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
     host_env["AR"] = "llvm-ar"
     host_env["RANLIB"] = "llvm-ranlib"
+elif platform == "win32":
+    cc_flags = ["-O3", "-flto", "-ffunction-sections", "-fdata-sections"]
+    link_flags = []
+    host_env["LIBS"] = ["bcrypt"]
 else:
     raise Exception("unsupported platform")
 
-host_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags + link_flags)
+host_env.Append(CCFLAGS=cc_flags, LINKFLAGS=cc_flags + link_flags)
 
 build_with_env("dist", host_env)
 

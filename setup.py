@@ -40,7 +40,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
     ],
     keywords=["x25519", "gimli", "signatures"],
-    package_dir={"lithium": "py"},
+    package_dir={"lithium": "py_src"},
     packages=["lithium"],
     include_package_data=True,
     package_data={"build_tools": ["ffibuilder.py"]},

@@ -16,20 +16,22 @@ test_lwc_aead_kat_out = env.Command(
     target="test_lwc_aead_kat.txt", source=test_lwc_aead_kat, action="$SOURCE > $TARGET"
 )
 
+# Strip trailing CRs for comparing against files generated on Windows.
+diff_action = "diff --strip-trailing-cr ${SOURCES[0]} ${SOURCES[1]}"
 env.Command(
     target="test_gimli.diff",
     source=[test_gimli_out, "test_gimli.exp"],
-    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+    action=diff_action,
 )
 env.Command(
     target="test_lwc_hash_kat.diff",
     source=[test_lwc_hash_kat_out, "LWC_HASH_KAT_256.txt"],
-    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+    action=diff_action,
 )
 env.Command(
     target="test_lwc_aead_kat.diff",
     source=[test_lwc_aead_kat_out, "LWC_AEAD_KAT_256_128.txt"],
-    action="diff ${SOURCES[0]} ${SOURCES[1]}",
+    action=diff_action,
 )
 
 test_x25519 = env.Program("test_x25519.c")
