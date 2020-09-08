@@ -1,12 +1,18 @@
 #include "hydrogen.h"
 
 #include <lithium/gimli_hash.h>
+#include <lithium/random.h>
 #include <lithium/x25519.h>
 
 #include <stdint.h>
 #include <string.h>
 
 #define HASH_PAD_LEN 16
+
+void hydro_random_buf(void *out, size_t out_len)
+{
+    lith_random_bytes(out, out_len);
+}
 
 void hydro_hash_keygen(uint8_t key[hydro_hash_KEYBYTES])
 {

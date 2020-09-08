@@ -4,7 +4,7 @@ Import("env")
 
 libhydrogen = env.StaticLibrary(
     target="hydrogen",
-    source=["hydrogen.c"],
+    source="hydrogen.c",
 )
 
 Return("libhydrogen")

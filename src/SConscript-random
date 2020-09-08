@@ -1,0 +1,7 @@
+# SConscript
+
+Import("env")
+
+liblith_random = env.StaticLibrary(target="lith_random", source="random.c")
+
+Return("liblith_random")

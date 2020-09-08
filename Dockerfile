@@ -12,6 +12,7 @@ RUN apt-get update \
         git \
         llvm \
         locales \
+        mingw-w64 \
         python3-pip \
         python3.6-dev \
         python3.7-dev \

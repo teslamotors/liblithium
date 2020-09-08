@@ -14,7 +14,15 @@ def build_with_env(path, env, test=True):
         exports={"env": liblith_env},
         duplicate=False,
     )
-    lith_env.Append(LIBS=[liblithium])
+    liblith_random = SConscript(
+        "src/SConscript-random",
+        variant_dir=os.path.join(path, "lib", "random"),
+        exports={"env": liblith_env},
+        duplicate=False,
+    )
+    # Prepend so platforms that need extra libraries will have them last and
+    # unresolved symbols from liblith_random will be resolved.
+    lith_env.Prepend(LIBS=[liblithium, liblith_random])
 
     SConscript(
         dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
@@ -55,10 +63,13 @@ platform = env["PLATFORM"]
 if platform == "win32":
     env["ENV"]["PATH"] = os.environ["PATH"]
 
-host_env = env.Clone()
+llvm_env = env.Clone()
 
 llvm_flags = [
     "-Weverything",
+    "-Wno-unknown-warning-option",
+    "-Wno-poison-system-directories",
+    "-Wno-c99-extensions",
     "-Werror",
     "-O3",
     "-g",
@@ -78,50 +89,52 @@ AddOption(
 if GetOption("sanitize"):
     llvm_flags.append("-fsanitize=address,undefined")
 
-if platform == "win32":
-    host_env["CC"] = "x86_64-w64-mingw32-gcc"
-    host_env["CXX"] = "x86_64-w64-mingw32-g++"
-    host_env["AS"] = "x86_64-w64-mingw32-as"
-    host_env["AR"] = "x86_64-w64-mingw32-gcc-ar"
-    host_env["RANLIB"] = "x86_64-w64-mingw32-gcc-ranlib"
-else:
-    host_env["CC"] = "clang"
-    host_env["CXX"] = "clang++"
+llvm_env["CC"] = "clang"
+
+llvm_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags)
 
 if platform == "darwin":
-    cc_flags = llvm_flags
-    link_flags = ["-dead_strip"]
+    llvm_env.Append(LINKFLAGS=["-dead_strip"])
 elif platform == "posix":
-    cc_flags = llvm_flags
-    link_flags = ["-Wl,--gc-sections"]
+    llvm_env.Append(LINKFLAGS=["-Wl,--gc-sections"])
     # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
-    host_env["AR"] = "llvm-ar"
-    host_env["RANLIB"] = "llvm-ranlib"
-elif platform == "win32":
-    cc_flags = ["-O3", "-flto", "-ffunction-sections", "-fdata-sections"]
-    link_flags = []
-    host_env["LIBS"] = ["bcrypt"]
-else:
-    raise Exception("unsupported platform")
+    llvm_env["AR"] = "llvm-ar"
+    llvm_env["RANLIB"] = "llvm-ranlib"
 
-host_env.Append(CCFLAGS=cc_flags, LINKFLAGS=cc_flags + link_flags)
+mingw_flags = [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror",
+    "-O3",
+    "-flto",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Wl,--gc-sections",
+]
+mingw_env = env.Clone(
+    CC="x86_64-w64-mingw32-gcc",
+    AS="x86_64-w64-mingw32-as",
+    AR="x86_64-w64-mingw32-gcc-ar",
+    RANLIB="x86_64-w64-mingw32-gcc-ranlib",
+    LIBPREFIX="",
+    LIBSUFFIX=".lib",
+    PROGSUFFIX=".exe",
+)
+mingw_env.Append(
+    CPPDEFINES=["__USE_MINGW_ANSI_STDIO"],
+    CCFLAGS=mingw_flags,
+    LINKFLAGS=mingw_flags,
+    LIBS=["bcrypt"],
+)
 
-build_with_env("dist", host_env)
-
-half_env = host_env.Clone()
-half_env.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
-build_with_env("dist/half", half_env)
-
-portable_asr_env = host_env.Clone()
-portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
-build_with_env("dist/portable_asr", portable_asr_env)
-
-arm_env = env.Clone()
-arm_env["CC"] = "arm-none-eabi-gcc"
-arm_env["LINK"] = "arm-none-eabi-gcc"
-arm_env["AR"] = "arm-none-eabi-gcc-ar"
-arm_env["RANLIB"] = "arm-none-eabi-gcc-ranlib"
-flags = [
+arm_env = env.Clone(
+    CC="arm-none-eabi-gcc",
+    LINK="arm-none-eabi-gcc",
+    AR="arm-none-eabi-gcc-ar",
+    RANLIB="arm-none-eabi-gcc-ranlib",
+)
+arm_flags = [
     "-Wall",
     "-Wextra",
     "-Wpedantic",
@@ -136,8 +149,23 @@ flags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-fstack-usage",
-    "-Wl,--gc-sections",
 ]
-arm_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
+arm_env.Append(CCFLAGS=arm_flags, LINKFLAGS=arm_flags + ["-Wl,--gc-sections"])
+
+if platform == "win32":
+    host_env = mingw_env
+else:
+    host_env = llvm_env
+    build_with_env("dist/mingw", mingw_env, test=False)
+
+build_with_env("dist", host_env)
+
+half_env = host_env.Clone()
+half_env.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+build_with_env("dist/half", half_env)
+
+portable_asr_env = host_env.Clone()
+portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
+build_with_env("dist/portable_asr", portable_asr_env)
 
 build_with_env("dist/arm", arm_env, test=False)
