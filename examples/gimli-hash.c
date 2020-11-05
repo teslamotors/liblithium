@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#define PLAT_FLAGS O_BINARY
+#else
+#define PLAT_FLAGS 0
+#endif
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -18,7 +24,7 @@ int main(int argc, char **argv)
     gimli_hash_state state;
     gimli_hash_init(&state);
 
-    int msgfd = open(argv[1], O_RDONLY);
+    int msgfd = open(argv[1], O_RDONLY | PLAT_FLAGS);
     if (msgfd < 0)
     {
         perror("open");

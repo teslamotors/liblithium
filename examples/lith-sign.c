@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#define PLAT_FLAGS O_BINARY
+#else
+#define PLAT_FLAGS 0
+#endif
+
 int main(int argc, char **argv)
 {
     if (argc < 4)
@@ -16,7 +22,7 @@ int main(int argc, char **argv)
     }
 
     unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN];
-    int skfd = open(argv[1], O_RDONLY);
+    int skfd = open(argv[1], O_RDONLY | PLAT_FLAGS);
     if (skfd < 0 ||
         read(skfd, secret_key, sizeof secret_key) != sizeof secret_key)
     {
@@ -26,7 +32,7 @@ int main(int argc, char **argv)
     close(skfd);
 
     unsigned char sig[LITH_SIGN_LEN];
-    int sigfd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    int sigfd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     if (sigfd < 0)
     {
         perror("could not create signature file");
@@ -36,7 +42,7 @@ int main(int argc, char **argv)
     lith_sign_state state;
     lith_sign_init(&state);
 
-    int msgfd = open(argv[2], O_RDONLY);
+    int msgfd = open(argv[2], O_RDONLY | PLAT_FLAGS);
     if (msgfd < 0)
     {
         perror("could not open message file");

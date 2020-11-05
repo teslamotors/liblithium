@@ -7,6 +7,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#define PLAT_FLAGS O_BINARY
+#else
+#define PLAT_FLAGS 0
+#endif
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -24,7 +30,7 @@ int main(int argc, char **argv)
     strcpy(pubkeyname, keyname);
     strcat(pubkeyname, ".pub");
 
-    int pkfd = open(pubkeyname, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    int pkfd = open(pubkeyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     free(pubkeyname);
     if (pkfd < 0)
     {
@@ -32,7 +38,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    int skfd = open(keyname, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    int skfd = open(keyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     if (skfd < 0)
     {
         perror("could not open secret key file for writing");
