@@ -14,7 +14,7 @@ class GimliHash:
         """
         Feed new data to be hashed.
         """
-        buf = ffi.from_buffer("unsigned char[%s]" % len(data), data)
+        buf = ffi.from_buffer(bytes(data))
         lib.gimli_hash_update(self._hash_state, buf, len(buf))
 
     def final(self, n=lib.GIMLI_HASH_DEFAULT_LEN):
