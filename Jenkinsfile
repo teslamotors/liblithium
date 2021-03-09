@@ -3,6 +3,9 @@ pipeline {
     environment {
         PIP_NO_INPUT = 1
     }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
     stages {
         stage ('Build and Test') {
             parallel {
@@ -46,6 +49,28 @@ pipeline {
                         archiveArtifacts artifacts: 'dist/*.whl, dist/*.tar.gz'
                     }
                 }
+                stage ('Windows Build py38') {
+                    agent { label 'windows' }
+                    steps {
+                        deleteDir()
+                        checkout scm
+                        powershell './win.bat 38'
+                        powershell './win.bat 38 64'
+                        stash name: 'build-artifacts-win-py38', includes: 'dist/*.whl'
+                        archiveArtifacts artifacts: 'dist/*.whl, dist/*.tar.gz'
+                    }
+                }
+                stage ('Windows Build py39') {
+                    agent { label 'windows' }
+                    steps {
+                        deleteDir()
+                        checkout scm
+                        powershell './win.bat 39'
+                        powershell './win.bat 39 64'
+                        stash name: 'build-artifacts-win-py39', includes: 'dist/*.whl'
+                        archiveArtifacts artifacts: 'dist/*.whl, dist/*.tar.gz'
+                    }
+                }
             }
         }
         stage ('Upload package') {
@@ -61,6 +86,8 @@ pipeline {
                 unstash 'build-artifacts-linux'
                 unstash 'build-artifacts-win-py36'
                 unstash 'build-artifacts-win-py37'
+                unstash 'build-artifacts-win-py38'
+                unstash 'build-artifacts-win-py39'
                 sh 'pip install --user twine'
                 withCredentials([usernamePassword(credentialsId: "python-repository-login",
                                     usernameVariable: "TWINE_USERNAME",
