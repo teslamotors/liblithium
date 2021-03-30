@@ -79,15 +79,15 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
 
     for (i = X25519_BITS - 1; i >= 0; --i)
     {
-#if (LITH_ENABLE_WATCHDOG)
-        lith_watchdog_pet();
-#endif
         const limb_t ki = ~(((limb_t)k[i / 8] >> (i % 8)) & 1) + 1;
         fe_t t;
         cswap(swap ^ ki, P, &Q);
         swap = ki;
         ladder_part1(P, &Q, t);
         ladder_part2(P, &Q, t, x);
+#if (LITH_ENABLE_WATCHDOG)
+        lith_watchdog_pet();
+#endif
     }
     cswap(swap, P, &Q);
 }

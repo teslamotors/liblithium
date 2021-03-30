@@ -1,6 +1,7 @@
 #include "gimli_common.h"
 
 #include "lith_endian.h"
+#include <lithium/watchdog.h>
 
 #include <string.h>
 
@@ -35,6 +36,9 @@ void gimli_advance(gimli_state *g)
     ++g->offset;
     if (g->offset == GIMLI_RATE)
     {
+#if (LITH_ENABLE_WATCHDOG)
+        lith_watchdog_pet();
+#endif
         gimli(g->state);
         g->offset = 0;
     }
