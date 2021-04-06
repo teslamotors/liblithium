@@ -12,7 +12,7 @@ with open("README.md") as f:
     readme = f.read()
 
 setup(
-    name="lithium",
+    name="pylithium",
     use_scm_version=True,
     description="Python bindings for liblithium",
     long_description=readme,
