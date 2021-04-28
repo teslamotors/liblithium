@@ -1,23 +1,23 @@
 #!/bin/bash
 
-set -x
+set -xe
 
 name="lithium"
 image="$name-builder"
 
 docker build --tag "$image" .
 
-cidfile="$(mktemp -u cidfile.XXXXXX)"
-
-docker run --interactive --tty \
+container=$(docker create --tty \
     --volume "$(pwd):/src/$name" \
-    --cidfile "$cidfile" \
     --cap-add SYS_PTRACE \
     "$image" \
     "bash" "-c" \
-    "git clone $name $name-docker && cd $name-docker && ./build.sh"
+    "git clone $name $name-docker && cd $name-docker && ./build.sh")
 
-container="$(cat "$cidfile")"
-docker cp "$container:/src/$name-docker/dist" "dist"
+if docker start --interactive "$container"; then
+    docker cp "$container:/src/$name-docker/dist" "dist"
+else
+    echo "Build failed, skipping copy out of docker container."
+fi
+
 docker rm "$container"
-rm -f "$cidfile"
