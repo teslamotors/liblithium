@@ -2,5 +2,7 @@
 
 int main(void)
 {
-    return !lith_sign_verify(NULL, NULL, 0, NULL);
+    static const unsigned char sig[LITH_SIGN_LEN];
+    static const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN];
+    return !lith_sign_verify(sig, NULL, 0, public_key);
 }
