@@ -16,20 +16,28 @@
 
 typedef limb_t scalar_t[NLIMBS];
 
-struct xz
-{
-    fe_t x, z;
-};
+#define XZLIMBS (NLIMBS * 2)
 
-static void cswap(limb_t swap, struct xz *a, struct xz *b)
+typedef limb_t xz_t[XZLIMBS];
+
+static limb_t *X(xz_t P)
 {
-    limb_t *ap = &a->x[0], *bp = &b->x[0];
+    return P;
+}
+
+static limb_t *Z(xz_t P)
+{
+    return &P[NLIMBS];
+}
+
+static void cswap(limb_t swap, xz_t P, xz_t Q)
+{
     int i;
-    for (i = 0; i < NLIMBS * 2; ++i)
+    for (i = 0; i < XZLIMBS; ++i)
     {
-        const limb_t d = (ap[i] ^ bp[i]) & swap;
-        ap[i] ^= d;
-        bp[i] ^= d;
+        const limb_t d = (P[i] ^ Q[i]) & swap;
+        P[i] ^= d;
+        Q[i] ^= d;
     }
 }
 
@@ -39,57 +47,57 @@ static void cswap(limb_t swap, struct xz *a, struct xz *b)
  */
 #define A24 UINT32_C(121665)
 
-static void ladder_part1(struct xz *P, struct xz *Q, fe_t t)
+static void ladder_part1(xz_t P, xz_t Q, fe_t t)
 {
     const fe_t a24 = {LIMBS(A24)};
-    add(t, P->x, P->z);    /* t = A = x + z */
-    sub(P->z, P->x, P->z); /* P->z = B = x - z */
-    add(P->x, Q->x, Q->z); /* P->x = C = u + w */
-    sub(Q->z, Q->x, Q->z); /* Q->z = D = u - w */
-    mul1(Q->z, t);         /* Q->z = DA = (u - w)(x + z) = xu + zu - xw - zw */
-    mul1(P->x, P->z);      /* Q->x = CB = (u + w)(x - z) = xu - zu + xw - zw */
-    add(Q->x, Q->z, P->x); /* Q->x = DA + CB = 2xu - 2zw */
-    sub(Q->z, Q->z, P->x); /* Q->z = DA - CB = 2zu - 2xw */
+    add(t, X(P), Z(P));    /* t = A = x + z */
+    sub(Z(P), X(P), Z(P)); /* Z(P) = B = x - z */
+    add(X(P), X(Q), Z(Q)); /* X(P) = C = u + w */
+    sub(Z(Q), X(Q), Z(Q)); /* Z(Q) = D = u - w */
+    mul1(Z(Q), t);         /* Z(Q) = DA = (u - w)(x + z) = xu + zu - xw - zw */
+    mul1(X(P), Z(P));      /* X(Q) = CB = (u + w)(x - z) = xu - zu + xw - zw */
+    add(X(Q), Z(Q), X(P)); /* X(Q) = DA + CB = 2xu - 2zw */
+    sub(Z(Q), Z(Q), X(P)); /* Z(Q) = DA - CB = 2zu - 2xw */
     sqr1(t);               /* t = AA = (x + z)^2 = xx + 2xz + zz */
-    sqr1(P->z);            /* P->z = BB = (x - z)^2 = xx - 2xz + zz */
-    sub(P->x, t, P->z);    /* P->x = E = AA - BB = 4xz */
-    mul(P->z, P->x, a24);  /* P->z = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
-    add(P->z, P->z, t);    /* P->z = E(a - 2)/4 + AA = xx + axz + zz */
+    sqr1(Z(P));            /* Z(P) = BB = (x - z)^2 = xx - 2xz + zz */
+    sub(X(P), t, Z(P));    /* X(P) = E = AA - BB = 4xz */
+    mul(Z(P), X(P), a24);  /* Z(P) = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
+    add(Z(P), Z(P), t);    /* Z(P) = E(a - 2)/4 + AA = xx + axz + zz */
 }
 
-static void ladder_part2(struct xz *P, struct xz *Q, const fe_t t, const fe_t x)
+static void ladder_part2(xz_t P, xz_t Q, const fe_t t, const fe_t x)
 {
-    sqr1(Q->z);         /* Q->z = (DA - CB)^2 */
-    mul1(Q->z, x);      /* Q->z = x(DA - CB)^2 */
-    sqr1(Q->x);         /* Q->x = (DA + CB)^2 */
-    mul1(P->z, P->x);   /* P->z = E(E(a - 2)/4 + AA) */
-    sub(P->x, t, P->x); /* P->x = AA - E = AA - (AA - BB) = BB */
-    mul1(P->x, t);      /* P->x = AABB */
+    sqr1(Z(Q));         /* Z(Q) = (DA - CB)^2 */
+    mul1(Z(Q), x);      /* Z(Q) = x(DA - CB)^2 */
+    sqr1(X(Q));         /* X(Q) = (DA + CB)^2 */
+    mul1(Z(P), X(P));   /* Z(P) = E(E(a - 2)/4 + AA) */
+    sub(X(P), t, X(P)); /* X(P) = AA - E = AA - (AA - BB) = BB */
+    mul1(X(P), t);      /* X(P) = AABB */
 }
 
-static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
-                      const fe_t x)
+static void x25519_xz(xz_t P, const unsigned char k[X25519_LEN], const fe_t x)
 {
-    struct xz Q = {{0}, {1}};
+    xz_t Q = {0};
     limb_t swap = 0;
     int i;
-    (void)memcpy(Q.x, x, sizeof(fe_t));
-    (void)memset(P, 0, sizeof *P);
-    P->x[0] = 1;
+    Z(Q)[0] = 1;
+    (void)memcpy(X(Q), x, sizeof(fe_t));
+    (void)memset(P, 0, sizeof(xz_t));
+    X(P)[0] = 1;
 
     for (i = X25519_BITS - 1; i >= 0; --i)
     {
         const limb_t ki = ~(((limb_t)k[i / 8] >> (i % 8)) & 1) + 1;
         fe_t t;
-        cswap(swap ^ ki, P, &Q);
+        cswap(swap ^ ki, P, Q);
         swap = ki;
-        ladder_part1(P, &Q, t);
-        ladder_part2(P, &Q, t, x);
+        ladder_part1(P, Q, t);
+        ladder_part2(P, Q, t, x);
 #if (LITH_ENABLE_WATCHDOG)
         lith_watchdog_pet();
 #endif
     }
-    cswap(swap, P, &Q);
+    cswap(swap, P, Q);
 }
 
 void x25519_clamp(unsigned char scalar[X25519_LEN])
@@ -104,13 +112,13 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
     fe_t x;
-    struct xz P;
+    xz_t P;
     read_limbs(x, point);
-    x25519_xz(&P, scalar, x);
-    inv(P.z, P.z);
-    mul1(P.x, P.z);
-    (void)canon(P.x);
-    write_limbs(out, P.x);
+    x25519_xz(P, scalar, x);
+    inv(Z(P), Z(P));
+    mul1(X(P), Z(P));
+    (void)canon(X(P));
+    write_limbs(out, X(P));
 }
 
 #define BASE_POINT 9U
@@ -133,46 +141,46 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
      * https://www.shiftleft.org/papers/fff/
      * https://eprint.iacr.org/2012/309.pdf
      */
-    struct xz P, Q;
+    xz_t P, Q;
     fe_t A, B = {BASE_POINT};
     read_limbs(A, public_key);
-    x25519_xz(&P, response, B);
-    x25519_xz(&Q, challenge, A);
+    x25519_xz(P, response, B);
+    x25519_xz(Q, challenge, A);
     /* P = x/z = response*base_point */
     /* Q = u/w = challenge*public_key */
 
-    mul(A, Q.x, Q.z);
+    mul(A, X(Q), Z(Q));
     mul_word(A, A, 16);
     /* A = 16uw */
 
-    ladder_part1(&P, &Q, B);
-    /* Q.x = 2xu - 2zw */
-    /* Q.z = 2zu - 2xw */
-    /* P.z = xx + axz + zz */
+    ladder_part1(P, Q, B);
+    /* X(Q) = 2xu - 2zw */
+    /* Z(Q) = 2zu - 2xw */
+    /* Z(P) = xx + axz + zz */
 
     read_limbs(B, public_nonce);
     /* B = R */
 
-    mul1(P.z, A);
-    mul1(P.z, B);
-    /* P.z = left = 16uwR(xx + axz + zz) */
+    mul1(Z(P), A);
+    mul1(Z(P), B);
+    /* Z(P) = left = 16uwR(xx + axz + zz) */
 
-    mul1(Q.z, B);
-    sub(Q.z, Q.z, Q.x);
-    sqr1(Q.z);
-    /* Q.z = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
+    mul1(Z(Q), B);
+    sub(Z(Q), Z(Q), X(Q));
+    sqr1(Z(Q));
+    /* Z(Q) = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
 
     /* check equality */
-    sub(Q.z, Q.z, P.z);
+    sub(Z(Q), Z(Q), Z(P));
 
     /*
-     * If canon(Q.z) then the two sides are equal.
-     * If canon(P.z) also, then both sides are zero.
+     * If canon(Z(Q)) then the two sides are equal.
+     * If canon(Z(P)) also, then both sides are zero.
      *
      * Reject signatures where both sides are zero, because that can happen if
      * an input causes the ladder to return 0/0.
      */
-    return (bool)(canon(Q.z) & ~canon(P.z));
+    return (bool)(canon(Z(Q)) & ~canon(Z(P)));
 }
 
 /*
