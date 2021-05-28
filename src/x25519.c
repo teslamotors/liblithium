@@ -92,14 +92,6 @@ static void x25519_xz(struct xz *P, const unsigned char k[X25519_LEN],
     cswap(swap, P, &Q);
 }
 
-static void xz_to_bytes(unsigned char out[X25519_LEN], struct xz *p)
-{
-    inv(p->z, p->z);
-    mul1(p->x, p->z);
-    (void)canon(p->x);
-    write_limbs(out, p->x);
-}
-
 void x25519_clamp(unsigned char scalar[X25519_LEN])
 {
     scalar[0] &= 0xF8U;
@@ -111,22 +103,23 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
-    struct xz P;
     fe_t x;
+    struct xz P;
     read_limbs(x, point);
     x25519_xz(&P, scalar, x);
-    xz_to_bytes(out, &P);
+    inv(P.z, P.z);
+    mul1(P.x, P.z);
+    (void)canon(P.x);
+    write_limbs(out, P.x);
 }
 
-#define BASE_POINT ((limb_t)9U)
+#define BASE_POINT 9U
 
 void x25519_base(unsigned char out[X25519_LEN],
                  const unsigned char scalar[X25519_LEN])
 {
-    struct xz P;
-    const fe_t B = {BASE_POINT};
-    x25519_xz(&P, scalar, B);
-    xz_to_bytes(out, &P);
+    const unsigned char base_point[X25519_LEN] = {BASE_POINT};
+    x25519(out, scalar, base_point);
 }
 
 bool x25519_verify(const unsigned char response[X25519_LEN],
