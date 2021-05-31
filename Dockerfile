@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # prevent tzdata package from asking for time zone (indirect dependency of new python versions)
 ENV DEBIAN_FRONTEND=noninteractive

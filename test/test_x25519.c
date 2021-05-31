@@ -102,7 +102,7 @@ int main(void)
     {
         fprintf(stderr, "FAIL iterated x25519\n");
         return EXIT_FAILURE;
-    };
+    }
 
     /*
      * X25519 Test Vectors from RFC7748
