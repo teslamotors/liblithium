@@ -16,7 +16,14 @@ cat input.bin > /dev/null
 time hydro-sign testkey input.bin input.sig
 hydro-verify testkey.pub input.bin input.sig
 
-[ -d libhydrogen ] || git clone https://github.com/jedisct1/libhydrogen.git
+if [ -d libhydrogen ]; then
+    pushd libhydrogen
+    git checkout master
+    git pull
+    popd
+else
+    git clone https://github.com/jedisct1/libhydrogen.git
+fi
 
 CCFLAGS="-g -O3 -flto -march=native"
 
@@ -31,3 +38,9 @@ clang $CCFLAGS -o libhydrogen-hash -Ilibhydrogen hydrogen.o ../../../hydro/examp
 # sign with libhydrogen and check that hydro can verify
 time ./libhydrogen-sign testkey input.bin input_libhydrogen.sig
 hydro-verify testkey.pub input.bin input_libhydrogen.sig
+
+h1=$(./libhydrogen-hash input.bin)
+h2=$(hydro-hash input.bin)
+if [ ! "$h1" = "$h2" ]; then
+    echo "Hashes don't match."
+fi

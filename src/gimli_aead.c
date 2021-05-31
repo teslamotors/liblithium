@@ -1,25 +1,16 @@
 #include <lithium/gimli_aead.h>
 
 #include "gimli_common.h"
-#include "lith_endian.h"
+#include "opt.h"
 
 #include <string.h>
 
-static void load_words(uint32_t *s, const unsigned char *p, size_t nwords)
+static void load_words(uint32_t *s, const unsigned char *p, size_t nw)
 {
     size_t i;
-    for (i = 0; i < nwords; ++i)
+    for (i = 0; i < nw; ++i)
     {
-        const unsigned char *pi = &p[4 * i];
-        if (LITH_LITTLE_ENDIAN)
-        {
-            (void)memcpy(&s[i], pi, sizeof s[i]);
-        }
-        else
-        {
-            s[i] = (uint32_t)pi[0] | (uint32_t)pi[1] << 8 |
-                   (uint32_t)pi[2] << 16 | (uint32_t)pi[3] << 24;
-        }
+        s[i] = gimli_load(&p[4 * i]);
     }
 }
 
@@ -43,8 +34,8 @@ void gimli_aead_final_ad(gimli_state *g)
     gimli_pad(g);
 }
 
-void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
-                               const unsigned char *m, size_t len)
+static void encrypt_update(gimli_state *g, unsigned char *c,
+                           const unsigned char *m, size_t len)
 {
     size_t i;
     for (i = 0; i < len; ++i)
@@ -55,14 +46,51 @@ void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
     }
 }
 
+void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
+                               const unsigned char *m, size_t len)
+{
+#if (LITH_ABSORB_WORDS)
+    const size_t first_block_len = (GIMLI_RATE - g->offset) % GIMLI_RATE;
+    if (len >= GIMLI_RATE + first_block_len)
+    {
+        encrypt_update(g, c, m, first_block_len);
+        c += first_block_len;
+        m += first_block_len;
+        len -= first_block_len;
+        do
+        {
+#if (LITH_VECTORIZE)
+            typedef uint32_t block_t
+                __attribute__((vector_size(16), aligned(1)));
+            *(block_t *)c = *(block_t *)g->state ^= *(const block_t *)m;
+            c += GIMLI_RATE;
+            m += GIMLI_RATE;
+#else
+            size_t i;
+            for (i = 0; i < GIMLI_RATE / 4; ++i)
+            {
+                g->state[i] ^= gimli_load(m);
+                gimli_store(c, g->state[i]);
+                c += 4;
+                m += 4;
+            }
+#endif
+            gimli(g->state);
+            len -= GIMLI_RATE;
+        } while (len >= GIMLI_RATE);
+    }
+#endif
+    encrypt_update(g, c, m, len);
+}
+
 void gimli_aead_encrypt_final(gimli_state *g, unsigned char *t, size_t len)
 {
     gimli_pad(g);
     gimli_squeeze(g, t, len);
 }
 
-void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
-                               const unsigned char *c, size_t len)
+static void decrypt_update(gimli_state *g, unsigned char *m,
+                           const unsigned char *c, size_t len)
 {
     size_t i;
     for (i = 0; i < len; ++i)
@@ -71,6 +99,45 @@ void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
         gimli_absorb_byte(g, m[i]);
         gimli_advance(g);
     }
+}
+
+void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
+                               const unsigned char *c, size_t len)
+{
+#if (LITH_ABSORB_WORDS)
+    const size_t first_block_len = (GIMLI_RATE - g->offset) % GIMLI_RATE;
+    if (len >= GIMLI_RATE + first_block_len)
+    {
+        decrypt_update(g, m, c, first_block_len);
+        m += first_block_len;
+        c += first_block_len;
+        len -= first_block_len;
+        do
+        {
+#if (LITH_VECTORIZE)
+            typedef uint32_t block_t
+                __attribute__((vector_size(16), aligned(1)));
+            *(block_t *)m = *(block_t *)g->state ^ *(const block_t *)c;
+            *(block_t *)g->state ^= *(const block_t *)m;
+            m += GIMLI_RATE;
+            c += GIMLI_RATE;
+#else
+            size_t i;
+            for (i = 0; i < GIMLI_RATE / 4; ++i)
+            {
+                const uint32_t mw = g->state[i] ^ gimli_load(c);
+                gimli_store(m, mw);
+                g->state[i] ^= mw;
+                m += 4;
+                c += 4;
+            }
+#endif
+            gimli(g->state);
+            len -= GIMLI_RATE;
+        } while (len >= GIMLI_RATE);
+    }
+#endif
+    decrypt_update(g, m, c, len);
 }
 
 bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,

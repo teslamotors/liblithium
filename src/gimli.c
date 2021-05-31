@@ -1,5 +1,7 @@
 #include <lithium/gimli.h>
 
+#include "opt.h"
+
 static uint32_t coeff(int round)
 {
     return UINT32_C(0x9E377900) | (uint32_t)round;
@@ -7,28 +9,17 @@ static uint32_t coeff(int round)
 
 #define rol(x, n) (((x) << ((n) % 32)) | ((x) >> ((32 - (n)) % 32)))
 
-#ifndef __has_attribute
-#define __has_attribute(x) 0
-#endif
-
-#if __has_attribute(vector_size) &&                                            \
-    ((defined(__SSE__) && defined(__SSE2__)) || (defined(__ARM_NEON)))
+#if (LITH_VECTORIZE)
 
 typedef uint32_t uint32x4_t __attribute__((vector_size(16), aligned(4)));
 typedef uint8_t uint8x16_t __attribute__((vector_size(16), aligned(4)));
 
-#ifndef __has_builtin
-#error "Can't test for builtins."
-#endif
-
-#if __has_builtin(__builtin_shufflevector)
+#if defined(__clang__)
 #define shuffle(x, ...) (__builtin_shufflevector(x, x, __VA_ARGS__))
 #define shuffleb shuffle
-#elif __has_builtin(__builtin_shuffle)
+#else /* Use the gcc shuffle builtin. */
 #define shuffle(x, ...) (__builtin_shuffle(x, (uint32x4_t){__VA_ARGS__}))
 #define shuffleb(x, ...) (__builtin_shuffle(x, (uint8x16_t){__VA_ARGS__}))
-#else
-#error "No __builtin_shufflevector or __builtin_shuffle."
 #endif
 
 static uint32x4_t rol24(uint32x4_t x)
@@ -90,7 +81,7 @@ void gimli(uint32_t *state)
     s[2] = z;
 }
 
-#else
+#else /* !LITH_VECTORIZE */
 
 static void swap(uint32_t *x, int i, int j)
 {
@@ -132,4 +123,4 @@ void gimli(uint32_t *state)
     }
 }
 
-#endif
+#endif /* LITH_VECTORIZE */
