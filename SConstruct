@@ -134,7 +134,8 @@ arm_env = env.Clone(
     AR="arm-none-eabi-gcc-ar",
     RANLIB="arm-none-eabi-gcc-ranlib",
 )
-arm_flags = [
+
+arm_gnu_flags = [
     "-Wall",
     "-Wextra",
     "-Wpedantic",
@@ -150,7 +151,11 @@ arm_flags = [
     "-fdata-sections",
     "-fstack-usage",
 ]
-arm_env.Append(CCFLAGS=arm_flags, LINKFLAGS=arm_flags + ["-Wl,--gc-sections"])
+
+arm_env.Append(
+    CCFLAGS=arm_gnu_flags,
+    LINKFLAGS=arm_gnu_flags + ["-Wl,--gc-sections"],
+)
 
 if platform == "win32":
     host_env = mingw_env
@@ -158,11 +163,17 @@ else:
     host_env = llvm_env
     build_with_env("dist/mingw", mingw_env, test=False)
 
-build_with_env("dist", host_env)
+env16 = host_env.Clone()
+env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+build_with_env("dist/16", env16)
 
-half_env = host_env.Clone()
-half_env.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
-build_with_env("dist/half", half_env)
+env32 = host_env.Clone()
+env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
+build_with_env("dist/32", env32)
+
+env64 = host_env.Clone()
+env64.Append(CPPDEFINES={"LITH_X25519_WBITS": 64})
+build_with_env("dist", env64)
 
 portable_asr_env = host_env.Clone()
 portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])

@@ -12,7 +12,11 @@
 #include <stdint.h>
 
 #ifndef LITH_X25519_WBITS
+#if defined(__GNUC__) && defined(__SIZEOF_INT128__)
+#define LITH_X25519_WBITS 64
+#else
 #define LITH_X25519_WBITS 32
+#endif
 #endif
 
 #if (LITH_X25519_WBITS == 16)
@@ -20,16 +24,29 @@
 typedef uint16_t limb_t;
 typedef uint32_t dlimb_t;
 typedef int32_t sdlimb_t;
-#define LIMB_MAX 0xFFFFU
-#define LIMBS(x) ((limb_t)((x) & LIMB_MAX)), ((limb_t)((x) >> LITH_X25519_WBITS))
+#define LIMBS_C(lsw, slsw, smsw, msw) (lsw##U), (slsw##U), (smsw##U), (msw##U)
+#define LOW_LIMB_C(lsw, slsw, smsw, msw) (lsw##U)
 
 #elif (LITH_X25519_WBITS == 32)
 
 typedef uint32_t limb_t;
 typedef uint64_t dlimb_t;
 typedef int64_t sdlimb_t;
-#define LIMB_MAX 0xFFFFFFFFU
-#define LIMBS(x) ((limb_t)(x))
+#define LIMBS_C(lsw, slsw, smsw, msw)                                          \
+    ((limb_t)(lsw##U) | ((limb_t)(slsw##U) << 16)),                            \
+        ((limb_t)(smsw##U) | ((limb_t)(msw##U) << 16))
+#define LOW_LIMB_C(lsw, slsw, smsw, msw)                                       \
+    ((limb_t)(lsw##U) | ((limb_t)(slsw##U) << 16))
+
+#elif (LITH_X25519_WBITS == 64)
+
+typedef uint64_t limb_t;
+typedef __uint128_t dlimb_t;
+typedef __int128_t sdlimb_t;
+#define LIMBS_C(lsw, slsw, smsw, msw)                                          \
+    ((limb_t)(lsw##U) | ((limb_t)(slsw##U) << 16) |                            \
+     ((limb_t)(smsw##U) << 32) | ((limb_t)(msw##U) << 48))
+#define LOW_LIMB_C LIMBS_C
 
 #else
 #error "Unsupported value for LITH_X25519_WBITS"
