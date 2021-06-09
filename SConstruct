@@ -70,6 +70,7 @@ llvm_flags = [
     "-Wno-unknown-warning-option",
     "-Wno-poison-system-directories",
     "-Wno-c99-extensions",
+    "-Wno-variadic-macros",
     "-Werror",
     "-O3",
     "-g",
@@ -104,7 +105,6 @@ elif platform == "posix":
 mingw_flags = [
     "-Wall",
     "-Wextra",
-    "-Wpedantic",
     "-Werror",
     "-O3",
     "-flto",
@@ -163,8 +163,13 @@ else:
     host_env = llvm_env
     build_with_env("dist/mingw", mingw_env, test=False)
 
+no_simd = ["-mno-sse", "-mno-sse2", "-mno-sse3"]
 env16 = host_env.Clone()
-env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+env16.Append(
+    CPPDEFINES={"LITH_X25519_WBITS": 16},
+    CCFLAGS=no_simd,
+    LINKFLAGS=no_simd,
+)
 build_with_env("dist/16", env16)
 
 env32 = host_env.Clone()

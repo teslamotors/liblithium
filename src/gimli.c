@@ -1,15 +1,102 @@
 #include <lithium/gimli.h>
 
-static uint32_t rol(uint32_t x, int n)
+static uint32_t coeff(int round)
 {
-    return (x << (n % 32)) | (x >> ((32 - n) % 32));
+    return UINT32_C(0x9E377900) | (uint32_t)round;
 }
 
-static void swap(uint32_t *x, uint32_t *y)
+#define rol(x, n) (((x) << ((n) % 32)) | ((x) >> ((32 - (n)) % 32)))
+
+#ifndef __has_attribute
+#define __has_attribute(x) 0
+#endif
+
+#if __has_attribute(vector_size) &&                                            \
+    ((defined(__SSE__) && defined(__SSE2__)) || (defined(__ARM_NEON)))
+
+typedef uint32_t uint32x4_t __attribute__((vector_size(16), aligned(4)));
+typedef uint8_t uint8x16_t __attribute__((vector_size(16), aligned(4)));
+
+#ifndef __has_builtin
+#error "Can't test for builtins."
+#endif
+
+#if __has_builtin(__builtin_shufflevector)
+#define shuffle(x, ...) (__builtin_shufflevector(x, x, __VA_ARGS__))
+#define shuffleb shuffle
+#elif __has_builtin(__builtin_shuffle)
+#define shuffle(x, ...) (__builtin_shuffle(x, (uint32x4_t){__VA_ARGS__}))
+#define shuffleb(x, ...) (__builtin_shuffle(x, (uint8x16_t){__VA_ARGS__}))
+#else
+#error "No __builtin_shufflevector or __builtin_shuffle."
+#endif
+
+static uint32x4_t rol24(uint32x4_t x)
 {
-    const uint32_t tmp = *x;
-    *x = *y;
-    *y = tmp;
+    /*
+     * Rotate left by 24 bits can be achieved more efficiently with a shuffle
+     * if there is no vector rotate.
+     * vpshufb is part of SSSE3, and vprold is part of AVX512VL.
+     * Neon doesn't have a vector rotate, but does have shuffles.
+     */
+#if (defined(__SSSE3__) && !defined(__AVX512VL__)) || defined(__ARM_NEON)
+    uint8x16_t xb = (uint8x16_t)x;
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    xb = shuffleb(xb, 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12);
+#elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    xb = shuffleb(xb, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14);
+#else
+#error "Can't determine which byte order to use for byte shuffle rol24."
+#endif
+    return (uint32x4_t)xb;
+#else
+    return rol(x, 24);
+#endif
+}
+
+void gimli(uint32_t *state)
+{
+    uint32x4_t *s = (uint32x4_t *)state;
+    uint32x4_t x = s[0];
+    uint32x4_t y = s[1];
+    uint32x4_t z = s[2];
+    int round;
+    for (round = 24; round > 0; --round)
+    {
+        uint32x4_t newy, newz;
+        x = rol24(x);
+        y = rol(y, 9);
+        newz = x ^ (z << 1) ^ ((y & z) << 2);
+        newy = y ^ x ^ ((x | z) << 1);
+        x = z ^ y ^ ((x & y) << 3);
+        y = newy;
+        z = newz;
+        switch (round & 3)
+        {
+        case 0:
+            /* small swap: pattern s...s...s... etc. */
+            x = shuffle(x, 1, 0, 3, 2);
+            /* add constant: pattern c...c...c... etc. */
+            x ^= (uint32x4_t){coeff(round)};
+            break;
+        case 2:
+            /* big swap: pattern ..S...S...S. etc. */
+            x = shuffle(x, 2, 3, 0, 1);
+            break;
+        }
+    }
+    s[0] = x;
+    s[1] = y;
+    s[2] = z;
+}
+
+#else
+
+static void swap(uint32_t *x, int i, int j)
+{
+    const uint32_t tmp = x[i];
+    x[i] = x[j];
+    x[j] = tmp;
 }
 
 void gimli(uint32_t *state)
@@ -27,20 +114,22 @@ void gimli(uint32_t *state)
             state[column + 4] = y ^ x ^ ((x | z) << 1);
             state[column] = z ^ y ^ ((x & y) << 3);
         }
-        switch (round % 4)
+        switch (round & 3)
         {
         case 0:
             /* small swap: pattern s...s...s... etc. */
-            swap(&state[0], &state[1]);
-            swap(&state[2], &state[3]);
+            swap(state, 0, 1);
+            swap(state, 2, 3);
             /* add constant: pattern c...c...c... etc. */
-            state[0] ^= UINT32_C(0x9E377900) | (uint32_t)round;
+            state[0] ^= coeff(round);
             break;
         case 2:
             /* big swap: pattern ..S...S...S. etc. */
-            swap(&state[0], &state[2]);
-            swap(&state[1], &state[3]);
+            swap(state, 0, 2);
+            swap(state, 1, 3);
             break;
         }
     }
 }
+
+#endif
