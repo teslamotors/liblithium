@@ -11,46 +11,61 @@
 #define PLAT_FLAGS 0
 #endif
 
-int main(int argc, char **argv)
+static ssize_t hash_fd(int fd)
 {
-    if (argc < 2)
-    {
-        fprintf(stderr, "usage: %s <input-file>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    unsigned char output[32];
-
     gimli_hash_state state;
     gimli_hash_init(&state);
-
-    int msgfd = open(argv[1], O_RDONLY | PLAT_FLAGS);
-    if (msgfd < 0)
-    {
-        perror("open");
-        return EXIT_FAILURE;
-    }
 
     static unsigned char buf[4096];
     ssize_t nread;
 
-    while ((nread = read(msgfd, buf, sizeof buf)) > 0)
+    while ((nread = read(fd, buf, sizeof buf)) > 0)
     {
         gimli_hash_update(&state, buf, (size_t)nread);
     }
 
-    if (nread < 0)
+    if (nread == 0)
     {
-        perror("read");
-        return EXIT_FAILURE;
+        unsigned char output[GIMLI_HASH_DEFAULT_LEN];
+        gimli_hash_final(&state, output, sizeof output);
+
+        for (size_t i = 0; i < sizeof output; ++i)
+        {
+            printf("%02hhx", output[i]);
+        }
     }
-    close(msgfd);
 
-    gimli_hash_final(&state, output, sizeof output);
+    return nread;
+}
 
-    for (size_t i = 0; i < sizeof output; ++i)
+int main(int argc, char **argv)
+{
+    if (argc < 2)
     {
-        printf("%02hhx", output[i]);
+        if (hash_fd(STDIN_FILENO) < 0)
+        {
+            perror("read");
+            return EXIT_FAILURE;
+        }
+        printf("  -\n");
     }
-    printf("\n");
+    else
+    {
+        for (int i = 1; i < argc; ++i)
+        {
+            int fd = open(argv[i], O_RDONLY | PLAT_FLAGS);
+            if (fd < 0)
+            {
+                perror("open");
+                return EXIT_FAILURE;
+            }
+            if (hash_fd(fd) < 0)
+            {
+                perror("read");
+                return EXIT_FAILURE;
+            }
+            printf("  %s\n", argv[i]);
+            close(fd);
+        }
+    }
 }

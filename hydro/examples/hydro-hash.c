@@ -5,47 +5,62 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char **argv)
+static ssize_t hash_fd(int fd)
 {
-    if (argc < 2)
-    {
-        fprintf(stderr, "usage: %s <input-file>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    unsigned char output[hydro_hash_BYTES];
-    static const char ctx[hydro_hash_CONTEXTBYTES] = {0};
-
     hydro_hash_state state;
+    static const char ctx[hydro_hash_CONTEXTBYTES] = {0};
     hydro_hash_init(&state, ctx, NULL);
-
-    int msgfd = open(argv[1], O_RDONLY);
-    if (msgfd < 0)
-    {
-        perror("open");
-        return EXIT_FAILURE;
-    }
 
     static unsigned char buf[4096];
     ssize_t nread;
 
-    while ((nread = read(msgfd, buf, sizeof buf)) > 0)
+    while ((nread = read(fd, buf, sizeof buf)) > 0)
     {
         hydro_hash_update(&state, buf, (size_t)nread);
     }
 
-    if (nread < 0)
+    if (nread == 0)
     {
-        perror("read");
-        return EXIT_FAILURE;
+        unsigned char output[hydro_hash_BYTES];
+        hydro_hash_final(&state, output, sizeof output);
+
+        for (size_t i = 0; i < sizeof output; ++i)
+        {
+            printf("%02hhx", output[i]);
+        }
     }
-    close(msgfd);
 
-    hydro_hash_final(&state, output, sizeof output);
+    return nread;
+}
 
-    for (size_t i = 0; i < sizeof output; ++i)
+int main(int argc, char **argv)
+{
+    if (argc < 2)
     {
-        printf("%02hhx", output[i]);
+        if (hash_fd(STDIN_FILENO) < 0)
+        {
+            perror("read");
+            return EXIT_FAILURE;
+        }
+        printf("  -\n");
     }
-    printf("\n");
+    else
+    {
+        for (int i = 1; i < argc; ++i)
+        {
+            int fd = open(argv[i], O_RDONLY);
+            if (fd < 0)
+            {
+                perror("open");
+                return EXIT_FAILURE;
+            }
+            if (hash_fd(fd) < 0)
+            {
+                perror("read");
+                return EXIT_FAILURE;
+            }
+            printf("  %s\n", argv[i]);
+            close(fd);
+        }
+    }
 }
