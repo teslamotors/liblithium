@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define HASH_PAD_LEN 16
-
 void hydro_random_buf(void *out, size_t out_len)
 {
     lith_random_bytes(out, out_len);
@@ -25,7 +23,7 @@ int hydro_hash_init(hydro_hash_state *state,
 {
     gimli_hash_init(state);
     static const unsigned char prefix[] = {4, 'k', 'm', 'a', 'c', 8};
-    static const unsigned char pad[HASH_PAD_LEN] = {0};
+    static const unsigned char pad[16] = {0};
     gimli_hash_update(state, prefix, sizeof prefix);
     gimli_hash_update(state, ctx ? (const unsigned char *)ctx : pad,
                       hydro_hash_CONTEXTBYTES);
@@ -33,13 +31,13 @@ int hydro_hash_init(hydro_hash_state *state,
     if (key != NULL)
     {
         unsigned char key_len = hydro_hash_KEYBYTES;
-        gimli_hash_update(state, &key_len, sizeof key_len);
+        gimli_hash_update(state, &key_len, 1);
         gimli_hash_update(state, key, hydro_hash_KEYBYTES);
-        gimli_hash_update(state, pad, HASH_PAD_LEN - 1);
+        gimli_hash_update(state, pad, sizeof pad - 1);
     }
     else
     {
-        gimli_hash_update(state, pad, HASH_PAD_LEN);
+        gimli_hash_update(state, pad, sizeof pad);
     }
     return 0;
 }
@@ -65,7 +63,8 @@ int hydro_hash_final(hydro_hash_state *state, uint8_t *out, size_t out_len)
     };
     gimli_hash_update(state, suffix, hash_len_len + 2U);
 
-    // apply different padding to match libhydrogen
+    // Apply different padding to match libhydrogen's older implementation of
+    // Gimli-Hash. See https://github.com/jedisct1/libhydrogen/issues/82.
     state->state[state->offset / 4] ^= UINT32_C(0x1E)
                                        << ((state->offset % 4) * 8);
     state->state[3] ^= UINT32_C(0x80000000);
@@ -95,10 +94,9 @@ int hydro_hash_hash(uint8_t *out, size_t out_len, const void *in_,
 
 void hydro_sign_keygen(hydro_sign_keypair *kp)
 {
-    uint8_t *pk_copy = &kp->sk[X25519_LEN];
     hydro_random_buf(kp->sk, X25519_LEN);
     x25519_base(kp->pk, kp->sk);
-    memcpy(pk_copy, kp->pk, X25519_LEN);
+    memcpy(&kp->sk[X25519_LEN], kp->pk, X25519_LEN);
 }
 
 int hydro_sign_init(hydro_sign_state *state,

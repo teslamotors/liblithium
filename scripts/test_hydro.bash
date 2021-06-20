@@ -2,7 +2,7 @@
 
 set -xe
 
-scons --no-sanitize --jobs $(nproc)
+scons --no-sanitize --jobs $(nproc) dist/hydro
 
 testdir="dist/test/hydrotest"
 PATH="$(pwd)/dist/hydro:$PATH"
@@ -18,9 +18,12 @@ hydro-verify testkey.pub input.bin input.sig
 
 [ -d libhydrogen ] || git clone https://github.com/jedisct1/libhydrogen.git
 
-clang -O3 -flto -march=native -c -o hydrogen.o -Ilibhydrogen libhydrogen/hydrogen.c
-clang -O3 -flto -march=native -o libhydrogen-sign -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-sign.c
-clang -O3 -flto -march=native -o libhydrogen-verify -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-verify.c
+CCFLAGS="-g -O3 -flto -march=native"
+
+clang $CCFLAGS -c -o hydrogen.o -Ilibhydrogen libhydrogen/hydrogen.c
+clang $CCFLAGS -o libhydrogen-sign -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-sign.c
+clang $CCFLAGS -o libhydrogen-verify -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-verify.c
+clang $CCFLAGS -o libhydrogen-hash -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-hash.c
 
 # check that libhydrogen can verify signatures from hydro
 ./libhydrogen-verify testkey.pub input.bin input.sig
