@@ -1,6 +1,11 @@
 #ifndef LITHIUM_OPT_H
 #define LITHIUM_OPT_H
 
+/*
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <limits.h>
 
 /*

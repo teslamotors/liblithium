@@ -1,6 +1,15 @@
 #ifndef hydrogen_H
 #define hydrogen_H
 
+/*
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Derived from libhydrogen's hydrogen.h, under the ISC license.
+ * libhydrogen is Copyright (c) 2017-2021 Frank Denis <j at pureftpd dot org>
+ * SPDX-License-Identifier: ISC
+ */
+
 #include <lithium/gimli_hash.h>
 
 #include <stdint.h>

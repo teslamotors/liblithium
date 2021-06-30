@@ -1,6 +1,11 @@
 #ifndef LITHIUM_GIMLI_AEAD_H
 #define LITHIUM_GIMLI_AEAD_H
 
+/*
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <lithium/gimli_state.h>
 
 #include <stdbool.h>

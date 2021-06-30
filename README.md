@@ -15,7 +15,8 @@ elliptic curve points, a technique pioneered in the paper ["Fast and compact
 elliptic-curve cryptography"](https://www.shiftleft.org/papers/fff/) and
 implemented in the [STROBE project](https://sourceforge.net/projects/strobe/).
 This technique greatly reduces the code size required for creating and
-verifying signatures.
+verifying signatures. liblithium's X25519 implementation is derived from
+STROBE.
 
 # Compiling
 

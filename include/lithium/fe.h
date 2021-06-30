@@ -1,7 +1,10 @@
 /*
- * Copyright (c) 2016 Cryptography Research, Inc.
- * Released under the MIT License.
- * See LICENSE for license information.
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Derived from STROBE's x25519.c, under the MIT license.
+ * STROBE is Copyright (c) 2015-2016 Cryptography Research, Inc.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef LITHIUM_FE_H

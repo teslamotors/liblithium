@@ -1,5 +1,14 @@
 #include "hydrogen.h"
 
+/*
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Derived from libhydrogen's impl headers, under the ISC license.
+ * libhydrogen is Copyright (c) 2017-2021 Frank Denis <j at pureftpd dot org>
+ * SPDX-License-Identifier: ISC
+ */
+
 #include <lithium/gimli_hash.h>
 #include <lithium/random.h>
 #include <lithium/x25519.h>

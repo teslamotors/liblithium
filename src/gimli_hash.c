@@ -1,3 +1,8 @@
+/*
+ * Part of liblithium, under the Apache License v2.0.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <lithium/gimli_hash.h>
 
 #include "gimli_common.h"
