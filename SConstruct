@@ -70,6 +70,7 @@ llvm_flags = [
     "-Wno-unknown-warning-option",
     "-Wno-poison-system-directories",
     "-Wno-c99-extensions",
+    "-Wno-long-long",
     "-Wno-variadic-macros",
     "-Werror",
     "-O3",
