@@ -5,12 +5,16 @@
 
 #include <lithium/random.h>
 
-#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include <winternl.h>
-#include <ntstatus.h>
+
 #include <bcrypt.h>
+#include <ntstatus.h>
 #else
 #include <fcntl.h>
 #include <unistd.h>
@@ -20,13 +24,34 @@ void lith_random_bytes(unsigned char *buf, size_t len)
 {
 #ifdef _WIN32
     BCRYPT_ALG_HANDLE h;
-    assert(BCryptOpenAlgorithmProvider(&h, BCRYPT_RNG_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0) == STATUS_SUCCESS);
-    assert(BCryptGenRandom(h, buf, len, 0) == STATUS_SUCCESS);
+    if (BCryptOpenAlgorithmProvider(&h, BCRYPT_RNG_ALGORITHM,
+                                    MS_PRIMITIVE_PROVIDER, 0) != STATUS_SUCCESS)
+    {
+        fprintf(stderr, "failed to open bcrypt algorithm provider\n");
+        abort();
+    }
+    if (BCryptGenRandom(h, buf, len, 0) != STATUS_SUCCESS)
+    {
+        fprintf(stderr, "failed to generate random data\n");
+        BCryptCloseAlgorithmProvider(h, 0);
+        abort();
+    }
     BCryptCloseAlgorithmProvider(h, 0);
 #else
-    int fd = open("/dev/urandom", O_RDONLY);
-    assert(fd >= 0);
-    assert(read(fd, buf, len) == (ssize_t)len);
+    static const char urandom[] = "/dev/urandom";
+    int fd = open(urandom, O_RDONLY);
+    if (fd < 0)
+    {
+        fprintf(stderr, "failed to open %s: %s\n", urandom, strerror(errno));
+        abort();
+    }
+    if (read(fd, buf, len) != (ssize_t)len)
+    {
+        fprintf(stderr, "couldn't read %zu bytes from %s: %s\n", len, urandom,
+                strerror(errno));
+        close(fd);
+        abort();
+    }
     close(fd);
 #endif
 }

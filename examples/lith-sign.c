@@ -21,32 +21,42 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    int skfd = -1, sigfd = -1, msgfd = -1;
+    int exitcode = EXIT_SUCCESS;
+
     unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN];
-    int skfd = open(argv[1], O_RDONLY | PLAT_FLAGS);
-    if (skfd < 0 ||
-        read(skfd, secret_key, sizeof secret_key) != sizeof secret_key)
+    skfd = open(argv[1], O_RDONLY | PLAT_FLAGS);
+    if (skfd < 0)
+    {
+        perror("could not open the secret key file");
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
+    }
+    if (read(skfd, secret_key, sizeof secret_key) != sizeof secret_key)
     {
         perror("could not read secret key");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(skfd);
 
     unsigned char sig[LITH_SIGN_LEN];
-    int sigfd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
+    sigfd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     if (sigfd < 0)
     {
         perror("could not create signature file");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
     lith_sign_state state;
     lith_sign_init(&state);
 
-    int msgfd = open(argv[2], O_RDONLY | PLAT_FLAGS);
+    msgfd = open(argv[2], O_RDONLY | PLAT_FLAGS);
     if (msgfd < 0)
     {
         perror("could not open message file");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
     static unsigned char buf[4096];
@@ -60,16 +70,34 @@ int main(int argc, char **argv)
     if (nread < 0)
     {
         perror("could not read message");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(msgfd);
 
     lith_sign_final_create(&state, sig, secret_key);
 
     if (write(sigfd, sig, sizeof sig) != sizeof sig)
     {
         perror("could not write signature");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(sigfd);
+
+cleanup:
+    if ((skfd >= 0) && (close(skfd) < 0))
+    {
+        perror("failed to close secret key file");
+        exitcode = EXIT_FAILURE;
+    }
+    if ((sigfd >= 0) && (close(sigfd) < 0))
+    {
+        perror("failed to close signature file");
+        exitcode = EXIT_FAILURE;
+    }
+    if ((msgfd >= 0) && (close(msgfd) < 0))
+    {
+        perror("failed to close message file");
+        exitcode = EXIT_FAILURE;
+    }
+    return exitcode;
 }

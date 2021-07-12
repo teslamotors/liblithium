@@ -15,34 +15,43 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    int pkfd = -1, sigfd = -1, msgfd = -1;
+    int exitcode = EXIT_SUCCESS;
+
     unsigned char public_key[hydro_sign_PUBLICKEYBYTES];
-    int pkfd = open(argv[1], O_RDONLY);
-    if (pkfd < 0 ||
-        read(pkfd, public_key, sizeof public_key) != sizeof public_key)
+    pkfd = open(argv[1], O_RDONLY);
+    if (pkfd < 0)
+    {
+        perror("could not open public key file");
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
+    }
+    if (read(pkfd, public_key, sizeof public_key) != sizeof public_key)
     {
         perror("could not read public key");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(pkfd);
 
     unsigned char sig[hydro_sign_BYTES];
-    int sigfd = open(argv[3], O_RDONLY);
+    sigfd = open(argv[3], O_RDONLY);
     if (sigfd < 0 || read(sigfd, sig, sizeof sig) != sizeof sig)
     {
         perror("could not read signature");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(sigfd);
 
     static const char ctx[hydro_sign_CONTEXTBYTES] = {0};
     hydro_sign_state state;
     hydro_sign_init(&state, ctx);
 
-    int msgfd = open(argv[2], O_RDONLY);
+    msgfd = open(argv[2], O_RDONLY);
     if (msgfd < 0)
     {
         perror("could not open message file");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
     static unsigned char buf[4096];
@@ -56,13 +65,32 @@ int main(int argc, char **argv)
     if (nread < 0)
     {
         perror("could not read message");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
-    close(msgfd);
 
     if (hydro_sign_final_verify(&state, sig, public_key) != 0)
     {
         fprintf(stderr, "could not verify signature\n");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
+
+cleanup:
+    if ((pkfd >= 0) && (close(pkfd) < 0))
+    {
+        perror("failed to close public key file");
+        exitcode = EXIT_FAILURE;
+    }
+    if ((sigfd >= 0) && (close(sigfd) < 0))
+    {
+        perror("failed to close signature file");
+        exitcode = EXIT_FAILURE;
+    }
+    if ((msgfd >= 0) && (close(msgfd) < 0))
+    {
+        perror("failed to close message file");
+        exitcode = EXIT_FAILURE;
+    }
+    return exitcode;
 }

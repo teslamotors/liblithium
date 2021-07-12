@@ -62,6 +62,7 @@ int main(int argc, char **argv)
             if (hash_fd(fd) < 0)
             {
                 perror("read");
+                close(fd);
                 return EXIT_FAILURE;
             }
             printf("  %s\n", argv[i]);

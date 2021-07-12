@@ -27,36 +27,58 @@ int main(int argc, char **argv)
 
     char *keyname = argv[1];
     char *pubkeyname = malloc(strlen(keyname) + 5);
+    if (!pubkeyname)
+    {
+        perror("malloc");
+        return EXIT_FAILURE;
+    }
     strcpy(pubkeyname, keyname);
     strcat(pubkeyname, ".pub");
 
-    int pkfd = open(pubkeyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
+    int exitcode = EXIT_SUCCESS;
+    int pkfd = -1, skfd = -1;
+
+    pkfd = open(pubkeyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     free(pubkeyname);
     if (pkfd < 0)
     {
         perror("could not open public key file for writing");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
-    int skfd = open(keyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
+    skfd = open(keyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
     if (skfd < 0)
     {
         perror("could not open secret key file for writing");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
     if (write(pkfd, public_key, sizeof public_key) != sizeof public_key)
     {
         perror("could not write public key");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
     if (write(skfd, secret_key, sizeof secret_key) != sizeof secret_key)
     {
         perror("could not write secret key");
-        return EXIT_FAILURE;
+        exitcode = EXIT_FAILURE;
+        goto cleanup;
     }
 
-    close(pkfd);
-    close(skfd);
+cleanup:
+    if ((pkfd >= 0) && (close(pkfd) < 0))
+    {
+        perror("failed to close public key file");
+        exitcode = EXIT_FAILURE;
+    }
+    if ((skfd >= 0) && (close(skfd) < 0))
+    {
+        perror("failed to close secret key file");
+        exitcode = EXIT_FAILURE;
+    }
+    return exitcode;
 }

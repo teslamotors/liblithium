@@ -72,6 +72,7 @@ llvm_flags = [
     "-Wno-c99-extensions",
     "-Wno-long-long",
     "-Wno-variadic-macros",
+    "-Wno-format-non-iso",
     "-Werror",
     "-O3",
     "-g",
@@ -139,7 +140,6 @@ arm_env = env.Clone(
 arm_gnu_flags = [
     "-Wall",
     "-Wextra",
-    "-Wpedantic",
     "-Werror",
     "-specs=nosys.specs",
     "-specs=nano.specs",
