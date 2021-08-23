@@ -1,0 +1,6 @@
+# SConscript
+
+Import("env")
+
+test_hydro = env.Program("test_hydro.c")
+env.Command(target="test_hydro_output", source=test_hydro, action="$SOURCE ")

@@ -28,14 +28,6 @@ def build_with_env(path, env, test=True):
         dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
     )
 
-    if test:
-        SConscript(
-            dirs="test",
-            variant_dir=os.path.join(path, "test"),
-            exports={"env": lith_env},
-            duplicate=False,
-        )
-
     hydro_env = lith_env.Clone()
     hydro_env.Append(CPPPATH=[Dir("hydro")])
     libhydrogen = SConscript(
@@ -52,6 +44,20 @@ def build_with_env(path, env, test=True):
         exports={"env": hydro_env},
         duplicate=False,
     )
+
+    if test:
+        SConscript(
+            dirs="test",
+            variant_dir=os.path.join(path, "test"),
+            exports={"env": lith_env},
+            duplicate=False,
+        )
+        SConscript(
+            dirs="hydro/test",
+            variant_dir=os.path.join(path, "hydro", "test"),
+            exports={"env": hydro_env},
+            duplicate=False,
+        )
 
 
 env = Environment(tools=["cc", "c++", "ar", "link"])
