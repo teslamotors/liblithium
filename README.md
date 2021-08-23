@@ -24,22 +24,21 @@ While you can embed liblithium in many environments, the library comes with a
 SConstruct file for building using scons by default.
 
 You can also use the `docker.sh` script that will conveniently build
-liblithium along with examples for multiple target architectures in one go.
+liblithium along with examples for multiple target architectures.
 
 # What you can use liblithium for
 
-Liblithium is particularly well suited for constrained environments and low
-power microcontrollers due to its very small footprint and limited
-processing requirements, thus making it possible to include cryptographic
-operations such as signature verification on low power electronics. This makes
-liblithium a great candidate for implementing signed firmware updates on
-embedded electronics.
+liblithium is particularly well-suited for constrained environments and
+low-power microcontrollers due to its very small footprint and limited
+processing requirements. This makes liblithium a great candidate for
+implementing signed firmware updates on embedded electronics that have no
+secure boot functionality.
 
 ## Basics of using liblithium for signed updates
 
-Before anything else, you should ensure that all debug ports (JTAG, other) on
+Before anything else, you should ensure that all debug ports (e.g., JTAG) on
 your target MCU are disabled, since those can be used to circumvent
-software-only signature validation.
+software-only signature verification.
 
 Signature verification should ideally be implemented in the bootloader, either
 at boot time, or only at firmware update time if boot speed is critical.
@@ -55,28 +54,12 @@ In order for the signature verification process to be effective, the entire
 firmware binary should be signed (not only the header or a subset of the
 firmware).
 
-Since signature verification is done continuously during data reception by the
-update process, it makes sense to append the signature at the end of the
+Since signature verification can be done continuously during data reception by
+the update process, it makes sense to append the signature at the end of the
 firmware binary, since the signature is required at that point for final
 verification.
 
 # Examples
-
-## Verifying a signature
-
-You can refer to [`examples/lith-verify.c`](examples/lith-verify.c) for an
-example of how to verify the signature of a binary blob against a public key.
-
-Three calls only are required to implement this:
-
-- `lith_sign_init(&state);` : initializes the liblithium state (state is
-   a `lith_sign_state`)
-- `lith_sign_update(&state, buf, data_size);` : updates the liblithium
-  state for each data block that is being read (for instance when
-  reading a file, or receiving data over a serial bus)
-- `lith_sign_final_verify(&state, sig, public_key)` : is called once all the
-  data and the signature are received, and verifies the signature against the
-  public key.
 
 ## Generating a signature
 
@@ -87,7 +70,23 @@ Three calls only are required to implement this:
 
 - `lith_sign_init(&state);` : initializes the liblithium library state (state
   is a `lith_sign_state`)
-- `lith_sign_update(&state, buf, data_size);` : updates the liblithium
+- `lith_sign_update(&state, msg, len);` : updates the liblithium
   state for each data block that is being read
 - `lith_sign_final_create(&state, sig, secret_key);` : is called once all the
   data is received, and generates the signature using the secret key.
+
+## Verifying a signature
+
+You can refer to [`examples/lith-verify.c`](examples/lith-verify.c) for an
+example of how to verify the signature of a binary blob against a public key.
+
+Three calls only are required to implement this:
+
+- `lith_sign_init(&state);` : initializes the liblithium state (state is
+   a `lith_sign_state`)
+- `lith_sign_update(&state, msg, len);` : updates the liblithium
+  state for each data block that is being read (for instance when
+  reading a file, or receiving data over a serial bus)
+- `lith_sign_final_verify(&state, sig, public_key);` : is called once all the
+  data and the signature are received, and verifies the signature against the
+  public key.
