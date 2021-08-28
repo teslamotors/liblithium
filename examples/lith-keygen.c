@@ -25,32 +25,35 @@ int main(int argc, char **argv)
         secret_key[LITH_SIGN_SECRET_KEY_LEN];
     lith_sign_keygen(public_key, secret_key);
 
-    char *keyname = argv[1];
-    char *pubkeyname = malloc(strlen(keyname) + 5);
-    if (!pubkeyname)
+    const char *const skname = argv[1];
+    char pkname[255];
+    int written = snprintf(pkname, sizeof pkname, "%s.pub", skname);
+    if (written < 0)
     {
-        perror("malloc");
+        perror("snprintf");
         return EXIT_FAILURE;
     }
-    strcpy(pubkeyname, keyname);
-    strcat(pubkeyname, ".pub");
+    if ((size_t)written >= sizeof pkname)
+    {
+        fprintf(stderr, "key name is too long");
+        return EXIT_FAILURE;
+    }
 
     int exitcode = EXIT_SUCCESS;
-    int pkfd = -1, skfd = -1;
+    int skfd = -1, pkfd = -1;
 
-    pkfd = open(pubkeyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
-    free(pubkeyname);
-    if (pkfd < 0)
+    skfd = open(skname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
+    if (skfd < 0)
     {
-        perror("could not open public key file for writing");
+        perror("could not open secret key file for writing");
         exitcode = EXIT_FAILURE;
         goto cleanup;
     }
 
-    skfd = open(keyname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
-    if (skfd < 0)
+    pkfd = open(pkname, O_CREAT | O_WRONLY | O_TRUNC | PLAT_FLAGS, 0600);
+    if (pkfd < 0)
     {
-        perror("could not open secret key file for writing");
+        perror("could not open public key file for writing");
         exitcode = EXIT_FAILURE;
         goto cleanup;
     }
