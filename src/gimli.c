@@ -21,26 +21,18 @@ typedef uint8_t uint8x16_t __attribute__((vector_size(16), aligned(4)));
 
 #if defined(__clang__)
 #define shuffle(x, ...) (__builtin_shufflevector(x, x, __VA_ARGS__))
-#define shuffleb shuffle
 #else /* Use the gcc shuffle builtin. */
-#define shuffle(x, ...) (__builtin_shuffle(x, (uint32x4_t){__VA_ARGS__}))
-#define shuffleb(x, ...) (__builtin_shuffle(x, (uint8x16_t){__VA_ARGS__}))
+#define shuffle(x, ...) (__builtin_shuffle(x, (__typeof__(x)){__VA_ARGS__}))
 #endif
 
 static uint32x4_t rol24(uint32x4_t x)
 {
-    /*
-     * Rotate left by 24 bits can be achieved more efficiently with a shuffle
-     * if there is no vector rotate.
-     * vpshufb is part of SSSE3, and vprold is part of AVX512VL.
-     * Neon doesn't have a vector rotate, but does have shuffles.
-     */
-#if (defined(__SSSE3__) && !defined(__AVX512VL__)) || defined(__ARM_NEON)
+#if (LITH_SHUFFLE_ROTATE)
     uint8x16_t xb = (uint8x16_t)x;
 #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    xb = shuffleb(xb, 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12);
+    xb = shuffle(xb, 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12);
 #elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-    xb = shuffleb(xb, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14);
+    xb = shuffle(xb, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14);
 #else
 #error "Can't determine which byte order to use for byte shuffle rol24."
 #endif

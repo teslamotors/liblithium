@@ -192,3 +192,13 @@ portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
 build_with_env("dist/portable_asr", portable_asr_env)
 
 build_with_env("dist/arm", arm_env, test=False)
+
+# Build with AVX512VL explicitly enabled and disabled to cover both
+# cases regardless of whether the host supports it or not.
+avx512vl_env = host_env.Clone()
+avx512vl_env.Append(CCFLAGS="-mavx512vl")
+build_with_env("dist/avx512vl", avx512vl_env, test=False)
+
+no_avx512vl_env = host_env.Clone()
+no_avx512vl_env.Append(CCFLAGS="-mno-avx512vl")
+build_with_env("dist/no-avx512vl", no_avx512vl_env, test=False)
