@@ -54,11 +54,11 @@
  * Neon doesn't have a vector rotate, but does have shuffles.
  */
 #if (defined(__SSSE3__) && !defined(__AVX512VL__)) || defined(__ARM_NEON)
-#define LITH_SHUFFLE_ROTATE 1
+#define LITH_SHUFFLE_ROL24 1
 #endif
 
-#ifndef LITH_SHUFFLE_ROTATE
-#define LITH_SHUFFLE_ROTATE 0
+#ifndef LITH_SHUFFLE_ROL24
+#define LITH_SHUFFLE_ROL24 0
 #endif
 
 #endif /* LITHIUM_OPT_H */

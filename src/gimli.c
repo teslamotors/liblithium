@@ -27,7 +27,7 @@ typedef uint8_t uint8x16_t __attribute__((vector_size(16), aligned(4)));
 
 static uint32x4_t rol24(uint32x4_t x)
 {
-#if (LITH_SHUFFLE_ROTATE)
+#if (LITH_SHUFFLE_ROL24)
     uint8x16_t xb = (uint8x16_t)x;
 #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     xb = shuffle(xb, 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12);
