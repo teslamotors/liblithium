@@ -4,23 +4,18 @@ set -xe
 
 name="lithium"
 image="$name-builder"
-container="$name-container"
 
 docker build --tag "$image" .
 
-if docker run \
-  --name "$container" \
+workdir="/mnt/liblithium"
+
+docker run \
+  --rm \
   --tty \
   --interactive \
-  --volume "$(pwd):/src/$name" \
+  --volume "$(pwd):$workdir" \
+  --user "$(id -u $USER):$(id -g $USER)" \
+  --workdir "$workdir" \
   --cap-add SYS_PTRACE \
   "$image" \
-  "bash" "-c" \
-  "git clone $name $name-docker && cd $name-docker && ./build.sh"
-then
-  docker cp "$container:/src/$name-docker/dist" "dist"
-else
-  echo "Build failed, skipping copy out of docker container."
-fi
-
-docker rm "$container"
+  "bash" "-c" 'scons --jobs "$(nproc)"'
