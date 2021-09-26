@@ -121,8 +121,8 @@ bool lith_sign_final_verify(
     return lith_sign_verify_prehash(sig, prehash, public_key);
 }
 
-void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
-                      size_t len,
+void lith_sign_create(unsigned char sig[LITH_SIGN_LEN],
+                      const unsigned char *msg, size_t len,
                       const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN])
 {
     lith_sign_state state;
@@ -131,8 +131,8 @@ void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
     lith_sign_final_create(&state, sig, secret_key);
 }
 
-bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN], const void *msg,
-                      size_t len,
+bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN],
+                      const unsigned char *msg, size_t len,
                       const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
 {
     lith_sign_state state;

@@ -48,12 +48,12 @@ bool lith_sign_verify_prehash(
     const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
     const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
-void lith_sign_create(unsigned char sig[LITH_SIGN_LEN], const void *msg,
-                      size_t len,
+void lith_sign_create(unsigned char sig[LITH_SIGN_LEN],
+                      const unsigned char *msg, size_t len,
                       const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN]);
 
-bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN], const void *msg,
-                      size_t len,
+bool lith_sign_verify(const unsigned char sig[LITH_SIGN_LEN],
+                      const unsigned char *msg, size_t len,
                       const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 /* cffi:end */
