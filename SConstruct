@@ -1,6 +1,7 @@
 # SConstruct
 
 import os
+import platform
 
 
 def build_with_env(path, env, test=True):
@@ -60,14 +61,17 @@ def build_with_env(path, env, test=True):
         )
 
 
-env = Environment(tools=["cc", "c++", "ar", "link"])
+uname = platform.uname()
+
+if uname.system == "Windows":
+    env = Environment(tools=["cc", "c++", "link", "ar"])
+    env["ENV"]["PATH"] = os.environ["PATH"]
+else:
+    env = Environment()
+
 # for color terminal output when available
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]
-
-platform = env["PLATFORM"]
-if platform == "win32":
-    env["ENV"]["PATH"] = os.environ["PATH"]
 
 llvm_env = env.Clone()
 
@@ -85,8 +89,12 @@ llvm_flags = [
     "-flto",
     "-ffunction-sections",
     "-fdata-sections",
-    "-march=native",
 ]
+
+if uname.system == "Darwin" and uname.machine == "arm64":
+    llvm_flags.extend(["--target=x86_64-apple-darwin", "-march=penryn"])
+else:
+    llvm_flags.append("-march=native")
 
 AddOption(
     "--no-sanitize",
@@ -102,9 +110,9 @@ llvm_env["CC"] = "clang"
 
 llvm_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags)
 
-if platform == "darwin":
+if uname.system == "Darwin":
     llvm_env.Append(LINKFLAGS=["-dead_strip"])
-elif platform == "posix":
+elif uname.system == "Linux":
     llvm_env.Append(LINKFLAGS=["-Wl,--gc-sections"])
     # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
     llvm_env["AR"] = "llvm-ar"
@@ -164,7 +172,7 @@ arm_env.Append(
     LINKFLAGS=arm_gnu_flags + ["-Wl,--gc-sections"],
 )
 
-if platform == "win32":
+if uname.system == "Windows":
     host_env = mingw_env
 else:
     host_env = llvm_env
