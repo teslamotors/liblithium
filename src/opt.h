@@ -23,10 +23,11 @@
 #endif
 
 /*
- * If a Gimli state word fits in a machine register, absorb a word at a time.
+ * If a Gimli state word fits in a machine register, sponge operations can
+ * happen a word at a time.
  */
-#ifndef LITH_ABSORB_WORDS
-#define LITH_ABSORB_WORDS (UINT_MAX >= UINT32_MAX)
+#ifndef LITH_SPONGE_WORDS
+#define LITH_SPONGE_WORDS (UINT_MAX >= UINT32_MAX)
 #endif
 
 /*
@@ -37,14 +38,27 @@
 /* Clang claims a GNUC version of 4.2.1, so check the clang version first. */
 #if ((defined(__clang__) && (__clang_major__ >= 4)) ||                         \
      (((__GNUC__ * 100) + __GNUC_MINOR__) >= 407)) &&                          \
-    ((defined(__SSE__) && defined(__SSE2__)) ||                                \
-     (defined(__ARM_NEON) && defined(__ARM_FEATURE_UNALIGNED)))
+    ((defined(__SSE__) && defined(__SSE2__)) || (defined(__ARM_NEON)))
+
 #define LITH_VECTORIZE 1
+
+/*
+ * If vector loads from unaligned addresses are supported, sponge operations can
+ * be vectorized. This requires SSE2 on x86 and unaligned accesses on ARM.
+ */
+#if defined(__SSE2__) || defined(__ARM_FEATURE_UNALIGNED)
+#define LITH_SPONGE_VECTORS 1
+#endif
+
 #endif
 #endif
 
 #ifndef LITH_VECTORIZE
 #define LITH_VECTORIZE 0
+#endif
+
+#ifndef LITH_SPONGE_VECTORS
+#define LITH_SPONGE_VECTORS 0
 #endif
 
 /*

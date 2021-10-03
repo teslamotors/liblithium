@@ -54,7 +54,7 @@ static void encrypt_update(gimli_state *g, unsigned char *c,
 void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
                                const unsigned char *m, size_t len)
 {
-#if (LITH_ABSORB_WORDS)
+#if (LITH_SPONGE_WORDS)
     const size_t first_block_len = (GIMLI_RATE - g->offset) % GIMLI_RATE;
     if (len >= GIMLI_RATE + first_block_len)
     {
@@ -64,7 +64,7 @@ void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
         len -= first_block_len;
         do
         {
-#if (LITH_VECTORIZE)
+#if (LITH_SPONGE_VECTORS)
             typedef uint32_t block_t
                 __attribute__((vector_size(16), aligned(1)));
             *(block_t *)c = *(block_t *)g->state ^= *(const block_t *)m;
@@ -109,7 +109,7 @@ static void decrypt_update(gimli_state *g, unsigned char *m,
 void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
                                const unsigned char *c, size_t len)
 {
-#if (LITH_ABSORB_WORDS)
+#if (LITH_SPONGE_WORDS)
     const size_t first_block_len = (GIMLI_RATE - g->offset) % GIMLI_RATE;
     if (len >= GIMLI_RATE + first_block_len)
     {
@@ -119,7 +119,7 @@ void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
         len -= first_block_len;
         do
         {
-#if (LITH_VECTORIZE)
+#if (LITH_SPONGE_VECTORS)
             typedef uint32_t block_t
                 __attribute__((vector_size(16), aligned(1)));
             *(block_t *)m = *(block_t *)g->state ^ *(const block_t *)c;
