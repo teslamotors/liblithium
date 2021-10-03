@@ -91,11 +91,6 @@ llvm_flags = [
     "-fdata-sections",
 ]
 
-if uname.system == "Darwin" and uname.machine == "arm64":
-    llvm_flags.extend(["--target=x86_64-apple-darwin", "-march=penryn"])
-else:
-    llvm_flags.append("-march=native")
-
 AddOption(
     "--no-sanitize",
     dest="sanitize",
@@ -127,6 +122,7 @@ mingw_flags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-Wl,--gc-sections",
+    "-march=skylake",
 ]
 mingw_env = env.Clone(
     CC="x86_64-w64-mingw32-gcc",
@@ -172,28 +168,36 @@ arm_env.Append(
     LINKFLAGS=arm_gnu_flags + ["-Wl,--gc-sections"],
 )
 
+
+def new_x86_env(flags):
+    new_env = llvm_env.Clone()
+    if uname.system == "Darwin" and uname.machine == "arm64":
+        target_flag = "--target=x86_64-apple-darwin"
+        new_env.Append(CCFLAGS=target_flag, LINKFLAGS=target_flag)
+    new_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
+    return new_env
+
+
 if uname.system == "Windows":
     host_env = mingw_env
 else:
-    host_env = llvm_env
     build_with_env("dist/mingw", mingw_env, test=False)
+    host_env = llvm_env.Clone()
+    if uname.system == "Darwin" and uname.machine == "arm64":
+        native_flag = "-mcpu=apple-a14"
+    else:
+        native_flag = "-march=native"
+    host_env.Append(CCFLAGS=native_flag, LINKFLAGS=native_flag)
 
-no_simd = ["-mno-sse", "-mno-sse2", "-mno-sse3"]
+build_with_env("dist", host_env)
+
 env16 = host_env.Clone()
-env16.Append(
-    CPPDEFINES={"LITH_X25519_WBITS": 16},
-    CCFLAGS=no_simd,
-    LINKFLAGS=no_simd,
-)
+env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
 build_with_env("dist/16", env16)
 
 env32 = host_env.Clone()
 env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
 build_with_env("dist/32", env32)
-
-env64 = host_env.Clone()
-env64.Append(CPPDEFINES={"LITH_X25519_WBITS": 64})
-build_with_env("dist", env64)
 
 portable_asr_env = host_env.Clone()
 portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
@@ -201,12 +205,14 @@ build_with_env("dist/portable_asr", portable_asr_env)
 
 build_with_env("dist/arm", arm_env, test=False)
 
-# Build with AVX512VL explicitly enabled and disabled to cover both
-# cases regardless of whether the host supports it or not.
-avx512vl_env = host_env.Clone()
-avx512vl_env.Append(CCFLAGS="-mavx512vl")
-build_with_env("dist/avx512vl", avx512vl_env, test=False)
+# SSE, etc., but no AVX
+penryn_env = new_x86_env("-march=penryn")
+build_with_env("dist/penryn", penryn_env, test=False)
 
-no_avx512vl_env = host_env.Clone()
-no_avx512vl_env.Append(CCFLAGS="-mno-avx512vl")
-build_with_env("dist/no-avx512vl", no_avx512vl_env, test=False)
+# Everything except AVX512
+skylake_env = new_x86_env("-march=skylake")
+build_with_env("dist/skylake", skylake_env, test=False)
+
+# AVX512
+icelake_env = new_x86_env("-march=icelake-server")
+build_with_env("dist/icelake", icelake_env, test=False)
