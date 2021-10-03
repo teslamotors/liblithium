@@ -122,7 +122,6 @@ mingw_flags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-Wl,--gc-sections",
-    "-march=skylake",
 ]
 mingw_env = env.Clone(
     CC="x86_64-w64-mingw32-gcc",
@@ -170,7 +169,10 @@ arm_env.Append(
 
 
 def new_x86_env(flags):
-    new_env = llvm_env.Clone()
+    if uname.system == "Windows":
+        new_env = mingw_env.Clone()
+    else:
+        new_env = llvm_env.Clone()
     if uname.system == "Darwin" and uname.machine == "arm64":
         target_flag = "--target=x86_64-apple-darwin"
         new_env.Append(CCFLAGS=target_flag, LINKFLAGS=target_flag)
@@ -179,15 +181,17 @@ def new_x86_env(flags):
 
 
 if uname.system == "Windows":
-    host_env = mingw_env
+    host_env = mingw_env.Clone()
+    arch_flag = "-march=skylake"
 else:
     build_with_env("dist/mingw", mingw_env, test=False)
     host_env = llvm_env.Clone()
     if uname.system == "Darwin" and uname.machine == "arm64":
-        native_flag = "-mcpu=apple-a14"
+        arch_flag = "-mcpu=apple-a14"
     else:
-        native_flag = "-march=native"
-    host_env.Append(CCFLAGS=native_flag, LINKFLAGS=native_flag)
+        arch_flag = "-march=native"
+
+host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
 
 build_with_env("dist", host_env)
 
@@ -206,8 +210,8 @@ build_with_env("dist/portable_asr", portable_asr_env)
 build_with_env("dist/arm", arm_env, test=False)
 
 # SSE, etc., but no AVX
-penryn_env = new_x86_env("-march=penryn")
-build_with_env("dist/penryn", penryn_env, test=False)
+nehalem_env = new_x86_env("-march=nehalem")
+build_with_env("dist/nehalem", nehalem_env, test=False)
 
 # Everything except AVX512
 skylake_env = new_x86_env("-march=skylake")

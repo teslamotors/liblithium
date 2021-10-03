@@ -1,4 +1,4 @@
-name: SCons Test
+name: Linux Test
 
 on:
   push:
@@ -11,13 +11,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Show CPU information
-      run: |
-        lscpu
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install clang gcc-arm-none-eabi llvm mingw-w64 scons
+        sudo apt-get update -qq
+        sudo apt-get install -qq clang gcc-arm-none-eabi llvm mingw-w64 scons
     - name: Build with SCons
       run: |
         scons --jobs "$(nproc)"
