@@ -21,23 +21,17 @@ setup(
     author_email="chris@chrisnc.net",
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        # How mature is this project? Common values are
-        #   1 - Planning
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
         "Development Status :: 3 - Alpha",
-        # Indicate who your project is intended for
         "Intended Audience :: Developers",
         "Topic :: Security :: Cryptography",
         "Topic :: Software Development :: Embedded Systems",
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: MIT License",
     ],
     keywords=["x25519", "gimli", "signatures"],
     package_dir={"lithium": "py_src"},
