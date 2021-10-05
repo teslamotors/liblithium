@@ -84,12 +84,13 @@ static void ladder_part2(feq P, feq Q, const fe t, const fe x)
 
 static void x25519_q(feq P, const unsigned char k[X25519_LEN], const fe x)
 {
-    feq Q = {0};
+    feq Q;
     limb swap = 0;
     int i;
-    Z(Q)[0] = 1;
     (void)memcpy(X(Q), x, sizeof(fe));
+    (void)memset(Z(Q), 0, sizeof(fe));
     (void)memset(P, 0, sizeof(feq));
+    Z(Q)[0] = 1;
     X(P)[0] = 1;
 
     for (i = X25519_BITS - 1; i >= 0; --i)
