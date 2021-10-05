@@ -77,7 +77,7 @@ void sqr1(fe a);
 
 limb canon(fe a);
 
-void inv(fe out, const fe a);
+void inv(fe a);
 
 sdlimb asr(sdlimb x, int b);
 

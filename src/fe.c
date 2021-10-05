@@ -167,20 +167,20 @@ limb canon(fe a)
     return (limb)(((dlimb)res - 1) >> LITH_X25519_WBITS);
 }
 
-void inv(fe out, const fe a)
+void inv(fe a)
 {
-    fe t = {1};
+    fe b;
     int i;
+    memcpy(b, a, sizeof(fe));
     /* Raise to the p-2 = 0x7f..ffeb */
-    for (i = 254; i >= 0; --i)
+    for (i = 253; i >= 0; --i)
     {
-        sqr1(t);
+        sqr1(a);
         if (i >= 8 || ((0xeb >> i) & 1))
         {
-            mul1(t, a);
+            mul1(a, b);
         }
     }
-    (void)memcpy(out, t, sizeof(fe));
 }
 
 /*

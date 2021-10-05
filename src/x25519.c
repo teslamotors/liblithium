@@ -113,7 +113,7 @@ void x25519(unsigned char out[X25519_LEN],
     feq P;
     read_limbs(x, point);
     x25519_q(P, scalar, x);
-    inv(Z(P), Z(P));
+    inv(Z(P));
     mul1(X(P), Z(P));
     (void)canon(X(P));
     write_limbs(out, X(P));
