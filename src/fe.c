@@ -7,9 +7,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <lithium/fe.h>
-
-#include "carry.h"
+#include "fe.h"
 
 #include <string.h>
 
@@ -183,4 +181,46 @@ void inv(fe out, const fe a)
         }
     }
     (void)memcpy(out, t, sizeof(fe));
+}
+
+/*
+ * Portable implementation of an arithmetic shift right on a signed double limb.
+ * Used for shifting signed carry values to be added in to the next limb.
+ * The portable implementation avoids arithmetic shift right on signed values
+ * and casts from unsigned to signed values where the result would be negative,
+ * as these operations are implementation-dependent.
+ */
+sdlimb asr(sdlimb x, int b)
+{
+#if ((-5 >> 1 != -3) || defined(LITH_FORCE_PORTABLE_ASR))
+    const dlimb ux = (dlimb)x;
+    const dlimb sign = ux >> ((LITH_X25519_WBITS * 2) - 1); /* sign bit */
+    const dlimb sign_mask = ~(sign - 1);
+    const dlimb sign_extend = ~(((dlimb)-1) >> b);
+    const dlimb pos = ux >> b;
+    const dlimb neg = sign_extend | pos;
+    return (sdlimb)(pos & ~sign_mask) - (sdlimb)((~neg + 1) & sign_mask);
+#else
+    return x >> b;
+#endif
+}
+
+/*
+ * Multiply-accumulate with addend.
+ */
+limb mac(limb *carry, limb a, limb b, limb c)
+{
+    const dlimb t = (dlimb)b * c + a + *carry;
+    *carry = (limb)(t >> LITH_X25519_WBITS);
+    return (limb)t;
+}
+
+/*
+ * Add with carry.
+ */
+limb adc(limb *carry, limb a, limb b)
+{
+    const dlimb t = (dlimb)a + b + *carry;
+    *carry = (limb)(t >> LITH_X25519_WBITS);
+    return (limb)t;
 }

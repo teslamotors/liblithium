@@ -9,16 +9,14 @@
 
 #include <lithium/x25519.h>
 
-#include <lithium/fe.h>
 #include <lithium/watchdog.h>
 
-#include "carry.h"
+#include "fe.h"
 
 #include <stdint.h>
 #include <string.h>
 
 typedef limb sc[NLIMBS];
-
 typedef limb feq[NLIMBS * 2];
 
 static limb *X(feq P)

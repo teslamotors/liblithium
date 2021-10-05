@@ -79,4 +79,10 @@ limb canon(fe a);
 
 void inv(fe out, const fe a);
 
+sdlimb asr(sdlimb x, int b);
+
+limb mac(limb *carry, limb a, limb b, limb c);
+
+limb adc(limb *carry, limb a, limb b);
+
 #endif /* LITHIUM_FE_H */

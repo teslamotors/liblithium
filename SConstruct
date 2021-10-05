@@ -47,10 +47,12 @@ def build_with_env(path, env, test=True):
     )
 
     if test:
+        test_env = lith_env.Clone()
+        test_env.Append(CPPPATH=Dir("src"))
         SConscript(
             dirs="test",
             variant_dir=os.path.join(path, "test"),
-            exports={"env": lith_env},
+            exports={"env": test_env},
             duplicate=False,
         )
         SConscript(

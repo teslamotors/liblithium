@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <lithium/fe.h>
+#include "fe.h"
 
 #include <assert.h>
 #include <string.h>
