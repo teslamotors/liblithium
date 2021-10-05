@@ -5,14 +5,12 @@
 
 #include <lithium/fe.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 int main(void)
 {
-    fe_t m, z, a;
+    fe m, z, a;
     memset(m, 0xFF, sizeof m);
     memset(z, 0, sizeof z);
     sub(a, z, m);

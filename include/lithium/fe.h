@@ -24,18 +24,18 @@
 
 #if (LITH_X25519_WBITS == 16)
 
-typedef uint16_t limb_t;
-typedef uint32_t dlimb_t;
-typedef int32_t sdlimb_t;
+typedef uint16_t limb;
+typedef uint32_t dlimb;
+typedef int32_t sdlimb;
 #define LIMBS(lsw, slsw, smsw, msw)                                            \
     UINT16_C(lsw), UINT16_C(slsw), UINT16_C(smsw), UINT16_C(msw)
 #define LOW_LIMB(lsw, slsw, smsw, msw) UINT16_C(lsw)
 
 #elif (LITH_X25519_WBITS == 32)
 
-typedef uint32_t limb_t;
-typedef uint64_t dlimb_t;
-typedef int64_t sdlimb_t;
+typedef uint32_t limb;
+typedef uint64_t dlimb;
+typedef int64_t sdlimb;
 #define LIMBS(lsw, slsw, smsw, msw)                                            \
     (UINT32_C(lsw) | (UINT32_C(slsw) << 16)),                                  \
         (UINT32_C(smsw) | (UINT32_C(msw) << 16))
@@ -43,9 +43,9 @@ typedef int64_t sdlimb_t;
 
 #elif (LITH_X25519_WBITS == 64)
 
-typedef uint64_t limb_t;
-typedef __uint128_t dlimb_t;
-typedef __int128_t sdlimb_t;
+typedef uint64_t limb;
+typedef __uint128_t dlimb;
+typedef __int128_t sdlimb;
 #define LIMBS(lsw, slsw, smsw, msw)                                            \
     (UINT64_C(lsw) | (UINT64_C(slsw) << 16) | (UINT64_C(smsw) << 32) |         \
      (UINT64_C(msw) << 48))
@@ -57,26 +57,26 @@ typedef __int128_t sdlimb_t;
 
 #define NLIMBS (X25519_BITS / LITH_X25519_WBITS)
 
-typedef limb_t fe_t[NLIMBS];
+typedef limb fe[NLIMBS];
 
-void read_limbs(limb_t x[NLIMBS], const unsigned char *in);
+void read_limbs(limb x[NLIMBS], const unsigned char *in);
 
-void write_limbs(unsigned char *out, const limb_t x[NLIMBS]);
+void write_limbs(unsigned char *out, const limb x[NLIMBS]);
 
-void add(fe_t out, const fe_t a, const fe_t b);
+void add(fe out, const fe a, const fe b);
 
-void sub(fe_t out, const fe_t a, const fe_t b);
+void sub(fe out, const fe a, const fe b);
 
-void mul(fe_t out, const fe_t a, const fe_t b);
+void mul(fe out, const fe a, const fe b);
 
-void mul1(fe_t a, const fe_t b);
+void mul1(fe a, const fe b);
 
-void mul_word(fe_t out, const fe_t a, limb_t b);
+void mul_word(fe out, const fe a, limb b);
 
-void sqr1(fe_t a);
+void sqr1(fe a);
 
-limb_t canon(fe_t a);
+limb canon(fe a);
 
-void inv(fe_t out, const fe_t a);
+void inv(fe out, const fe a);
 
 #endif /* LITHIUM_FE_H */

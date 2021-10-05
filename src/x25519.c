@@ -17,28 +17,26 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef limb_t scalar_t[NLIMBS];
+typedef limb sc[NLIMBS];
 
-#define XZLIMBS (NLIMBS * 2)
+typedef limb feq[NLIMBS * 2];
 
-typedef limb_t xz_t[XZLIMBS];
-
-static limb_t *X(xz_t P)
+static limb *X(feq P)
 {
     return P;
 }
 
-static limb_t *Z(xz_t P)
+static limb *Z(feq P)
 {
     return &P[NLIMBS];
 }
 
-static void cswap(limb_t swap, xz_t P, xz_t Q)
+static void cswap(limb swap, feq P, feq Q)
 {
     int i;
-    for (i = 0; i < XZLIMBS; ++i)
+    for (i = 0; i < NLIMBS * 2; ++i)
     {
-        const limb_t d = (P[i] ^ Q[i]) & swap;
+        const limb d = (P[i] ^ Q[i]) & swap;
         P[i] ^= d;
         Q[i] ^= d;
     }
@@ -49,9 +47,9 @@ static void cswap(limb_t swap, xz_t P, xz_t Q)
  * (a - 2)/4 = 121665 = 0x1DB41
  */
 
-static void ladder_part1(xz_t P, xz_t Q, fe_t t)
+static void ladder_part1(feq P, feq Q, fe t)
 {
-    const fe_t a24 = {LIMBS(0xDB41, 0x0001, 0x0000, 0x0000)};
+    const fe a24 = {LIMBS(0xDB41, 0x0001, 0x0000, 0x0000)};
     add(t, X(P), Z(P));    /* t = A = x + z */
     sub(Z(P), X(P), Z(P)); /* Z(P) = B = x - z */
     add(X(P), X(Q), Z(Q)); /* X(P) = C = u + w */
@@ -67,7 +65,7 @@ static void ladder_part1(xz_t P, xz_t Q, fe_t t)
     add(Z(P), Z(P), t);    /* Z(P) = E(a - 2)/4 + AA = xx + axz + zz */
 }
 
-static void ladder_part2(xz_t P, xz_t Q, const fe_t t, const fe_t x)
+static void ladder_part2(feq P, feq Q, const fe t, const fe x)
 {
     sqr1(Z(Q));         /* Z(Q) = (DA - CB)^2 */
     mul1(Z(Q), x);      /* Z(Q) = x(DA - CB)^2 */
@@ -77,20 +75,20 @@ static void ladder_part2(xz_t P, xz_t Q, const fe_t t, const fe_t x)
     mul1(X(P), t);      /* X(P) = AABB */
 }
 
-static void x25519_xz(xz_t P, const unsigned char k[X25519_LEN], const fe_t x)
+static void x25519_q(feq P, const unsigned char k[X25519_LEN], const fe x)
 {
-    xz_t Q = {0};
-    limb_t swap = 0;
+    feq Q = {0};
+    limb swap = 0;
     int i;
     Z(Q)[0] = 1;
-    (void)memcpy(X(Q), x, sizeof(fe_t));
-    (void)memset(P, 0, sizeof(xz_t));
+    (void)memcpy(X(Q), x, sizeof(fe));
+    (void)memset(P, 0, sizeof(feq));
     X(P)[0] = 1;
 
     for (i = X25519_BITS - 1; i >= 0; --i)
     {
-        const limb_t ki = ~(((limb_t)k[i / 8] >> (i % 8)) & 1) + 1;
-        fe_t t;
+        const limb ki = ~(((limb)k[i / 8] >> (i % 8)) & 1) + 1;
+        fe t;
         cswap(swap ^ ki, P, Q);
         swap = ki;
         ladder_part1(P, Q, t);
@@ -113,10 +111,10 @@ void x25519(unsigned char out[X25519_LEN],
             const unsigned char scalar[X25519_LEN],
             const unsigned char point[X25519_LEN])
 {
-    fe_t x;
-    xz_t P;
+    fe x;
+    feq P;
     read_limbs(x, point);
-    x25519_xz(P, scalar, x);
+    x25519_q(P, scalar, x);
     inv(Z(P), Z(P));
     mul1(X(P), Z(P));
     (void)canon(X(P));
@@ -143,11 +141,11 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
      * https://www.shiftleft.org/papers/fff/
      * https://eprint.iacr.org/2012/309.pdf
      */
-    xz_t P, Q;
-    fe_t A, B = {BASE_POINT};
+    feq P, Q;
+    fe A, B = {BASE_POINT};
     read_limbs(A, public_key);
-    x25519_xz(P, response, B);
-    x25519_xz(Q, challenge, A);
+    x25519_q(P, response, B);
+    x25519_q(Q, challenge, A);
     /* P = x/z = response*base_point */
     /* Q = u/w = challenge*public_key */
 
@@ -193,7 +191,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
 /*
  * Set t = (t + ab)R^-1 mod l
  */
-static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
+static void sc_montmul(sc t, const sc a, const sc b)
 {
     /*
      * OK, so carry bounding. We're using a high carry, so that the inputs
@@ -203,15 +201,15 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
      * rid of high carry. Second montmul, by r^2 mod p < p: output < (Mp +
      * Mp)/M = 2p, subtract p, < p, done.
      */
-    static const scalar_t L = {
+    static const sc L = {
         LIMBS(0xD3ED, 0x5CF5, 0x631A, 0x5812),
         LIMBS(0x9CD6, 0xA2F7, 0xF9DE, 0x14DE),
         LIMBS(0x0000, 0x0000, 0x0000, 0x0000),
         LIMBS(0x0000, 0x0000, 0x0000, 0x1000),
     };
 
-    limb_t hic = 0, need_add, carry, carry2, u;
-    sdlimb_t scarry = 0;
+    limb hic = 0, need_add, carry, carry2, u;
+    sdlimb scarry = 0;
     int i, j;
 
     for (i = 0; i < NLIMBS; ++i)
@@ -221,7 +219,7 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
         u = MONTGOMERY_FACTOR;
         for (j = 0; j < NLIMBS; ++j)
         {
-            limb_t acc = t[j];
+            limb acc = t[j];
             acc = mac(&carry, acc, a[i], b[j]);
             if (j == 0)
             {
@@ -242,10 +240,10 @@ static void sc_montmul(scalar_t t, const scalar_t a, const scalar_t b)
     for (i = 0; i < NLIMBS; ++i)
     {
         scarry = scarry + t[i] - L[i];
-        t[i] = (limb_t)scarry;
+        t[i] = (limb)scarry;
         scarry = asr(scarry, LITH_X25519_WBITS);
     }
-    need_add = (limb_t)(-(scarry + hic));
+    need_add = (limb)(-(scarry + hic));
 
     carry = 0;
     for (i = 0; i < NLIMBS; ++i)
@@ -272,18 +270,18 @@ void x25519_sign(unsigned char response[X25519_LEN],
      * Doing a Montgomery multiply by R^2 mod L undoes the Montgomery
      * reductions.
      */
-    static const scalar_t R2modL = {
+    static const sc R2modL = {
         LIMBS(0x0F01, 0x449C, 0x11E3, 0xA406),
         LIMBS(0x9347, 0x6885, 0x1BA7, 0xD00E),
         LIMBS(0xBE65, 0x17F5, 0x73D2, 0xCEEC),
         LIMBS(0x9A3D, 0x7C30, 0x411B, 0x0399),
     };
-    scalar_t r, a, h;
+    sc r, a, h;
     read_limbs(r, secret_nonce);
     read_limbs(a, secret_key);
     read_limbs(h, challenge);
     sc_montmul(r, a, h); /* r = (secret_nonce + secret_key * challenge)R^-1 */
-    (void)memset(a, 0, sizeof(scalar_t));
+    (void)memset(a, 0, sizeof(sc));
     sc_montmul(a, r, R2modL); /* a = (secret_nonce + secret_key * challenge) */
     write_limbs(response, a);
 }

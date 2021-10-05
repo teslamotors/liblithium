@@ -19,16 +19,16 @@
  * and casts from unsigned to signed values where the result would be negative,
  * as these operations are implementation-dependent.
  */
-static sdlimb_t asr(sdlimb_t x, int b)
+static sdlimb asr(sdlimb x, int b)
 {
 #if ((-5 >> 1 != -3) || defined(LITH_FORCE_PORTABLE_ASR))
-    const dlimb_t ux = (dlimb_t)x;
-    const dlimb_t sign = ux >> ((LITH_X25519_WBITS * 2) - 1); /* sign bit */
-    const dlimb_t sign_mask = ~(sign - 1);
-    const dlimb_t sign_extend = ~(((dlimb_t)-1) >> b);
-    const dlimb_t pos = ux >> b;
-    const dlimb_t neg = sign_extend | pos;
-    return (sdlimb_t)(pos & ~sign_mask) - (sdlimb_t)((~neg + 1) & sign_mask);
+    const dlimb ux = (dlimb)x;
+    const dlimb sign = ux >> ((LITH_X25519_WBITS * 2) - 1); /* sign bit */
+    const dlimb sign_mask = ~(sign - 1);
+    const dlimb sign_extend = ~(((dlimb)-1) >> b);
+    const dlimb pos = ux >> b;
+    const dlimb neg = sign_extend | pos;
+    return (sdlimb)(pos & ~sign_mask) - (sdlimb)((~neg + 1) & sign_mask);
 #else
     return x >> b;
 #endif
@@ -37,21 +37,21 @@ static sdlimb_t asr(sdlimb_t x, int b)
 /*
  * Multiply-accumulate with addend.
  */
-static limb_t mac(limb_t *carry, limb_t a, limb_t b, limb_t c)
+static limb mac(limb *carry, limb a, limb b, limb c)
 {
-    const dlimb_t tmp = (dlimb_t)b * c + a + *carry;
-    *carry = (limb_t)(tmp >> LITH_X25519_WBITS);
-    return (limb_t)tmp;
+    const dlimb tmp = (dlimb)b * c + a + *carry;
+    *carry = (limb)(tmp >> LITH_X25519_WBITS);
+    return (limb)tmp;
 }
 
 /*
  * Add with carry.
  */
-static limb_t adc(limb_t *carry, limb_t a, limb_t b)
+static limb adc(limb *carry, limb a, limb b)
 {
-    const dlimb_t total = (dlimb_t)a + b + *carry;
-    *carry = (limb_t)(total >> LITH_X25519_WBITS);
-    return (limb_t)total;
+    const dlimb total = (dlimb)a + b + *carry;
+    *carry = (limb)(total >> LITH_X25519_WBITS);
+    return (limb)total;
 }
 
 #endif /* LITHIUM_CARRY_H */

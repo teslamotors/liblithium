@@ -15,7 +15,7 @@
 
 #define WLEN (LITH_X25519_WBITS / 8)
 
-void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
+void read_limbs(limb x[NLIMBS], const unsigned char *in)
 {
     int i, j;
     for (i = 0; i < NLIMBS; ++i)
@@ -23,17 +23,17 @@ void read_limbs(limb_t x[NLIMBS], const unsigned char *in)
         x[i] = 0;
         for (j = 0; j < WLEN; ++j)
         {
-            x[i] |= (limb_t)in[(i * WLEN) + j] << (j * 8);
+            x[i] |= (limb)in[(i * WLEN) + j] << (j * 8);
         }
     }
 }
 
-void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
+void write_limbs(unsigned char *out, const limb x[NLIMBS])
 {
     int i, j;
     for (i = 0; i < NLIMBS; ++i)
     {
-        limb_t w = x[i];
+        limb w = x[i];
         for (j = 0; j < WLEN; ++j)
         {
             out[(i * WLEN) + j] = (unsigned char)((w >> (j * 8)) & 0xFFU);
@@ -47,22 +47,22 @@ void write_limbs(unsigned char *out, const limb_t x[NLIMBS])
  * In particular, always less than 2p.
  * Also, output x >= min(x,19)
  */
-static void propagate(fe_t x, limb_t carry)
+static void propagate(fe x, limb carry)
 {
     int i;
     carry <<= 1;
     carry |= x[NLIMBS - 1] >> (LITH_X25519_WBITS - 1);
     carry *= 19;
-    x[NLIMBS - 1] &= ~((limb_t)1 << (LITH_X25519_WBITS - 1));
+    x[NLIMBS - 1] &= ~((limb)1 << (LITH_X25519_WBITS - 1));
     for (i = 0; i < NLIMBS; ++i)
     {
         x[i] = adc(&carry, x[i], 0);
     }
 }
 
-void add(fe_t out, const fe_t a, const fe_t b)
+void add(fe out, const fe a, const fe b)
 {
-    limb_t carry = 0;
+    limb carry = 0;
     int i;
     for (i = 0; i < NLIMBS; ++i)
     {
@@ -71,23 +71,23 @@ void add(fe_t out, const fe_t a, const fe_t b)
     propagate(out, carry);
 }
 
-void sub(fe_t out, const fe_t a, const fe_t b)
+void sub(fe out, const fe a, const fe b)
 {
-    sdlimb_t carry = -76;
+    sdlimb carry = -76;
     int i;
     for (i = 0; i < NLIMBS; ++i)
     {
         carry = carry + a[i] - b[i];
-        out[i] = (limb_t)carry;
+        out[i] = (limb)carry;
         carry = asr(carry, LITH_X25519_WBITS);
     }
-    propagate(out, (limb_t)(carry + 2));
+    propagate(out, (limb)(carry + 2));
 }
 
-static void mul_n(fe_t out, const fe_t a, const limb_t *b, int nb)
+static void mul_n(fe out, const fe a, const limb *b, int nb)
 {
-    limb_t accum[NLIMBS * 2] = {0};
-    limb_t carry;
+    limb accum[NLIMBS * 2] = {0};
+    limb carry;
 
     int i, j;
     for (i = 0; i < nb; ++i)
@@ -108,27 +108,27 @@ static void mul_n(fe_t out, const fe_t a, const limb_t *b, int nb)
     propagate(out, carry);
 }
 
-void mul(fe_t out, const fe_t a, const fe_t b)
+void mul(fe out, const fe a, const fe b)
 {
     mul_n(out, a, b, NLIMBS);
 }
 
-void mul_word(fe_t out, const fe_t a, limb_t b)
+void mul_word(fe out, const fe a, limb b)
 {
     mul_n(out, a, &b, 1);
 }
 
-void mul1(fe_t a, const fe_t b)
+void mul1(fe a, const fe b)
 {
     mul(a, b, a);
 }
 
-void sqr1(fe_t a)
+void sqr1(fe a)
 {
     mul1(a, a);
 }
 
-limb_t canon(fe_t a)
+limb canon(fe a)
 {
     /*
      * Canonicalize a field element a, reducing it to the least residue which
@@ -136,12 +136,12 @@ limb_t canon(fe_t a)
      *
      * Precondition: x < 2^255 + 1 word
      */
-    sdlimb_t carry;
-    limb_t res;
+    sdlimb carry;
+    limb res;
     int i;
 
     /* First, add 19. */
-    const fe_t nineteen = {19};
+    const fe nineteen = {19};
     add(a, a, nineteen);
 
     /*
@@ -162,16 +162,16 @@ limb_t canon(fe_t a)
     for (i = 0; i < NLIMBS; ++i)
     {
         carry += a[i];
-        a[i] = (limb_t)carry;
+        a[i] = (limb)carry;
         res |= a[i];
         carry = asr(carry, LITH_X25519_WBITS);
     }
-    return (limb_t)(((dlimb_t)res - 1) >> LITH_X25519_WBITS);
+    return (limb)(((dlimb)res - 1) >> LITH_X25519_WBITS);
 }
 
-void inv(fe_t out, const fe_t a)
+void inv(fe out, const fe a)
 {
-    fe_t t = {1};
+    fe t = {1};
     int i;
     /* Raise to the p-2 = 0x7f..ffeb */
     for (i = 254; i >= 0; --i)
@@ -182,5 +182,5 @@ void inv(fe_t out, const fe_t a)
             mul1(t, a);
         }
     }
-    (void)memcpy(out, t, sizeof(fe_t));
+    (void)memcpy(out, t, sizeof(fe));
 }
