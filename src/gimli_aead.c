@@ -65,9 +65,7 @@ void gimli_aead_encrypt_update(gimli_state *g, unsigned char *c,
         do
         {
 #if (LITH_SPONGE_VECTORS)
-            typedef uint32_t block_t
-                __attribute__((vector_size(16), aligned(1)));
-            *(block_t *)c = *(block_t *)g->state ^= *(const block_t *)m;
+            *(block *)c = (*(block *)g->state ^= *(const block *)m);
             c += GIMLI_RATE;
             m += GIMLI_RATE;
 #else
@@ -119,20 +117,31 @@ void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
         len -= first_block_len;
         do
         {
+            /*
+             * We absorb the message data back into the gimli_state after
+             * outputting it, which amounts to:
+             * g->state ^= m;
+             * but we can rewrite as:
+             * g->state ^= g->state ^ c;
+             * and again as:
+             * g->state = g->state ^ g->state ^ c;
+             * and finally:
+             * g->state = c;
+             * This is easy to do when operating on words or blocks.
+             */
 #if (LITH_SPONGE_VECTORS)
-            typedef uint32_t block_t
-                __attribute__((vector_size(16), aligned(1)));
-            *(block_t *)m = *(block_t *)g->state ^ *(const block_t *)c;
-            *(block_t *)g->state ^= *(const block_t *)m;
+            const block cb = *(const block *)c;
+            *(block *)m = *(block *)g->state ^ cb;
+            *(block *)g->state = cb;
             m += GIMLI_RATE;
             c += GIMLI_RATE;
 #else
             size_t i;
             for (i = 0; i < GIMLI_RATE / 4; ++i)
             {
-                const uint32_t mw = g->state[i] ^ gimli_load(c);
-                gimli_store(m, mw);
-                g->state[i] ^= mw;
+                const uint32_t cw = gimli_load(c);
+                gimli_store(m, g->state[i] ^ cw);
+                g->state[i] = cw;
                 m += 4;
                 c += 4;
             }

@@ -211,9 +211,13 @@ build_with_env("dist/portable_asr", portable_asr_env)
 
 build_with_env("dist/arm", arm_env, test=False)
 
+# no SSE
+no_sse_env = new_x86_env("-mno-sse")
+build_with_env("dist/no-sse", no_sse_env, test=True)
+
 # SSE, etc., but no AVX
 nehalem_env = new_x86_env("-march=nehalem")
-build_with_env("dist/nehalem", nehalem_env, test=False)
+build_with_env("dist/nehalem", nehalem_env, test=True)
 
 # Everything except AVX512
 skylake_env = new_x86_env("-march=skylake")

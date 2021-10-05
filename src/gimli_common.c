@@ -95,9 +95,7 @@ void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
         do
         {
 #if (LITH_SPONGE_VECTORS)
-            typedef uint32_t block_t
-                __attribute__((vector_size(16), aligned(1)));
-            *(block_t *)g->state ^= *(const block_t *)m;
+            *(block *)g->state ^= *(const block *)m;
             m += GIMLI_RATE;
 #else
             size_t i;

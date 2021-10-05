@@ -7,6 +7,7 @@
  */
 
 #include <limits.h>
+#include <stdint.h>
 
 /*
  * On little-endian 8-bit byte platforms, accessing the Gimli
@@ -45,8 +46,10 @@
 /*
  * If vector loads from unaligned addresses are supported, sponge operations can
  * be vectorized. This requires SSE2 on x86 and unaligned accesses on ARM.
+ * Vectorized sponge operations also assume little-endian order.
  */
-#if defined(__SSE2__) || defined(__ARM_FEATURE_UNALIGNED)
+#if (LITH_LITTLE_ENDIAN) &&                                                    \
+    (defined(__SSE2__) || defined(__ARM_FEATURE_UNALIGNED))
 #define LITH_SPONGE_VECTORS 1
 #endif
 
@@ -59,6 +62,10 @@
 
 #ifndef LITH_SPONGE_VECTORS
 #define LITH_SPONGE_VECTORS 0
+#endif
+
+#if (LITH_SPONGE_VECTORS)
+typedef uint32_t block __attribute__((vector_size(16), aligned(1)));
 #endif
 
 /*
