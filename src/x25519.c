@@ -45,9 +45,18 @@ static void cswap(limb swap, feq P, feq Q)
  * (a - 2)/4 = 121665 = 0x1DB41
  */
 
+static void mul_a24(fe out, const fe a)
+{
+#if (LITH_X25519_WBITS < 32)
+    static const fe a24 = {LIMBS(0xDB41, 0x0001, 0x0000, 0x0000)};
+    mul(out, a, a24);
+#else
+    mul_word(out, a, 121665);
+#endif
+}
+
 static void ladder_part1(feq P, feq Q, fe t)
 {
-    const fe a24 = {LIMBS(0xDB41, 0x0001, 0x0000, 0x0000)};
     add(t, X(P), Z(P));    /* t = A = x + z */
     sub(Z(P), X(P), Z(P)); /* Z(P) = B = x - z */
     add(X(P), X(Q), Z(Q)); /* X(P) = C = u + w */
@@ -59,7 +68,7 @@ static void ladder_part1(feq P, feq Q, fe t)
     sqr1(t);               /* t = AA = (x + z)^2 = xx + 2xz + zz */
     sqr1(Z(P));            /* Z(P) = BB = (x - z)^2 = xx - 2xz + zz */
     sub(X(P), t, Z(P));    /* X(P) = E = AA - BB = 4xz */
-    mul(Z(P), X(P), a24);  /* Z(P) = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
+    mul_a24(Z(P), X(P));   /* Z(P) = E(a - 2)/4 = 4xz(a - 2)/4 = axz - 2xz */
     add(Z(P), Z(P), t);    /* Z(P) = E(a - 2)/4 + AA = xx + axz + zz */
 }
 
