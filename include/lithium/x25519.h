@@ -1,3 +1,6 @@
+#ifndef LITHIUM_X25519_H
+#define LITHIUM_X25519_H
+
 /*
  * Part of liblithium, under the Apache License v2.0.
  * SPDX-License-Identifier: Apache-2.0
@@ -6,9 +9,6 @@
  * STROBE is Copyright (c) 2015-2016 Cryptography Research, Inc.
  * SPDX-License-Identifier: MIT
  */
-
-#ifndef LITHIUM_X25519_H
-#define LITHIUM_X25519_H
 
 #include <stdbool.h>
 
