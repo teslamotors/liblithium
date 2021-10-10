@@ -1,6 +1,9 @@
-#include <lithium/sign.h>
+#include <lithium/gimli_hash.h>
 
 int main(void)
 {
-    gimli_hash(NULL, 0, NULL, 0);
+    unsigned char h[GIMLI_HASH_DEFAULT_LEN];
+    static const unsigned char m[128];
+    gimli_hash(h, sizeof h, m, sizeof m);
+    return h[0] != h[31];
 }
