@@ -13,29 +13,50 @@
 
 #define WLEN (LITH_X25519_WBITS / 8)
 
+static limb read_limb(const unsigned char *p)
+{
+    return (limb)((limb)p[0] | (limb)p[1] << 8
+#if (WLEN >= 4)
+                  | (limb)p[2] << 16 | (limb)p[3] << 24
+#if (WLEN >= 8)
+                  | (limb)p[4] << 32 | (limb)p[5] << 40 | (limb)p[6] << 48 |
+                  (limb)p[7] << 56
+#endif
+#endif
+    );
+}
+
+static void write_limb(unsigned char *p, limb x)
+{
+    p[0] = (unsigned char)x & 0xFFU;
+    p[1] = (unsigned char)(x >> 8) & 0xFFU;
+#if (WLEN >= 4)
+    p[2] = (unsigned char)(x >> 16) & 0xFFU;
+    p[3] = (unsigned char)(x >> 24) & 0xFFU;
+#if (WLEN >= 8)
+    p[4] = (unsigned char)(x >> 32) & 0xFFU;
+    p[5] = (unsigned char)(x >> 40) & 0xFFU;
+    p[6] = (unsigned char)(x >> 48) & 0xFFU;
+    p[7] = (unsigned char)(x >> 56) & 0xFFU;
+#endif
+#endif
+}
+
 void read_limbs(limb x[NLIMBS], const unsigned char *in)
 {
-    int i, j;
+    int i;
     for (i = 0; i < NLIMBS; ++i)
     {
-        x[i] = 0;
-        for (j = 0; j < WLEN; ++j)
-        {
-            x[i] |= (limb)in[(i * WLEN) + j] << (j * 8);
-        }
+        x[i] = read_limb(&in[i * WLEN]);
     }
 }
 
 void write_limbs(unsigned char *out, const limb x[NLIMBS])
 {
-    int i, j;
+    int i;
     for (i = 0; i < NLIMBS; ++i)
     {
-        limb w = x[i];
-        for (j = 0; j < WLEN; ++j)
-        {
-            out[(i * WLEN) + j] = (unsigned char)((w >> (j * 8)) & 0xFFU);
-        }
+        write_limb(&out[i * WLEN], x[i]);
     }
 }
 
