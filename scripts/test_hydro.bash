@@ -57,3 +57,7 @@ CCFLAGS="-Wl,--gc-sections -ffunction-sections -fdata-sections -specs=nosys.spec
 
 $CC $CCFLAGS -c -o arm-hydrogen.o libhydrogen/hydrogen.c
 $CC $CCFLAGS -o null-libhydrogen-verify arm-hydrogen.o ../../../hydro/examples/null-hydro-verify.c
+
+scons -C ../../.. --no-sanitize --jobs $(nproc) dist/arm
+
+arm-none-eabi-size null-libhydrogen-verify ../../arm/hydro/null-hydro-verify ../../arm/null-lith-verify
