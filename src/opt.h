@@ -25,10 +25,15 @@
 
 /*
  * If a Gimli state word fits in a machine register, sponge operations can
- * happen a word at a time.
+ * happen a word at a time. This makes the sponge implementation use a bit more
+ * code, so don't enable it if optimizing for size.
  */
+#if !defined(__OPTIMIZE_SIZE__) && (UINT_MAX >= UINT32_MAX)
+#define LITH_SPONGE_WORDS 1
+#endif
+
 #ifndef LITH_SPONGE_WORDS
-#define LITH_SPONGE_WORDS (UINT_MAX >= UINT32_MAX)
+#define LITH_SPONGE_WORDS 0
 #endif
 
 /*
