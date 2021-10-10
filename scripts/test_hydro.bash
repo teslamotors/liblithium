@@ -25,12 +25,19 @@ else
     git clone https://github.com/jedisct1/libhydrogen.git
 fi
 
-CCFLAGS="-g -O3 -flto -march=native"
+if [[ "$(uname -ps)" == "Darwin arm" ]]; then
+    arch_flag="-mcpu=apple-a14"
+else
+    arch_flag="-march=native"
+fi
 
-clang $CCFLAGS -c -o hydrogen.o -Ilibhydrogen libhydrogen/hydrogen.c
-clang $CCFLAGS -o libhydrogen-sign -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-sign.c
-clang $CCFLAGS -o libhydrogen-verify -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-verify.c
-clang $CCFLAGS -o libhydrogen-hash -Ilibhydrogen hydrogen.o ../../../hydro/examples/hydro-hash.c
+CC="clang"
+CCFLAGS="-g -O3 -flto $arch_flag -Ilibhydrogen"
+
+$CC $CCFLAGS -c -o hydrogen.o libhydrogen/hydrogen.c
+$CC $CCFLAGS -o libhydrogen-sign hydrogen.o ../../../hydro/examples/hydro-sign.c
+$CC $CCFLAGS -o libhydrogen-verify hydrogen.o ../../../hydro/examples/hydro-verify.c
+$CC $CCFLAGS -o libhydrogen-hash hydrogen.o ../../../hydro/examples/hydro-hash.c
 
 # check that libhydrogen can verify signatures from hydro
 ./libhydrogen-verify testkey.pub input.bin input.sig
@@ -44,3 +51,9 @@ h2=$(hydro-hash input.bin)
 if [ ! "$h1" = "$h2" ]; then
     echo "Hashes don't match."
 fi
+
+CC="arm-none-eabi-gcc"
+CCFLAGS="-Wl,--gc-sections -ffunction-sections -fdata-sections -specs=nosys.specs -specs=nano.specs -g -Os -mcpu=cortex-m4 -flto -Ilibhydrogen -D__unix__"
+
+$CC $CCFLAGS -c -o arm-hydrogen.o libhydrogen/hydrogen.c
+$CC $CCFLAGS -o null-libhydrogen-verify arm-hydrogen.o ../../../hydro/examples/null-hydro-verify.c

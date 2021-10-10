@@ -162,11 +162,12 @@ arm_gnu_flags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-fstack-usage",
+    "-Wl,--gc-sections",
 ]
 
 arm_env.Append(
     CCFLAGS=arm_gnu_flags,
-    LINKFLAGS=arm_gnu_flags + ["-Wl,--gc-sections"],
+    LINKFLAGS=arm_gnu_flags,
 )
 
 
