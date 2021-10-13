@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Sign",
+        "include": "base.json",
+        "val-profile": "analyzer",
+        "no-results": true,
+        "slevel": 1024,
+        "files": [
+            "sign.c"
+        ]
+    },
+    {
+        "name": "Verify",
+        "include": "base.json",
+        "val-profile": "analyzer",
+        "no-results": true,
+        "slevel": 1024,
+        "files": [
+            "verify.c"
+        ]
+    }
+]
