@@ -2,7 +2,7 @@
 
 set -xe
 
-scons --no-sanitize --jobs $(nproc) dist/hydro
+python3 "$(which scons)" --no-sanitize --jobs "$(nproc)" dist/hydro
 
 testdir="dist/test/hydrotest"
 PATH="$(pwd)/dist/hydro:$PATH"
@@ -55,9 +55,16 @@ fi
 CC="arm-none-eabi-gcc"
 CCFLAGS="-Wl,--gc-sections -ffunction-sections -fdata-sections -specs=nosys.specs -specs=nano.specs -g -Os -mcpu=cortex-m4 -flto -Ilibhydrogen -D__unix__"
 
-$CC $CCFLAGS -c -o arm-hydrogen.o libhydrogen/hydrogen.c
-$CC $CCFLAGS -o null-libhydrogen-verify arm-hydrogen.o ../../../hydro/examples/null-hydro-verify.c
+$CC $CCFLAGS -c -o arm_hydrogen.o libhydrogen/hydrogen.c
+$CC $CCFLAGS -Wl,--entry=hydro_sign_verify -o libhydrogen_sign_verify arm_hydrogen.o
+$CC $CCFLAGS -Wl,--entry=hydro_hash_hash -o libhydrogen_hash_hash arm_hydrogen.o
 
-scons -C ../../.. --no-sanitize --jobs $(nproc) dist/arm
+python3 "$(which scons)" -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm/entrypoints
 
-arm-none-eabi-size null-libhydrogen-verify ../../arm/hydro/null-hydro-verify ../../arm/null-lith-verify
+arm-none-eabi-size \
+  libhydrogen_sign_verify \
+  ../../arm/entrypoints/hydro_sign_verify \
+  ../../arm/entrypoints/lith_sign_verify \
+  libhydrogen_hash_hash \
+  ../../arm/entrypoints/hydro_hash_hash \
+  ../../arm/entrypoints/gimli_hash

@@ -4,7 +4,7 @@ import os
 import platform
 
 
-def build_with_env(path, env, test=True):
+def build_with_env(path, env, test=True, measure_size=False):
     lith_env = env.Clone()
     lith_env.Append(CPPPATH=[Dir("include")])
     liblith_env = lith_env.Clone()
@@ -60,6 +60,41 @@ def build_with_env(path, env, test=True):
             variant_dir=os.path.join(path, "hydro", "test"),
             exports={"env": hydro_env},
             duplicate=False,
+        )
+
+    if measure_size:
+        lith_entrypoints = [
+            lith_env.Program(
+                target=os.path.join(path, "entrypoints", f),
+                source=[],
+                LINKFLAGS=lith_env["LINKFLAGS"] + ["-Wl,--entry=" + f],
+            )
+            for f in [
+                "lith_sign_create",
+                "lith_sign_verify",
+                "gimli_aead_encrypt",
+                "gimli_aead_decrypt",
+                "gimli_hash",
+            ]
+        ]
+        hydro_entrypoints = [
+            hydro_env.Program(
+                target=os.path.join(path, "entrypoints", f),
+                source=[],
+                LINKFLAGS=lith_env["LINKFLAGS"] + ["-Wl,--entry=" + f],
+            )
+            for f in [
+                "hydro_sign_create",
+                "hydro_sign_verify",
+                "hydro_hash_hash",
+            ]
+        ]
+        AlwaysBuild(
+            env.Command(
+                os.path.join(path, "entrypoint-sizes"),
+                lith_entrypoints,
+                "$SIZE $SOURCES",
+            )
         )
 
 
@@ -146,6 +181,7 @@ arm_env = env.Clone(
     LINK="arm-none-eabi-gcc",
     AR="arm-none-eabi-gcc-ar",
     RANLIB="arm-none-eabi-gcc-ranlib",
+    SIZE="arm-none-eabi-size",
 )
 
 arm_gnu_flags = [
@@ -169,6 +205,8 @@ arm_env.Append(
     CCFLAGS=arm_gnu_flags,
     LINKFLAGS=arm_gnu_flags,
 )
+
+build_with_env("dist/arm", arm_env, test=False, measure_size=True)
 
 
 def new_x86_env(flags):
@@ -209,8 +247,6 @@ build_with_env("dist/32", env32)
 portable_asr_env = host_env.Clone()
 portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
 build_with_env("dist/portable_asr", portable_asr_env)
-
-build_with_env("dist/arm", arm_env, test=False)
 
 # no SSE
 no_sse_env = new_x86_env("-mno-sse")
