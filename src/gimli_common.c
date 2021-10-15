@@ -25,24 +25,34 @@ void gimli_store(unsigned char *p, uint32_t x)
     p[3] = (unsigned char)((x >> 24) & 0xFFU);
 }
 
-void gimli_absorb_byte(gimli_state *g, unsigned char x)
+static void xor8(uint32_t *state, size_t i, unsigned char x)
 {
 #if (LITH_LITTLE_ENDIAN)
-    ((unsigned char *)g->state)[g->offset] ^= x;
+    ((unsigned char *)state)[i] ^= x;
 #else
-    const int sh = (g->offset % 4) * 8;
-    g->state[g->offset / 4] ^= (uint32_t)x << sh;
+    const int sh = (i % 4) * 8;
+    state[i / 4] ^= (uint32_t)x << sh;
+#endif
+}
+
+void gimli_absorb_byte(gimli_state *g, unsigned char x)
+{
+    xor8(g->state, g->offset, x);
+}
+
+static unsigned char read8(const uint32_t *state, size_t i)
+{
+#if (LITH_LITTLE_ENDIAN)
+    return ((const unsigned char *)state)[i];
+#else
+    const int sh = (i % 4) * 8;
+    return (unsigned char)((state[i / 4] >> sh) & 0xFFU);
 #endif
 }
 
 unsigned char gimli_squeeze_byte(const gimli_state *g)
 {
-#if (LITH_LITTLE_ENDIAN)
-    return ((const unsigned char *)g->state)[g->offset];
-#else
-    const int sh = (g->offset % 4) * 8;
-    return (unsigned char)((g->state[g->offset / 4] >> sh) & 0xFFU);
-#endif
+    return read8(g->state, g->offset);
 }
 
 void gimli_advance(gimli_state *g)
@@ -65,12 +75,18 @@ void gimli_init(gimli_state *g)
 
 static void absorb(gimli_state *g, const unsigned char *m, size_t len)
 {
-    size_t i;
+    size_t i, offset = g->offset;
     for (i = 0; i < len; ++i)
     {
-        gimli_absorb_byte(g, m[i]);
-        gimli_advance(g);
+        xor8(g->state, offset, m[i]);
+        ++offset;
+        if (offset == GIMLI_RATE)
+        {
+            gimli(g->state);
+            offset = 0;
+        }
     }
+    g->offset = offset;
 }
 
 void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
@@ -105,12 +121,18 @@ void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 
 void gimli_squeeze(gimli_state *g, unsigned char *h, size_t len)
 {
-    size_t i;
+    size_t i, offset = g->offset;
     for (i = 0; i < len; ++i)
     {
-        gimli_advance(g);
-        h[i] = gimli_squeeze_byte(g);
+        ++offset;
+        if (offset == GIMLI_RATE)
+        {
+            gimli(g->state);
+            offset = 0;
+        }
+        h[i] = read8(g->state, offset);
     }
+    g->offset = offset;
 }
 
 void gimli_pad(gimli_state *g)
