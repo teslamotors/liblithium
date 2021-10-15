@@ -37,6 +37,7 @@ void gimli_aead_update_ad(gimli_state *g, const unsigned char *ad, size_t len)
 void gimli_aead_final_ad(gimli_state *g)
 {
     gimli_pad(g);
+    gimli_advance(g);
 }
 
 static void encrypt_update(gimli_state *g, unsigned char *c,
@@ -162,8 +163,8 @@ bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,
     gimli_pad(g);
     for (i = 0; i < len; ++i)
     {
-        mismatch |= t[i] ^ gimli_squeeze_byte(g);
         gimli_advance(g);
+        mismatch |= t[i] ^ gimli_squeeze_byte(g);
     }
     return !mismatch;
 }

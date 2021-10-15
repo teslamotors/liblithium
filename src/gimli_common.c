@@ -108,8 +108,8 @@ void gimli_squeeze(gimli_state *g, unsigned char *h, size_t len)
     size_t i;
     for (i = 0; i < len; ++i)
     {
-        h[i] = gimli_squeeze_byte(g);
         gimli_advance(g);
+        h[i] = gimli_squeeze_byte(g);
     }
 }
 
@@ -117,6 +117,5 @@ void gimli_pad(gimli_state *g)
 {
     gimli_absorb_byte(g, 0x01);
     g->state[GIMLI_WORDS - 1] ^= UINT32_C(0x01000000);
-    gimli(g->state);
-    g->offset = 0;
+    g->offset = GIMLI_RATE - 1;
 }
