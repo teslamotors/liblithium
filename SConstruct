@@ -196,6 +196,7 @@ arm_gnu_flags = [
     "-ffunction-sections",
     "-fdata-sections",
     "-fstack-usage",
+    "-fdump-rtl-expand",
     "-Wl,--gc-sections",
 ]
 

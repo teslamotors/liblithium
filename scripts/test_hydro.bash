@@ -53,7 +53,7 @@ if [ ! "$h1" = "$h2" ]; then
 fi
 
 CC="arm-none-eabi-gcc"
-CCFLAGS="-Wl,--gc-sections -ffunction-sections -fdata-sections -specs=nosys.specs -specs=nano.specs -g -Os -mcpu=cortex-m4 -flto -Ilibhydrogen -D__unix__"
+CCFLAGS="-Wl,--gc-sections -ffunction-sections -fdata-sections -specs=nosys.specs -specs=nano.specs -g -Os -mcpu=cortex-m4 -flto -fdump-rtl-expand -Ilibhydrogen -D__unix__"
 
 $CC $CCFLAGS -c -o arm_hydrogen.o libhydrogen/hydrogen.c
 $CC $CCFLAGS -Wl,--entry=hydro_sign_verify -o libhydrogen_sign_verify arm_hydrogen.o
