@@ -111,10 +111,11 @@ static void mul_n(fe out, const fe a, const limb *b, int nb)
     int i, j;
     for (i = 0; i < nb; ++i)
     {
+        const limb mand = b[i];
         carry = 0;
         for (j = 0; j < NLIMBS; ++j)
         {
-            accum[i + j] = mac(&carry, accum[i + j], b[i], a[j]);
+            accum[i + j] = mac(&carry, accum[i + j], mand, a[j]);
         }
         accum[i + NLIMBS] = carry;
     }
