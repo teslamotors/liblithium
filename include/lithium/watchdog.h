@@ -1,5 +1,5 @@
-#ifndef LITH_WATCHDOG_H
-#define LITH_WATCHDOG_H
+#ifndef LITHIUM_WATCHDOG_H
+#define LITHIUM_WATCHDOG_H
 
 /*
  * Part of liblithium, under the Apache License v2.0.
@@ -12,4 +12,4 @@
 
 void lith_watchdog_pet(void);
 
-#endif /* LITH_WATCHDOG_H */
+#endif /* LITHIUM_WATCHDOG_H */
