@@ -192,7 +192,7 @@ void inv(fe a)
 {
     fe b;
     int i;
-    memcpy(b, a, sizeof(fe));
+    (void)memcpy(b, a, sizeof(fe));
     /* Raise to the p-2 = 0x7f..ffeb */
     for (i = 253; i >= 0; --i)
     {
