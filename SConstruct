@@ -247,9 +247,16 @@ portable_asr_env = host_env.Clone()
 portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
 build_with_env("dist/portable_asr", portable_asr_env)
 
-# no SSE
-no_sse_env = new_x86_env("-mno-sse")
-build_with_env("dist/no-sse", no_sse_env, test=True)
+# disable architectural optimizations
+no_opt_env = host_env.Clone()
+no_opt_env.Append(
+    CPPDEFINES={
+        "LITH_LITTLE_ENDIAN": 0,
+        "LITH_SPONGE_WORDS": 0,
+        "LITH_VECTORIZE": 0,
+    }
+)
+build_with_env("dist/no_opt", no_opt_env)
 
 # SSE, etc., but no AVX
 nehalem_env = new_x86_env("-march=nehalem")
