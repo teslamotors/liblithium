@@ -155,13 +155,16 @@ limb canon(fe a)
      *
      * Precondition: x < 2^255 + 1 word
      */
-    sdlimb carry;
-    limb res;
+    sdlimb carry_sub = -19;
+    limb res = 0, carry_add = 19;
     int i;
 
     /* First, add 19. */
-    const fe nineteen = {19};
-    add(a, a, nineteen);
+    for (i = 0; i < NLIMBS; ++i)
+    {
+        a[i] = adc(&carry_add, a[i], 0);
+    }
+    propagate(a, carry_add);
 
     /*
      * Here, 19 <= x2 < 2^255
@@ -176,14 +179,12 @@ limb canon(fe a)
      *
      * So now, if we subtract 19, we will get back to something in [0,2^255-19).
      */
-    carry = -19;
-    res = 0;
     for (i = 0; i < NLIMBS; ++i)
     {
-        carry += a[i];
-        a[i] = (limb)carry;
+        carry_sub += a[i];
+        a[i] = (limb)carry_sub;
         res |= a[i];
-        carry = asr(carry, LITH_X25519_WBITS);
+        carry_sub = asr(carry_sub, LITH_X25519_WBITS);
     }
     return (limb)(((dlimb)res - 1) >> LITH_X25519_WBITS);
 }
