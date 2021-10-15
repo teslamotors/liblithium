@@ -12,7 +12,7 @@
 
 #define GIMLI_WORDS 12
 
-void gimli(uint32_t *state);
+void gimli(uint32_t state[GIMLI_WORDS]);
 
 /* cffi:end */
 

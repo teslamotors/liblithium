@@ -42,7 +42,7 @@ static uint32x4_t rol24(uint32x4_t x)
 #endif
 }
 
-void gimli(uint32_t *state)
+void gimli(uint32_t state[GIMLI_WORDS])
 {
     uint32x4_t *s = (uint32x4_t *)state;
     uint32x4_t x = s[0];
