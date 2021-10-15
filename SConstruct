@@ -98,9 +98,7 @@ def build_with_env(path, env, test=True, measure_size=False):
         )
 
 
-uname = platform.uname()
-
-if uname.system == "Windows":
+if platform.system() == "Windows":
     env = Environment(tools=["cc", "c++", "link", "ar"])
     env["ENV"]["PATH"] = os.environ["PATH"]
 else:
@@ -142,9 +140,9 @@ llvm_env["CC"] = "clang"
 
 llvm_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags)
 
-if uname.system == "Darwin":
+if platform.system() == "Darwin":
     llvm_env.Append(LINKFLAGS=["-dead_strip"])
-elif uname.system == "Linux":
+elif platform.system() == "Linux":
     llvm_env.Append(LINKFLAGS=["-Wl,--gc-sections"])
     # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
     llvm_env["AR"] = "llvm-ar"
@@ -210,24 +208,24 @@ build_with_env("dist/arm", arm_env, test=False, measure_size=True)
 
 
 def new_x86_env(flags):
-    if uname.system == "Windows":
+    if platform.system() == "Windows":
         new_env = mingw_env.Clone()
     else:
         new_env = llvm_env.Clone()
-    if uname.system == "Darwin" and uname.machine == "arm64":
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
         target_flag = "--target=x86_64-apple-darwin"
         new_env.Append(CCFLAGS=target_flag, LINKFLAGS=target_flag)
     new_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
     return new_env
 
 
-if uname.system == "Windows":
+if platform.system() == "Windows":
     host_env = mingw_env.Clone()
     arch_flag = "-march=skylake"
 else:
     build_with_env("dist/mingw", mingw_env, test=False)
     host_env = llvm_env.Clone()
-    if uname.system == "Darwin" and uname.machine == "arm64":
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
         arch_flag = "-mcpu=apple-a14"
     else:
         arch_flag = "-march=native"

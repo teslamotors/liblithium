@@ -2,7 +2,7 @@
 
 set -xe
 
-python3 "$(which scons)" --no-sanitize --jobs "$(nproc)" dist/hydro
+scons --no-sanitize --jobs "$(nproc)" dist/hydro
 
 testdir="dist/test/hydrotest"
 PATH="$(pwd)/dist/hydro:$PATH"
@@ -59,7 +59,7 @@ $CC $CCFLAGS -c -o arm_hydrogen.o libhydrogen/hydrogen.c
 $CC $CCFLAGS -Wl,--entry=hydro_sign_verify -o libhydrogen_sign_verify arm_hydrogen.o
 $CC $CCFLAGS -Wl,--entry=hydro_hash_hash -o libhydrogen_hash_hash arm_hydrogen.o
 
-python3 "$(which scons)" -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm/entrypoints
+scons -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm/entrypoints
 
 arm-none-eabi-size \
   libhydrogen_sign_verify \
