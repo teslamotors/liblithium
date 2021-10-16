@@ -11,7 +11,7 @@
 
 void gimli_hash_init(gimli_hash_state *g)
 {
-    gimli_init(g);
+    (void)memset(g, 0, sizeof *g);
 }
 
 void gimli_hash_update(gimli_hash_state *g, const unsigned char *m, size_t len)
@@ -21,7 +21,7 @@ void gimli_hash_update(gimli_hash_state *g, const unsigned char *m, size_t len)
 
 void gimli_hash_final(gimli_hash_state *g, unsigned char *h, size_t len)
 {
-    gimli_pad(g);
+    gimli_pad(g->state, g->offset);
     gimli_squeeze(g, h, len);
 }
 
