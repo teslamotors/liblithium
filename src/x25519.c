@@ -162,6 +162,7 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
      */
     feq P, Q;
     fe A, B = {BASE_POINT};
+
     read_limbs(A, public_key);
     x25519_q(P, response, B);
     x25519_q(Q, challenge, A);
@@ -180,26 +181,27 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     read_limbs(B, public_nonce);
     /* B = R */
 
-    mul1(Z(P), A);
-    mul1(Z(P), B);
-    /* Z(P) = left = 16uwR(xx + axz + zz) */
+    mul1(A, Z(P));
+    mul1(A, B);
+    /* A = left = 16uwR(xx + axz + zz) */
 
     mul1(Z(Q), B);
-    sub(Z(Q), Z(Q), X(Q));
-    sqr1(Z(Q));
-    /* Z(Q) = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
+    sub(B, Z(Q), X(Q));
+    sqr1(B);
+    /* B = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
 
-    /* check equality */
-    sub(Z(Q), Z(Q), Z(P));
+    /* check equality:
+     * 16uwR(xx + axz + zz) == (R(2zu - 2xw) - (2xu - 2zw))^2 */
+    sub(A, A, B);
 
     /*
-     * If canon(Z(Q)) then the two sides are equal.
-     * If canon(Z(P)) also, then both sides are zero.
+     * If canon(A) returns nonzero, A is zero and the two sides are equal.
+     * If canon(B) also returns nonzero, then B is zero and both sides are zero.
      *
      * Reject signatures where both sides are zero, because that can happen if
      * an input causes the ladder to return 0/0.
      */
-    return (bool)(canon(Z(Q)) & ~canon(Z(P)));
+    return (canon(A) & ~canon(B)) != 0;
 }
 
 /*
