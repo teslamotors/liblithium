@@ -301,3 +301,42 @@ AddOption(
 
 if GetOption("arm_eabi"):
     build_with_env("dist/arm-eabi", arm_env, test=False, measure_size=True)
+
+AddOption(
+    "--powerpc",
+    dest="powerpc",
+    default=False,
+    action="store_true",
+    help="build for powerpc-linux",
+)
+
+ppc_env = env.Clone(
+    CC="powerpc-linux-gnu-gcc",
+    LINK="powerpc-linux-gnu-gcc",
+    AR="powerpc-linux-gnu-gcc-ar",
+    RANLIB="powerpc-linux-gnu-gcc-ranlib",
+)
+
+ppc_gnu_flags = [
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-mcpu=power9",
+    "-O3",
+    "-flto",
+    "-ffat-lto-objects",
+    "-g",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fstack-usage",
+    "-fdump-rtl-expand",
+    "-Wl,--gc-sections",
+]
+
+ppc_env.Append(
+    CCFLAGS=ppc_gnu_flags,
+    LINKFLAGS=ppc_gnu_flags,
+)
+
+if GetOption("powerpc"):
+    build_with_env("dist/powerpc", ppc_env, test=False)

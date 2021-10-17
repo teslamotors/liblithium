@@ -28,16 +28,16 @@ static limb read_limb(const unsigned char *p)
 
 static void write_limb(unsigned char *p, limb x)
 {
-    p[0] = (unsigned char)x & 0xFFU;
-    p[1] = (unsigned char)(x >> 8) & 0xFFU;
+    p[0] = (unsigned char)(x & 0xFFU);
+    p[1] = (unsigned char)((x >> 8) & 0xFFU);
 #if (WLEN >= 4)
-    p[2] = (unsigned char)(x >> 16) & 0xFFU;
-    p[3] = (unsigned char)(x >> 24) & 0xFFU;
+    p[2] = (unsigned char)((x >> 16) & 0xFFU);
+    p[3] = (unsigned char)((x >> 24) & 0xFFU);
 #if (WLEN >= 8)
-    p[4] = (unsigned char)(x >> 32) & 0xFFU;
-    p[5] = (unsigned char)(x >> 40) & 0xFFU;
-    p[6] = (unsigned char)(x >> 48) & 0xFFU;
-    p[7] = (unsigned char)(x >> 56) & 0xFFU;
+    p[4] = (unsigned char)((x >> 32) & 0xFFU);
+    p[5] = (unsigned char)((x >> 40) & 0xFFU);
+    p[6] = (unsigned char)((x >> 48) & 0xFFU);
+    p[7] = (unsigned char)((x >> 56) & 0xFFU);
 #endif
 #endif
 }

@@ -10,6 +10,7 @@ docker build --tag "$image" .
 workdir="/mnt/liblithium"
 
 docker run \
+  --platform="linux/amd64" \
   --rm \
   --tty \
   --interactive \
@@ -18,4 +19,4 @@ docker run \
   --workdir "$workdir" \
   --cap-add SYS_PTRACE \
   "$image" \
-  "bash" "-c" 'scons --jobs "$(nproc)" --mingw'
+  "bash" "-c" 'scons --jobs "$(nproc)" --mingw --powerpc'

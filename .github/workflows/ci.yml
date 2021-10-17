@@ -15,10 +15,11 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -qq clang gcc-arm-none-eabi llvm mingw-w64 scons
+        sudo apt-get install -qq clang gcc-arm-none-eabi gcc-powerpc-linux-gnu \
+          llvm mingw-w64 scons
     - name: Build with SCons
       run: |
-        scons --jobs "$(nproc)" --mingw
+        scons --jobs "$(nproc)" --mingw --powerpc
 
   macos-test:
     name: macOS Test

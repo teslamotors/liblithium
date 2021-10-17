@@ -52,7 +52,7 @@ typedef __int128_t sdlimb;
 #define LOW_LIMB LIMBS
 
 #else
-#error "Unsupported value for LITH_X25519_WBITS"
+#error "LITH_X25519_WBITS must be 16, 32, or 64"
 #endif
 
 #define NLIMBS (X25519_BITS / LITH_X25519_WBITS)

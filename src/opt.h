@@ -24,6 +24,21 @@
 #define LITH_LITTLE_ENDIAN 0
 #endif
 
+#if !defined(LITH_BIG_ENDIAN) &&                                            \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__))
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) && (CHAR_BIT == 8)
+#define LITH_BIG_ENDIAN 1
+#endif
+#endif
+
+#ifndef LITH_BIG_ENDIAN
+#define LITH_BIG_ENDIAN 0
+#endif
+
+#if (LITH_BIG_ENDIAN && LITH_LITTLE_ENDIAN)
+#error "cannot be both little- and big-endian"
+#endif
+
 /*
  * If a Gimli state word fits in a machine register, sponge operations can
  * happen a word at a time. This makes the sponge implementation use a bit more
@@ -47,7 +62,8 @@
 /* Clang claims a GNUC version of 4.2.1, so check the clang version first. */
 #if ((defined(__clang__) && (__clang_major__ >= 4)) ||                         \
      (((__GNUC__ * 100) + __GNUC_MINOR__) >= 407)) &&                          \
-    ((defined(__SSE__) && defined(__SSE2__)) || (defined(__ARM_NEON)))
+    ((defined(__SSE__) && defined(__SSE2__)) || defined(__ARM_NEON) ||         \
+     defined(__ALTIVEC__))
 
 #define LITH_VECTORIZE 1
 
@@ -64,8 +80,10 @@
 /*
  * Rotate left by 24 bits can be achieved more efficiently with a byte shuffle,
  * unless there is a vectorized rotate.
- * vpshufb is part of SSSE3, and vprold is part of AVX512VL.
- * Neon doesn't have a vector rotate, but does have shuffles.
+ * vpshufb is part of SSSE3, and vprold is part of AVX512VL, so enable this
+ * optimization if SSSE3 is present but not AVX512VL.
+ * Neon doesn't have a vector rotate, but does have shuffles, so enable on Neon.
+ * Altivec does have vector rotate.
  */
 #if !defined(LITH_SHUFFLE_ROL24) &&                                            \
     ((defined(__SSSE3__) && !defined(__AVX512VL__)) || defined(__ARM_NEON))

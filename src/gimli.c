@@ -29,12 +29,12 @@ static uint32x4_t rol24(uint32x4_t x)
 {
 #if (LITH_SHUFFLE_ROL24)
     uint8x16_t xb = (uint8x16_t)x;
-#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if (LITH_LITTLE_ENDIAN)
     xb = shuffle(xb, 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12);
-#elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#elif (LITH_BIG_ENDIAN)
     xb = shuffle(xb, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14);
 #else
-#error "Can't determine which byte order to use for byte shuffle rol24."
+#error "no byte order to use for byte shuffle implementation of rol24"
 #endif
     return (uint32x4_t)xb;
 #else
