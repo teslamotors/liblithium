@@ -170,7 +170,7 @@ bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,
         gimli_advance(g->state, &offset);
         mismatch |= t[i] ^ gimli_squeeze_byte(g->state, offset);
     }
-    return !mismatch;
+    return mismatch == 0;
 }
 
 void gimli_aead_encrypt(unsigned char *c, unsigned char *t, size_t tlen,
@@ -202,7 +202,7 @@ bool gimli_aead_decrypt(unsigned char *m, const unsigned char *c, size_t len,
     gimli_aead_final_ad(&g);
     gimli_aead_decrypt_update(&g, m, c, len);
     success = gimli_aead_decrypt_final(&g, t, tlen);
-    mask = (unsigned char)~(((uint32_t)success - 1) >> 16);
+    mask = (unsigned char)(~(unsigned int)success + 1);
     for (i = 0; i < len; ++i)
     {
         m[i] &= mask;
