@@ -11,22 +11,22 @@ static ssize_t hash_fd(int fd)
     static const char ctx[hydro_hash_CONTEXTBYTES] = {0};
     hydro_hash_init(&state, ctx, NULL);
 
-    static unsigned char buf[4096];
+    static unsigned char m[4096];
     ssize_t nread;
 
-    while ((nread = read(fd, buf, sizeof buf)) > 0)
+    while ((nread = read(fd, m, sizeof m)) > 0)
     {
-        hydro_hash_update(&state, buf, (size_t)nread);
+        hydro_hash_update(&state, m, (size_t)nread);
     }
 
     if (nread == 0)
     {
-        unsigned char output[hydro_hash_BYTES];
-        hydro_hash_final(&state, output, sizeof output);
+        unsigned char h[hydro_hash_BYTES];
+        hydro_hash_final(&state, h, sizeof h);
 
-        for (size_t i = 0; i < sizeof output; ++i)
+        for (size_t i = 0; i < sizeof h; ++i)
         {
-            printf("%02hhx", output[i]);
+            printf("%02hhx", h[i]);
         }
     }
 

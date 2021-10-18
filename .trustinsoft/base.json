@@ -2,11 +2,14 @@
     "files": [
         "../src/fe.c",
         "../src/gimli.c",
+        "../src/gimli_aead.c",
         "../src/gimli_common.c",
         "../src/gimli_hash.c",
         "../src/sign.c",
-        "../src/x25519.c",
-        "unknown_random.c"
+        "../src/x25519.c"
     ],
-    "cpp-extra-args": "-I../include -DLITH_VECTORIZE=0 -DLITH_LITTLE_ENDIAN=0 -DLITH_X25519_WBITS=32"
+    "cpp-extra-args": "-I../include -DLITH_VECTORIZE=0 -DLITH_LITTLE_ENDIAN=0 -DLITH_X25519_WBITS=32",
+    "val-profile": "analyzer",
+    "no-results": true,
+    "slevel": 1024
 }

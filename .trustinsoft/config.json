@@ -1,22 +1,27 @@
 [
     {
+        "name": "Hash",
+        "include": "base.json",
+        "files": ["hash.c"]
+    },
+    {
+        "name": "X25519",
+        "include": "base.json",
+        "files": ["x25519.c"]
+    },
+    {
+        "name": "Keygen",
+        "include": "base.json",
+        "files": ["keygen.c"]
+    },
+    {
         "name": "Sign",
         "include": "base.json",
-        "val-profile": "analyzer",
-        "no-results": true,
-        "slevel": 1024,
-        "files": [
-            "sign.c"
-        ]
+        "files": ["sign.c"]
     },
     {
         "name": "Verify",
         "include": "base.json",
-        "val-profile": "analyzer",
-        "no-results": true,
-        "slevel": 1024,
-        "files": [
-            "verify.c"
-        ]
+        "files": ["verify.c"]
     }
 ]

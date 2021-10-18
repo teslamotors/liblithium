@@ -1,3 +1,5 @@
+[![TrustInSoft CI](https://ci.trust-in-soft.com/projects/teslamotors/liblithium.svg?branch=main)](https://ci.trust-in-soft.com/projects/teslamotors/liblithium)
+
 ![Lithium](lithium.svg)
 
 # liblithium

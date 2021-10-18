@@ -70,8 +70,7 @@ static void absorb(uint32_t *state, size_t *offset, const unsigned char *m,
     }
 }
 
-void gimli_absorb(gimli_state *g, const unsigned char *m,
-                  size_t len)
+void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 {
     size_t offset = g->offset;
 #if (LITH_SPONGE_WORDS)

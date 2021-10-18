@@ -1,0 +1,10 @@
+Import("env")
+
+tis_env = env.Clone()
+tis_env.Append(CPPPATH="stubs")
+
+tis_env.Program("hash.c")
+tis_env.Program("x25519.c")
+tis_env.Program("keygen.c")
+tis_env.Program("sign.c")
+tis_env.Program("verify.c")

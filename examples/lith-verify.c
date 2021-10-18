@@ -65,12 +65,12 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    static unsigned char buf[4096];
+    static unsigned char msg[4096];
     ssize_t nread;
 
-    while ((nread = read(msgfd, buf, sizeof buf)) > 0)
+    while ((nread = read(msgfd, msg, sizeof msg)) > 0)
     {
-        lith_sign_update(&state, buf, (size_t)nread);
+        lith_sign_update(&state, msg, (size_t)nread);
     }
 
     if (nread < 0)

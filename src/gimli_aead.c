@@ -29,9 +29,9 @@ void gimli_aead_init(gimli_state *g,
     gimli(g->state);
 }
 
-void gimli_aead_update_ad(gimli_state *g, const unsigned char *ad, size_t len)
+void gimli_aead_update_ad(gimli_state *g, const unsigned char *ad, size_t adlen)
 {
-    gimli_absorb(g, ad, len);
+    gimli_absorb(g, ad, adlen);
 }
 
 void gimli_aead_final_ad(gimli_state *g)
@@ -159,13 +159,13 @@ void gimli_aead_decrypt_update(gimli_state *g, unsigned char *m,
 }
 
 bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,
-                              size_t len)
+                              size_t tlen)
 {
     unsigned char mismatch = 0;
     size_t i, offset = g->offset;
     gimli_pad(g->state, offset);
     offset = GIMLI_RATE - 1;
-    for (i = 0; i < len; ++i)
+    for (i = 0; i < tlen; ++i)
     {
         gimli_advance(g->state, &offset);
         mismatch |= t[i] ^ gimli_squeeze_byte(g->state, offset);
@@ -174,7 +174,7 @@ bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,
 }
 
 void gimli_aead_encrypt(unsigned char *c, unsigned char *t, size_t tlen,
-                        const unsigned char *m, size_t mlen,
+                        const unsigned char *m, size_t len,
                         const unsigned char *ad, size_t adlen,
                         const unsigned char n[GIMLI_AEAD_NONCE_LEN],
                         const unsigned char k[GIMLI_AEAD_KEY_LEN])
@@ -183,11 +183,11 @@ void gimli_aead_encrypt(unsigned char *c, unsigned char *t, size_t tlen,
     gimli_aead_init(&g, n, k);
     gimli_aead_update_ad(&g, ad, adlen);
     gimli_aead_final_ad(&g);
-    gimli_aead_encrypt_update(&g, c, m, mlen);
+    gimli_aead_encrypt_update(&g, c, m, len);
     gimli_aead_encrypt_final(&g, t, tlen);
 }
 
-bool gimli_aead_decrypt(unsigned char *m, const unsigned char *c, size_t clen,
+bool gimli_aead_decrypt(unsigned char *m, const unsigned char *c, size_t len,
                         const unsigned char *t, size_t tlen,
                         const unsigned char *ad, size_t adlen,
                         const unsigned char n[GIMLI_AEAD_NONCE_LEN],
@@ -200,10 +200,10 @@ bool gimli_aead_decrypt(unsigned char *m, const unsigned char *c, size_t clen,
     gimli_aead_init(&g, n, k);
     gimli_aead_update_ad(&g, ad, adlen);
     gimli_aead_final_ad(&g);
-    gimli_aead_decrypt_update(&g, m, c, clen);
+    gimli_aead_decrypt_update(&g, m, c, len);
     success = gimli_aead_decrypt_final(&g, t, tlen);
     mask = (unsigned char)~(((uint32_t)success - 1) >> 16);
-    for (i = 0; i < clen; ++i)
+    for (i = 0; i < len; ++i)
     {
         m[i] &= mask;
     }

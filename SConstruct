@@ -96,6 +96,7 @@ def build_with_env(path, env, test=True, measure_size=False):
                 "$SIZE $SOURCES",
             )
         )
+    return lith_env
 
 
 if platform.system() == "Windows":
@@ -233,7 +234,13 @@ else:
 
 host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
 
-build_with_env("dist", host_env)
+lith_env = build_with_env("dist", host_env)
+SConscript(
+    dirs=".trustinsoft",
+    variant_dir="dist/trustinsoft",
+    exports={"env": lith_env},
+    duplicate=False,
+)
 
 env16 = host_env.Clone()
 env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
