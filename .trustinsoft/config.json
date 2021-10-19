@@ -23,5 +23,15 @@
         "name": "Verify",
         "include": "base.json",
         "files": ["verify.c"]
+    },
+    {
+        "name": "Encrypt",
+        "include": "base.json",
+        "files": ["encrypt.c"]
+    },
+    {
+        "name": "Decrypt",
+        "include": "base.json",
+        "files": ["decrypt.c"]
     }
 ]

@@ -20,7 +20,7 @@ static inline unsigned long tis_unsigned_long_interval(unsigned long min_,
     unsigned long range = max_ - min_;
     unsigned long rand;
     lith_random_bytes((unsigned char *)&rand, sizeof rand);
-    rand %= range;
+    rand %= range + 1;
     return min_ + range;
 }
 
