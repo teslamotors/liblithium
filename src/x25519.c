@@ -122,6 +122,17 @@ void x25519(unsigned char out[X25519_LEN],
     fe x;
     feq P;
     read_limbs(x, point);
+    /*
+     * Per RFC7748 section 5:
+     * "When receiving such an array, implementations of X25519 (but not X448)
+     * MUST mask the most significant bit in the final byte. This is done to
+     * preserve compatibility with point formats that reserve the sign bit for
+     * use in other protocols and to increase resistance to implementation
+     * fingerprinting."
+     *
+     * Clear this bit after converting to an fe to avoid making an extra copy.
+     */
+    x[NLIMBS - 1] &= ~((limb)1 << (LITH_X25519_WBITS - 1));
     x25519_q(P, scalar, x);
     inv(Z(P));
     mul1(X(P), Z(P));
