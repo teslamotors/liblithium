@@ -87,7 +87,7 @@ static void swap(uint32_t *x, int i, int j)
     x[j] = tmp;
 }
 
-void gimli(uint32_t *state)
+void gimli(uint32_t state[GIMLI_WORDS])
 {
     int round;
     for (round = 24; round > 0; --round)
