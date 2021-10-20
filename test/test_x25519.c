@@ -60,9 +60,9 @@ int main(void)
     for (int i = 0; i < 10; i++)
     {
         randomize(secret1);
-        x25519_base(public1, secret1);
+        x25519_base_uniform(public1, secret1);
         randomize(eph_secret);
-        x25519_base(eph_public, eph_secret);
+        x25519_base_uniform(eph_public, eph_secret);
         randomize(challenge);
         x25519_sign(response, challenge, eph_secret, secret1);
         if (!x25519_verify(response, challenge, eph_public, public1))
@@ -170,11 +170,8 @@ int main(void)
 
     for (size_t t = 0; t < sizeof(tv) / sizeof(tv[0]); ++t)
     {
-        unsigned char sc[X25519_LEN];
-        memcpy(sc, tv[t].sc, X25519_LEN);
-        x25519_clamp(sc);
         unsigned char exp[X25519_LEN];
-        x25519(exp, sc, tv[t].u);
+        x25519(exp, tv[t].sc, tv[t].u);
         if (memcmp(exp, tv[t].exp, X25519_LEN) != 0)
         {
             printf("expected: ");

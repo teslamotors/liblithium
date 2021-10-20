@@ -57,6 +57,8 @@ typedef __int128_t sdlimb;
 
 #define NLIMBS (X25519_BITS / LITH_X25519_WBITS)
 
+#define LIMB_HIGH_BIT_MASK ((limb)1U << (LITH_X25519_WBITS - 1))
+
 typedef limb fe[NLIMBS];
 
 void read_limbs(limb x[NLIMBS], const unsigned char *in);

@@ -19,10 +19,14 @@ test_kat("test_lwc_hash_kat", "LWC_HASH_KAT_256.txt")
 test_kat("test_lwc_aead_kat", "LWC_AEAD_KAT_256_128.txt")
 
 
-def test(name):
-    prog = env.Program(name + ".c")
+def test(name, extra_sources=[]):
+    prog = env.Program(target=name, source=[name + ".c"] + extra_sources)
     env.Command(target=name + ".txt", source=prog, action="$SOURCE ")
 
 
+env_ed25519 = env.Clone()
+env_ed25519.Append(CCFLAGS=["-Wno-conversion", "-fwrapv"])
+
 test("test_x25519")
 test("test_fe")
+test("test_reduce", extra_sources=[env_ed25519.Object("sc_reduce.c")])

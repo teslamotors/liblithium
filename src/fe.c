@@ -72,7 +72,7 @@ static void propagate(fe x, limb carry)
     carry <<= 1;
     carry |= x[NLIMBS - 1] >> (LITH_X25519_WBITS - 1);
     carry *= 19;
-    x[NLIMBS - 1] &= ~((limb)1 << (LITH_X25519_WBITS - 1));
+    x[NLIMBS - 1] &= ~LIMB_HIGH_BIT_MASK;
     for (i = 0; i < NLIMBS; ++i)
     {
         x[i] = adc(&carry, x[i], 0);

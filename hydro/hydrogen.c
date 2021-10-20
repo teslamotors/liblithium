@@ -104,7 +104,7 @@ int hydro_hash_hash(uint8_t *out, size_t out_len, const void *in_,
 void hydro_sign_keygen(hydro_sign_keypair *kp)
 {
     hydro_random_buf(kp->sk, X25519_LEN);
-    x25519_base(kp->pk, kp->sk);
+    x25519_base_uniform(kp->pk, kp->sk);
     memcpy(&kp->sk[X25519_LEN], kp->pk, X25519_LEN);
 }
 
@@ -152,7 +152,7 @@ int hydro_sign_final_create(hydro_sign_state *state,
     hydro_hash_update(&st, prehash, hydro_sign_PREHASHBYTES);
     hydro_hash_final(&st, eph_sk, X25519_LEN);
 
-    x25519_base(nonce, eph_sk);
+    x25519_base_uniform(nonce, eph_sk);
     hydro_sign_challenge(challenge, nonce, pk, prehash);
 
     x25519_sign(sig, challenge, eph_sk, sk);

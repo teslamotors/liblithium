@@ -10,22 +10,13 @@
 
 #include <string.h>
 
-#define AZ_LEN 64
-
-static void gen_az(unsigned char az[AZ_LEN],
-                   const unsigned char secret_key[X25519_LEN])
-{
-    gimli_hash(az, AZ_LEN, secret_key, X25519_LEN);
-    x25519_clamp(az);
-}
-
 void lith_sign_keygen(unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
                       unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN])
 {
-    unsigned char az[AZ_LEN];
+    unsigned char secret_scalar[X25519_LEN];
     lith_random_bytes(secret_key, X25519_LEN);
-    gen_az(az, secret_key);
-    x25519_base(public_key, az);
+    gimli_hash(secret_scalar, X25519_LEN, secret_key, X25519_LEN);
+    x25519_base_uniform(public_key, secret_scalar);
     (void)memcpy(&secret_key[X25519_LEN], public_key, X25519_LEN);
 }
 
@@ -46,12 +37,13 @@ gen_challenge(gimli_hash_state *state, unsigned char challenge[X25519_LEN],
               const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
               const unsigned char prehash[LITH_SIGN_PREHASH_LEN])
 {
+    unsigned char challenge_unreduced[X25519_LEN * 2];
     gimli_hash_init(state);
     gimli_hash_update(state, public_nonce, X25519_LEN);
     gimli_hash_update(state, public_key, LITH_SIGN_PUBLIC_KEY_LEN);
     gimli_hash_update(state, prehash, LITH_SIGN_PREHASH_LEN);
-    gimli_hash_final(state, challenge, X25519_LEN);
-    x25519_clamp(challenge);
+    gimli_hash_final(state, challenge_unreduced, X25519_LEN * 2);
+    x25519_scalar_reduce(challenge, challenge_unreduced);
 }
 
 void lith_sign_create_from_prehash(
@@ -59,27 +51,39 @@ void lith_sign_create_from_prehash(
     const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
     const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN])
 {
+    /* The two signature components. */
     unsigned char *const public_nonce = &sig[0];
     unsigned char *const response = &sig[X25519_LEN];
+
     const unsigned char *const public_key = &secret_key[X25519_LEN];
-    /* use response part of signature as scratch space for the secret nonce */
-    unsigned char *const secret_nonce = response;
-    unsigned char challenge[X25519_LEN];
-    unsigned char az[AZ_LEN];
+
+    /* Use the signature buffer as scratch space for the secret nonce
+     * to save stack space and so it will be overwritten by the signature.
+     * The public nonce will be written first, and the reduced secret nonce is
+     * still needed afterward, so use the second half of the signature buffer
+     * for the reduced secret nonce. */
+    unsigned char *const secret_nonce_unreduced = &sig[0];
+    unsigned char *const secret_nonce = &sig[X25519_LEN];
+
+    unsigned char az[X25519_LEN * 2];
+    unsigned char *const secret_scalar = &az[0];
+    /* Use the z component of the secret key expansion as scratch space for the
+     * challenge after feeding z into the secret nonce calculation. */
+    unsigned char *challenge = &az[X25519_LEN];
     gimli_hash_state state;
 
-    gen_az(az, secret_key);
+    gimli_hash(az, sizeof az, secret_key, X25519_LEN);
 
     gimli_hash_init(&state);
     gimli_hash_update(&state, &az[X25519_LEN], X25519_LEN);
     gimli_hash_update(&state, prehash, LITH_SIGN_PREHASH_LEN);
-    gimli_hash_final(&state, secret_nonce, X25519_LEN);
-    x25519_clamp(secret_nonce);
-    x25519_base(public_nonce, secret_nonce);
+    gimli_hash_final(&state, secret_nonce_unreduced, X25519_LEN * 2);
+    x25519_scalar_reduce(secret_nonce, secret_nonce_unreduced);
+    x25519_base_uniform(public_nonce, secret_nonce);
 
     gen_challenge(&state, challenge, public_nonce, public_key, prehash);
 
-    x25519_sign(response, challenge, secret_nonce, az);
+    x25519_sign(response, challenge, secret_nonce, secret_scalar);
 }
 
 void lith_sign_final_prehash(lith_sign_state *state,
