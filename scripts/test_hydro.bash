@@ -25,8 +25,8 @@ else
     git clone https://github.com/jedisct1/libhydrogen.git
 fi
 
-if [[ "$(uname -ps)" == "Darwin arm" ]]; then
-    arch_flag="-mcpu=apple-a14"
+if [[ "$(uname -p)" =~ arm|aarch64 ]]; then
+    arch_flag="-march=armv8.4-a"
 else
     arch_flag="-march=native"
 fi
@@ -59,12 +59,12 @@ $CC $CCFLAGS -c -o arm_hydrogen.o libhydrogen/hydrogen.c
 $CC $CCFLAGS -Wl,--entry=hydro_sign_verify -o libhydrogen_sign_verify arm_hydrogen.o
 $CC $CCFLAGS -Wl,--entry=hydro_hash_hash -o libhydrogen_hash_hash arm_hydrogen.o
 
-scons -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm/entrypoints
+scons -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm-eabi/entrypoints
 
 arm-none-eabi-size \
   libhydrogen_sign_verify \
-  ../../arm/entrypoints/hydro_sign_verify \
-  ../../arm/entrypoints/lith_sign_verify \
+  ../../arm-eabi/entrypoints/hydro_sign_verify \
+  ../../arm-eabi/entrypoints/lith_sign_verify \
   libhydrogen_hash_hash \
-  ../../arm/entrypoints/hydro_hash_hash \
-  ../../arm/entrypoints/gimli_hash
+  ../../arm-eabi/entrypoints/hydro_hash_hash \
+  ../../arm-eabi/entrypoints/gimli_hash

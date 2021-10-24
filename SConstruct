@@ -206,19 +206,7 @@ arm_env.Append(
     LINKFLAGS=arm_gnu_flags,
 )
 
-build_with_env("dist/arm", arm_env, test=False, measure_size=True)
-
-
-def new_x86_env(flags):
-    if platform.system() == "Windows":
-        new_env = mingw_env.Clone()
-    else:
-        new_env = llvm_env.Clone()
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
-        target_flag = "--target=x86_64-apple-darwin"
-        new_env.Append(CCFLAGS=target_flag, LINKFLAGS=target_flag)
-    new_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
-    return new_env
+build_with_env("dist/arm-eabi", arm_env, test=False, measure_size=True)
 
 
 if platform.system() == "Windows":
@@ -227,8 +215,8 @@ if platform.system() == "Windows":
 else:
     build_with_env("dist/mingw", mingw_env, test=False)
     host_env = llvm_env.Clone()
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
-        arch_flag = "-mcpu=apple-a14"
+    if platform.machine() in ("arm64", "aarch64"):
+        arch_flag = "-march=armv8.4-a"
     else:
         arch_flag = "-march=native"
 
@@ -265,14 +253,25 @@ no_opt_env.Append(
 )
 build_with_env("dist/no_opt", no_opt_env)
 
-# SSE, etc., but no AVX
-nehalem_env = new_x86_env("-march=nehalem")
-build_with_env("dist/nehalem", nehalem_env, test=True)
 
-# Everything except AVX512
-skylake_env = new_x86_env("-march=skylake")
-build_with_env("dist/skylake", skylake_env, test=False)
+if platform.machine() == "x86_64":
 
-# AVX512
-icelake_env = new_x86_env("-march=icelake-server")
-build_with_env("dist/icelake", icelake_env, test=False)
+    def new_x86_env(flags):
+        if platform.system() == "Windows":
+            new_env = mingw_env.Clone()
+        else:
+            new_env = llvm_env.Clone()
+        new_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
+        return new_env
+
+    # SSE, etc., but no AVX
+    nehalem_env = new_x86_env("-march=nehalem")
+    build_with_env("dist/nehalem", nehalem_env, test=True)
+
+    # Everything except AVX512
+    skylake_env = new_x86_env("-march=skylake")
+    build_with_env("dist/skylake", skylake_env, test=False)
+
+    # AVX512
+    icelake_env = new_x86_env("-march=icelake-server")
+    build_with_env("dist/icelake", icelake_env, test=False)
