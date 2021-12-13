@@ -135,6 +135,7 @@ AddOption(
     help="disable sanitizers",
 )
 if GetOption("sanitize"):
+    llvm_env["ENV"]["MallocNanoZone"] = "0"
     llvm_flags.append("-fsanitize=address,undefined")
 
 llvm_env["CC"] = "clang"
