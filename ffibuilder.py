@@ -19,6 +19,7 @@ ffibuilder.set_source(
         "src/gimli_common.c",
         "src/gimli_hash.c",
         "src/fe.c",
+        "src/memzero.c",
         "src/x25519.c",
         "src/sign.c",
     ],

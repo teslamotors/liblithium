@@ -8,6 +8,8 @@
 #include <lithium/random.h>
 #include <lithium/x25519.h>
 
+#include "memzero.h"
+
 #include <string.h>
 
 void lith_sign_keygen(unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
@@ -18,6 +20,7 @@ void lith_sign_keygen(unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
     gimli_hash(secret_scalar, X25519_LEN, secret_key, X25519_LEN);
     x25519_base_uniform(public_key, secret_scalar);
     (void)memcpy(&secret_key[X25519_LEN], public_key, X25519_LEN);
+    lith_memzero(secret_scalar, X25519_LEN);
 }
 
 void lith_sign_init(lith_sign_state *state)
@@ -84,6 +87,7 @@ void lith_sign_create_from_prehash(
     gen_challenge(&state, challenge, public_nonce, public_key, prehash);
 
     x25519_sign(response, challenge, secret_nonce, secret_scalar);
+    lith_memzero(secret_scalar, X25519_LEN);
 }
 
 void lith_sign_final_prehash(lith_sign_state *state,
