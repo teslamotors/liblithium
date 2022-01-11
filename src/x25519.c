@@ -86,26 +86,29 @@ static void x25519_q(feq P, const sc k, const fe x)
 {
     feq Q;
     limb swap = 0;
-    int i;
+    int i, j;
     (void)memcpy(X(Q), x, sizeof(fe));
     (void)memset(Z(Q), 0, sizeof(fe));
     (void)memset(P, 0, sizeof(feq));
     Z(Q)[0] = 1;
     X(P)[0] = 1;
 
-    for (i = X25519_BITS - 1; i >= 0; --i)
+    for (i = NLIMBS - 1; i >= 0; --i)
     {
-        fe t;
-        const limb ki =
-            ~((k[i / LITH_X25519_WBITS] >> (i % LITH_X25519_WBITS)) & 1) + 1;
-        cswap(swap ^ ki, P, Q);
-        swap = ki;
-        ladder_part1(P, Q, t);
-        ladder_part2(P, Q, t, x);
+        for (j = LITH_X25519_WBITS - 1; j >= 0; --j)
+        {
+            fe t;
+            const limb kb = ~((k[i] >> j) & 1) + 1;
+            cswap(swap ^ kb, P, Q);
+            swap = kb;
+            ladder_part1(P, Q, t);
+            ladder_part2(P, Q, t, x);
 #if (LITH_ENABLE_WATCHDOG)
-        lith_watchdog_pet();
+            lith_watchdog_pet();
 #endif
+        }
     }
+
     cswap(swap, P, Q);
 }
 
