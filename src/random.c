@@ -5,18 +5,26 @@
 
 #include <lithium/random.h>
 
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
+#if defined(__unix__) || defined(__APPLE__)
+#define USE_URANDOM 1
+#else
+#define USE_URANDOM 0
+#endif
 
 #ifdef _WIN32
-#include <winternl.h>
+/* Must be included first, so leave a blank line to prevent reordering. */
+#include <windows.h>
 
 #include <bcrypt.h>
 #include <ntstatus.h>
-#else
+#include <stdio.h>
+#elif USE_URANDOM
+#include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #endif
 
@@ -37,7 +45,7 @@ void lith_random_bytes(unsigned char *buf, size_t len)
         abort();
     }
     BCryptCloseAlgorithmProvider(h, 0);
-#else
+#elif USE_URANDOM
     static const char urandom[] = "/dev/urandom";
     int fd = open(urandom, O_RDONLY);
     if (fd < 0)
@@ -53,5 +61,13 @@ void lith_random_bytes(unsigned char *buf, size_t len)
         abort();
     }
     close(fd);
+#else
+    /*
+     * No supported random implementation available, so abort rather than do
+     * something insecure.
+     */
+    (void)buf;
+    (void)len;
+    abort();
 #endif
 }
