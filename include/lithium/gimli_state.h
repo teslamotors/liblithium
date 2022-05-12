@@ -16,7 +16,7 @@
 typedef struct
 {
     uint32_t state[GIMLI_WORDS];
-    size_t offset;
+    unsigned offset;
 } gimli_state;
 
 /* cffi:end */

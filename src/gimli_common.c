@@ -26,27 +26,25 @@ void gimli_store(unsigned char *p, uint32_t x)
     p[3] = (unsigned char)((x >> 24) & 0xFFU);
 }
 
-void gimli_absorb_byte(uint32_t *state, size_t offset, unsigned char x)
+void gimli_absorb_byte(uint32_t *state, unsigned offset, unsigned char x)
 {
 #if (LITH_LITTLE_ENDIAN)
     ((unsigned char *)state)[offset] ^= x;
 #else
-    const int sh = (offset % 4) * 8;
-    state[offset / 4] ^= (uint32_t)x << sh;
+    state[offset / 4] ^= (uint32_t)x << ((offset % 4) * 8);
 #endif
 }
 
-unsigned char gimli_squeeze_byte(const uint32_t *state, size_t offset)
+unsigned char gimli_squeeze_byte(const uint32_t *state, unsigned offset)
 {
 #if (LITH_LITTLE_ENDIAN)
     return ((const unsigned char *)state)[offset];
 #else
-    const int sh = (offset % 4) * 8;
-    return (unsigned char)((state[offset / 4] >> sh) & 0xFFU);
+    return (unsigned char)((state[offset / 4] >> ((offset % 4) * 8)) & 0xFFU);
 #endif
 }
 
-void gimli_advance(uint32_t *state, size_t *offset)
+void gimli_advance(uint32_t *state, unsigned *offset)
 {
     ++*offset;
     if (*offset == GIMLI_RATE)
@@ -59,7 +57,7 @@ void gimli_advance(uint32_t *state, size_t *offset)
     }
 }
 
-static void absorb(uint32_t *state, size_t *offset, const unsigned char *m,
+static void absorb(uint32_t *state, unsigned *offset, const unsigned char *m,
                    size_t len)
 {
     size_t i;
@@ -72,9 +70,9 @@ static void absorb(uint32_t *state, size_t *offset, const unsigned char *m,
 
 void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 {
-    size_t offset = g->offset;
+    unsigned offset = g->offset;
 #if (LITH_SPONGE_WORDS)
-    const size_t first_block_len = (GIMLI_RATE - offset) % GIMLI_RATE;
+    const unsigned first_block_len = (GIMLI_RATE - offset) % GIMLI_RATE;
     if (len >= GIMLI_RATE + first_block_len)
     {
         absorb(g->state, &offset, m, first_block_len);
@@ -104,7 +102,8 @@ void gimli_absorb(gimli_state *g, const unsigned char *m, size_t len)
 
 void gimli_squeeze(gimli_state *g, unsigned char *h, size_t len)
 {
-    size_t i, offset = GIMLI_RATE - 1;
+    size_t i;
+    unsigned offset = GIMLI_RATE - 1;
     for (i = 0; i < len; ++i)
     {
         gimli_advance(g->state, &offset);
@@ -113,7 +112,7 @@ void gimli_squeeze(gimli_state *g, unsigned char *h, size_t len)
     g->offset = offset;
 }
 
-void gimli_pad(uint32_t *state, size_t offset)
+void gimli_pad(uint32_t *state, unsigned offset)
 {
     gimli_absorb_byte(state, offset, 0x01);
     state[GIMLI_WORDS - 1] ^= UINT32_C(0x01000000);

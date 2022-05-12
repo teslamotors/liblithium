@@ -44,7 +44,8 @@ void gimli_aead_final_ad(gimli_state *g)
 static void encrypt_update(gimli_state *g, unsigned char *c,
                            const unsigned char *m, size_t len)
 {
-    size_t i, offset = g->offset;
+    size_t i;
+    unsigned offset = g->offset;
     for (i = 0; i < len; ++i)
     {
         gimli_absorb_byte(g->state, offset, m[i]);
@@ -98,7 +99,8 @@ void gimli_aead_encrypt_final(gimli_state *g, unsigned char *t, size_t len)
 static void decrypt_update(gimli_state *g, unsigned char *m,
                            const unsigned char *c, size_t len)
 {
-    size_t i, offset = g->offset;
+    size_t i;
+    unsigned offset = g->offset;
     for (i = 0; i < len; ++i)
     {
         m[i] = c[i] ^ gimli_squeeze_byte(g->state, offset);
@@ -162,7 +164,8 @@ bool gimli_aead_decrypt_final(gimli_state *g, const unsigned char *t,
                               size_t tlen)
 {
     unsigned char mismatch = 0;
-    size_t i, offset = g->offset;
+    size_t i;
+    unsigned offset = g->offset;
     gimli_pad(g->state, offset);
     offset = GIMLI_RATE - 1;
     for (i = 0; i < tlen; ++i)
