@@ -18,4 +18,4 @@ docker run \
   --workdir "$workdir" \
   --cap-add SYS_PTRACE \
   "$image" \
-  "bash" "-c" 'scons --jobs "$(nproc)"'
+  "bash" "-c" 'scons --jobs "$(nproc)" --mingw'

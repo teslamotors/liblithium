@@ -130,7 +130,7 @@ llvm_flags = [
 AddOption(
     "--no-sanitize",
     dest="sanitize",
-    default="true",
+    default=True,
     action="store_false",
     help="disable sanitizers",
 )
@@ -176,50 +176,27 @@ mingw_env.Append(
     LIBS=["bcrypt"],
 )
 
-arm_env = env.Clone(
-    CC="arm-none-eabi-gcc",
-    LINK="arm-none-eabi-gcc",
-    AR="arm-none-eabi-gcc-ar",
-    RANLIB="arm-none-eabi-gcc-ranlib",
-    SIZE="arm-none-eabi-size",
-)
-
-arm_gnu_flags = [
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-specs=nosys.specs",
-    "-specs=nano.specs",
-    "-mcpu=cortex-m4",
-    "-Os",
-    "-flto",
-    "-ffat-lto-objects",
-    "-g",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-fstack-usage",
-    "-fdump-rtl-expand",
-    "-Wl,--gc-sections",
-]
-
-arm_env.Append(
-    CCFLAGS=arm_gnu_flags,
-    LINKFLAGS=arm_gnu_flags,
-)
-
-build_with_env("dist/arm-eabi", arm_env, test=False, measure_size=True)
-
+if platform.system() != "Windows":
+    AddOption(
+        "--mingw",
+        dest="mingw",
+        default=False,
+        action="store_true",
+        help="build for Windows",
+    )
 
 if platform.system() == "Windows":
     host_env = mingw_env.Clone()
     arch_flag = "-march=skylake"
 else:
-    build_with_env("dist/mingw", mingw_env, test=False)
     host_env = llvm_env.Clone()
     if platform.machine() in ("arm64", "aarch64"):
         arch_flag = "-march=armv8.4-a"
     else:
         arch_flag = "-march=native"
+
+    if GetOption("mingw"):
+        build_with_env("dist/mingw", mingw_env, test=False)
 
 host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
 
@@ -276,3 +253,47 @@ if platform.machine() == "x86_64":
     # AVX512
     icelake_env = new_x86_env("-march=icelake-server")
     build_with_env("dist/icelake", icelake_env, test=False)
+
+
+arm_env = env.Clone(
+    CC="arm-none-eabi-gcc",
+    LINK="arm-none-eabi-gcc",
+    AR="arm-none-eabi-gcc-ar",
+    RANLIB="arm-none-eabi-gcc-ranlib",
+    SIZE="arm-none-eabi-size",
+)
+
+arm_gnu_flags = [
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-specs=nosys.specs",
+    "-specs=nano.specs",
+    "-mcpu=cortex-m4",
+    "-Os",
+    "-flto",
+    "-ffat-lto-objects",
+    "-g",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fstack-usage",
+    "-fdump-rtl-expand",
+    "-Wl,--gc-sections",
+]
+
+arm_env.Append(
+    CCFLAGS=arm_gnu_flags,
+    LINKFLAGS=arm_gnu_flags,
+)
+
+# For cases where the toolchain isn't installed or is broken.
+AddOption(
+    "--skip-arm-eabi",
+    dest="arm_eabi",
+    default=True,
+    action="store_false",
+    help="don't build for arm-eabi",
+)
+
+if GetOption("arm_eabi"):
+    build_with_env("dist/arm-eabi", arm_env, test=False, measure_size=True)

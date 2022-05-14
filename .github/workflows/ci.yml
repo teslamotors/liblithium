@@ -9,7 +9,7 @@ on:
 jobs:
   linux-test:
     name: Linux Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
@@ -18,32 +18,32 @@ jobs:
         sudo apt-get install -qq clang gcc-arm-none-eabi llvm mingw-w64 scons
     - name: Build with SCons
       run: |
-        scons --jobs "$(nproc)"
+        scons --jobs "$(nproc)" --mingw
 
   macos-test:
     name: macOS Test
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: |
-        brew install -q gcc-arm-embedded mingw-w64 scons
+        brew install -q scons
     - name: Build with SCons
       run: |
-        scons --jobs "$(sysctl -n hw.ncpu)"
+        scons --jobs "$(sysctl -n hw.ncpu)" --skip-arm-eabi
 
   windows-test:
     name: Windows Test
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: |
         python -m pip install -qq scons
-        choco install --limit-output --no-progress diffutils gcc-arm-embedded
+        choco install --limit-output --no-progress diffutils
     - name: Build with SCons
       run: |
-        scons --jobs "$env:NUMBER_OF_PROCESSORS"
+        scons --jobs "$env:NUMBER_OF_PROCESSORS" --skip-arm-eabi
 
   python-test:
     name: Python Test (${{ matrix.os }}, python${{ matrix.python-version }})
