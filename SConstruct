@@ -24,6 +24,10 @@ def build_with_env(path, env, test=True, measure_size=False):
     # Prepend so platforms that need extra libraries will have them last and
     # unresolved symbols from liblith_random will be resolved.
     lith_env.Prepend(LIBS=[liblithium, liblith_random])
+    # This is still enabled with -Weverything even though we are using a modern
+    # C standard for the examples and tests, but disabling it globally also
+    # disables it for -ansi mode, so only disable it here.
+    lith_env.Append(CFLAGS=["-Wno-declaration-after-statement"])
 
     SConscript(
         dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
