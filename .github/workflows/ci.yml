@@ -86,7 +86,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -qq --upgrade pip
-        python -m pip install -qq black==21.12b0
+        python -m pip install -qq black==22.3.0
     - name: Format with black
       run: |
         bash black-check.bash
