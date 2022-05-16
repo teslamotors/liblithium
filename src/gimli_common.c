@@ -34,8 +34,11 @@ void gimli_store(unsigned char *p, uint32_t x)
 
 void gimli_absorb_byte(uint32_t *state, unsigned offset, unsigned char x)
 {
-#if (LITH_LITTLE_ENDIAN || LITH_BIG_ENDIAN)
-    ((unsigned char *)state)[offset ^ OFFSET_SWAP] ^= x;
+#if defined(__TMS320C2000__)
+    __byte((int *)state, offset) ^= x;
+#elif ((LITH_LITTLE_ENDIAN || LITH_BIG_ENDIAN) && (CHAR_BIT == 8))
+    offset ^= OFFSET_SWAP;
+    ((unsigned char *)state)[offset] ^= x;
 #else
     state[offset / 4] ^= (uint32_t)x << ((offset % 4) * 8);
 #endif
@@ -43,8 +46,11 @@ void gimli_absorb_byte(uint32_t *state, unsigned offset, unsigned char x)
 
 unsigned char gimli_squeeze_byte(const uint32_t *state, unsigned offset)
 {
-#if (LITH_LITTLE_ENDIAN || LITH_BIG_ENDIAN)
-    return ((const unsigned char *)state)[offset ^ OFFSET_SWAP];
+#if defined(__TMS320C2000__)
+    return (unsigned char)__byte((int *)state, offset);
+#elif ((LITH_LITTLE_ENDIAN || LITH_BIG_ENDIAN) && (CHAR_BIT == 8))
+    offset ^= OFFSET_SWAP;
+    return ((const unsigned char *)state)[offset];
 #else
     return (unsigned char)((state[offset / 4] >> ((offset % 4) * 8)) & 0xFFU);
 #endif

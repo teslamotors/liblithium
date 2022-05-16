@@ -13,29 +13,39 @@
  * On little-endian 8-bit byte platforms, accessing the Gimli
  * state words can be done directly with byte accesses.
  */
-#if !defined(LITH_LITTLE_ENDIAN) &&                                            \
-    (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__))
-#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) && (CHAR_BIT == 8)
+#if !defined(LITH_LITTLE_ENDIAN)
+
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__))
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #define LITH_LITTLE_ENDIAN 1
 #endif
+#elif defined(__LITTLE_ENDIAN__)
+#define LITH_LITTLE_ENDIAN 1
 #endif
+
+#endif /* !defined(LITH_LITTLE_ENDIAN) */
+
+#if !defined(LITH_BIG_ENDIAN)
+
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__))
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define LITH_BIG_ENDIAN 1
+#endif
+#elif defined(__BIG_ENDIAN__)
+#define LITH_BIG_ENDIAN 1
+#endif
+
+#endif /* !defined(LITH_BIG_ENDIAN) */
 
 #ifndef LITH_LITTLE_ENDIAN
 #define LITH_LITTLE_ENDIAN 0
-#endif
-
-#if !defined(LITH_BIG_ENDIAN) &&                                            \
-    (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__))
-#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) && (CHAR_BIT == 8)
-#define LITH_BIG_ENDIAN 1
-#endif
 #endif
 
 #ifndef LITH_BIG_ENDIAN
 #define LITH_BIG_ENDIAN 0
 #endif
 
-#if (LITH_BIG_ENDIAN && LITH_LITTLE_ENDIAN)
+#if (LITH_LITTLE_ENDIAN && LITH_BIG_ENDIAN)
 #error "cannot be both little- and big-endian"
 #endif
 
