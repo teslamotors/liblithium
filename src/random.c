@@ -7,6 +7,10 @@
 
 #include <stdlib.h>
 
+#if defined(__TRUSTINSOFT_ANALYZER__)
+#include <tis_builtin.h>
+#endif
+
 #if defined(__unix__) || defined(__APPLE__)
 #define USE_URANDOM 1
 #else
@@ -30,7 +34,9 @@
 
 void lith_random_bytes(unsigned char *buf, size_t len)
 {
-#ifdef _WIN32
+#if defined(__TRUSTINSOFT_ANALYZER__)
+    tis_make_unknown(buf, len);
+#elif defined(_WIN32)
     BCRYPT_ALG_HANDLE h;
     if (BCryptOpenAlgorithmProvider(&h, BCRYPT_RNG_ALGORITHM,
                                     MS_PRIMITIVE_PROVIDER, 0) != STATUS_SUCCESS)

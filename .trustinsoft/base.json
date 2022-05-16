@@ -5,6 +5,7 @@
         "../src/gimli_aead.c",
         "../src/gimli_common.c",
         "../src/gimli_hash.c",
+        "../src/random.c",
         "../src/sign.c",
         "../src/x25519.c"
     ],
