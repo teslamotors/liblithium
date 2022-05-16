@@ -30,7 +30,16 @@ def build_with_env(path, env, test=True, measure_size=False):
     lith_env.Append(CFLAGS=["-Wno-declaration-after-statement"])
 
     SConscript(
-        dirs="examples", variant_dir=path, exports={"env": lith_env}, duplicate=False
+        dirs="examples",
+        variant_dir=path,
+        exports={"env": lith_env},
+        duplicate=False,
+    )
+    SConscript(
+        dirs=".trustinsoft",
+        variant_dir=os.path.join(path, "trustinsoft"),
+        exports={"env": lith_env},
+        duplicate=False,
     )
 
     hydro_env = lith_env.Clone()
@@ -100,8 +109,52 @@ def build_with_env(path, env, test=True, measure_size=False):
                 "$SIZE $SOURCES",
             )
         )
-    return lith_env
 
+
+all_targets = [
+    "host",
+    "arm-eabi",
+    "powerpc-linux",
+]
+
+AddOption(
+    "--target",
+    dest="target",
+    default="host",
+    action="store",
+    help=f"choose targets ({', '.join(all_targets)}) or specify \"all\"",
+    metavar="TARGET1[,TARGET2...]",
+)
+
+targets = [t.strip() for t in GetOption("target").split(",")]
+
+if "all" in GetOption("target"):
+    targets = all_targets
+
+for t in targets:
+    if t not in all_targets:
+        raise SCons.Errors.UserError(f"Unknown target {t}")
+
+arch_default = "native"
+if platform.machine() in ("arm64", "aarch64"):
+    arch_default = "armv8.4-a"
+
+AddOption(
+    "--host-march",
+    dest="host_march",
+    default=arch_default,
+    action="store",
+    help=f"set the -march option for the host target, defaults to {arch_default}",
+    metavar="ARCH",
+)
+
+AddOption(
+    "--sanitize",
+    dest="sanitize",
+    default=False,
+    action="store_true",
+    help="enable sanitizers on the host target",
+)
 
 if platform.system() == "Windows":
     env = Environment(tools=["cc", "c++", "link", "ar"])
@@ -113,230 +166,154 @@ else:
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]
 
-llvm_env = env.Clone()
+if "host" in targets:
 
-llvm_flags = [
-    "-Weverything",
-    "-Wno-unknown-warning-option",
-    "-Wno-poison-system-directories",
-    "-Wno-c99-extensions",
-    "-Wno-long-long",
-    "-Wno-variadic-macros",
-    "-Wno-format-non-iso",
-    "-Werror",
-    "-O3",
-    "-g",
-    "-flto",
-    "-ffunction-sections",
-    "-fdata-sections",
-]
+    if platform.system() != "Windows":
+        host_env = env.Clone(CC="clang")
+        llvm_flags = [
+            "-Weverything",
+            "-Wno-unknown-warning-option",
+            "-Wno-poison-system-directories",
+            "-Wno-c99-extensions",
+            "-Wno-long-long",
+            "-Wno-variadic-macros",
+            "-Wno-format-non-iso",
+            "-Werror",
+            "-O3",
+            "-g",
+            "-flto",
+            "-ffunction-sections",
+            "-fdata-sections",
+        ]
+        if GetOption("sanitize"):
+            host_env["ENV"]["MallocNanoZone"] = "0"
+            llvm_flags.append("-fsanitize=address,undefined")
 
-AddOption(
-    "--no-sanitize",
-    dest="sanitize",
-    default=True,
-    action="store_false",
-    help="disable sanitizers",
-)
-if GetOption("sanitize"):
-    llvm_env["ENV"]["MallocNanoZone"] = "0"
-    llvm_flags.append("-fsanitize=address,undefined")
+        host_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags)
 
-llvm_env["CC"] = "clang"
+        if platform.system() == "Darwin":
+            host_env.Append(LINKFLAGS=["-dead_strip"])
+        elif platform.system() == "Linux":
+            host_env.Append(LINKFLAGS=["-Wl,--gc-sections"])
+            # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
+            host_env["AR"] = "llvm-ar"
+            host_env["RANLIB"] = "llvm-ranlib"
 
-llvm_env.Append(CCFLAGS=llvm_flags, LINKFLAGS=llvm_flags)
+    else:  # Windows
+        mingw_flags = [
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-O3",
+            "-flto",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-Wl,--gc-sections",
+        ]
+        host_env = env.Clone(
+            CC="x86_64-w64-mingw32-gcc",
+            AS="x86_64-w64-mingw32-as",
+            AR="x86_64-w64-mingw32-gcc-ar",
+            RANLIB="x86_64-w64-mingw32-gcc-ranlib",
+            LIBPREFIX="",
+            LIBSUFFIX=".lib",
+            PROGSUFFIX=".exe",
+            CPPDEFINES=["__USE_MINGW_ANSI_STDIO"],
+            CCFLAGS=mingw_flags,
+            LINKFLAGS=mingw_flags,
+            LIBS=["bcrypt"],
+        )
 
-if platform.system() == "Darwin":
-    llvm_env.Append(LINKFLAGS=["-dead_strip"])
-elif platform.system() == "Linux":
-    llvm_env.Append(LINKFLAGS=["-Wl,--gc-sections"])
-    # need llvm-ar and llvm-ranlib for LLVM LTO to work on Linux
-    llvm_env["AR"] = "llvm-ar"
-    llvm_env["RANLIB"] = "llvm-ranlib"
+    arch_flag = f"-march={GetOption('host_march')}"
+    host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
 
-mingw_flags = [
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-O3",
-    "-flto",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-Wl,--gc-sections",
-]
-mingw_env = env.Clone(
-    CC="x86_64-w64-mingw32-gcc",
-    AS="x86_64-w64-mingw32-as",
-    AR="x86_64-w64-mingw32-gcc-ar",
-    RANLIB="x86_64-w64-mingw32-gcc-ranlib",
-    LIBPREFIX="",
-    LIBSUFFIX=".lib",
-    PROGSUFFIX=".exe",
-)
-mingw_env.Append(
-    CPPDEFINES=["__USE_MINGW_ANSI_STDIO"],
-    CCFLAGS=mingw_flags,
-    LINKFLAGS=mingw_flags,
-    LIBS=["bcrypt"],
-)
+    build_with_env("build", host_env)
 
-if platform.system() != "Windows":
-    AddOption(
-        "--mingw",
-        dest="mingw",
-        default=False,
-        action="store_true",
-        help="build for Windows",
+    env16 = host_env.Clone()
+    env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+    build_with_env("build/16", env16)
+
+    env32 = host_env.Clone()
+    env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
+    build_with_env("build/32", env32)
+
+    portable_asr_env = host_env.Clone()
+    portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
+    build_with_env("build/portable_asr", portable_asr_env)
+
+    # disable architectural optimizations
+    no_opt_env = host_env.Clone()
+    no_opt_env.Append(
+        CPPDEFINES={
+            "LITH_LITTLE_ENDIAN": 0,
+            "LITH_BIG_ENDIAN": 0,
+            "LITH_SPONGE_WORDS": 0,
+            "LITH_VECTORIZE": 0,
+        }
+    )
+    build_with_env("build/no_opt", no_opt_env)
+
+
+if "arm-eabi" in targets:
+    arm_env = env.Clone(
+        CC="arm-none-eabi-gcc",
+        LINK="arm-none-eabi-gcc",
+        AR="arm-none-eabi-gcc-ar",
+        RANLIB="arm-none-eabi-gcc-ranlib",
+        SIZE="arm-none-eabi-size",
     )
 
-if platform.system() == "Windows":
-    host_env = mingw_env.Clone()
-    arch_flag = "-march=skylake"
-else:
-    host_env = llvm_env.Clone()
-    if platform.machine() in ("arm64", "aarch64"):
-        arch_flag = "-march=armv8.4-a"
-    else:
-        arch_flag = "-march=native"
+    arm_gnu_flags = [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-specs=nosys.specs",
+        "-specs=nano.specs",
+        "-mcpu=cortex-m4",
+        "-Os",
+        "-flto",
+        "-ffat-lto-objects",
+        "-g",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fstack-usage",
+        "-fdump-rtl-expand",
+        "-Wl,--gc-sections",
+    ]
 
-    if GetOption("mingw"):
-        build_with_env("dist/mingw", mingw_env, test=False)
+    arm_env.Append(
+        CCFLAGS=arm_gnu_flags,
+        LINKFLAGS=arm_gnu_flags,
+    )
+    build_with_env("build/arm-eabi", arm_env, test=False, measure_size=True)
 
-host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
+if "powerpc-linux" in targets:
+    ppc_env = env.Clone(
+        CC="powerpc-linux-gnu-gcc",
+        LINK="powerpc-linux-gnu-gcc",
+        AR="powerpc-linux-gnu-gcc-ar",
+        RANLIB="powerpc-linux-gnu-gcc-ranlib",
+    )
 
-lith_env = build_with_env("dist", host_env)
-SConscript(
-    dirs=".trustinsoft",
-    variant_dir="dist/trustinsoft",
-    exports={"env": lith_env},
-    duplicate=False,
-)
+    ppc_gnu_flags = [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-mcpu=power9",
+        "-O3",
+        "-flto",
+        "-ffat-lto-objects",
+        "-g",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fstack-usage",
+        "-fdump-rtl-expand",
+        "-Wl,--gc-sections",
+    ]
 
-env16 = host_env.Clone()
-env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
-build_with_env("dist/16", env16)
+    ppc_env.Append(
+        CCFLAGS=ppc_gnu_flags,
+        LINKFLAGS=ppc_gnu_flags,
+    )
 
-env32 = host_env.Clone()
-env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
-build_with_env("dist/32", env32)
-
-portable_asr_env = host_env.Clone()
-portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
-build_with_env("dist/portable_asr", portable_asr_env)
-
-# disable architectural optimizations
-no_opt_env = host_env.Clone()
-no_opt_env.Append(
-    CPPDEFINES={
-        "LITH_LITTLE_ENDIAN": 0,
-        "LITH_SPONGE_WORDS": 0,
-        "LITH_VECTORIZE": 0,
-    }
-)
-build_with_env("dist/no_opt", no_opt_env)
-
-
-if platform.machine() == "x86_64":
-
-    def new_x86_env(flags):
-        if platform.system() == "Windows":
-            new_env = mingw_env.Clone()
-        else:
-            new_env = llvm_env.Clone()
-        new_env.Append(CCFLAGS=flags, LINKFLAGS=flags)
-        return new_env
-
-    # SSE, etc., but no AVX
-    nehalem_env = new_x86_env("-march=nehalem")
-    build_with_env("dist/nehalem", nehalem_env, test=True)
-
-    # Everything except AVX512
-    skylake_env = new_x86_env("-march=skylake")
-    build_with_env("dist/skylake", skylake_env, test=False)
-
-    # AVX512
-    icelake_env = new_x86_env("-march=icelake-server")
-    build_with_env("dist/icelake", icelake_env, test=False)
-
-
-arm_env = env.Clone(
-    CC="arm-none-eabi-gcc",
-    LINK="arm-none-eabi-gcc",
-    AR="arm-none-eabi-gcc-ar",
-    RANLIB="arm-none-eabi-gcc-ranlib",
-    SIZE="arm-none-eabi-size",
-)
-
-arm_gnu_flags = [
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-specs=nosys.specs",
-    "-specs=nano.specs",
-    "-mcpu=cortex-m4",
-    "-Os",
-    "-flto",
-    "-ffat-lto-objects",
-    "-g",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-fstack-usage",
-    "-fdump-rtl-expand",
-    "-Wl,--gc-sections",
-]
-
-arm_env.Append(
-    CCFLAGS=arm_gnu_flags,
-    LINKFLAGS=arm_gnu_flags,
-)
-
-# For cases where the toolchain isn't installed or is broken.
-AddOption(
-    "--skip-arm-eabi",
-    dest="arm_eabi",
-    default=True,
-    action="store_false",
-    help="don't build for arm-eabi",
-)
-
-if GetOption("arm_eabi"):
-    build_with_env("dist/arm-eabi", arm_env, test=False, measure_size=True)
-
-AddOption(
-    "--powerpc",
-    dest="powerpc",
-    default=False,
-    action="store_true",
-    help="build for powerpc-linux",
-)
-
-ppc_env = env.Clone(
-    CC="powerpc-linux-gnu-gcc",
-    LINK="powerpc-linux-gnu-gcc",
-    AR="powerpc-linux-gnu-gcc-ar",
-    RANLIB="powerpc-linux-gnu-gcc-ranlib",
-)
-
-ppc_gnu_flags = [
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-mcpu=power9",
-    "-O3",
-    "-flto",
-    "-ffat-lto-objects",
-    "-g",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-fstack-usage",
-    "-fdump-rtl-expand",
-    "-Wl,--gc-sections",
-]
-
-ppc_env.Append(
-    CCFLAGS=ppc_gnu_flags,
-    LINKFLAGS=ppc_gnu_flags,
-)
-
-if GetOption("powerpc"):
-    build_with_env("dist/powerpc", ppc_env, test=False)
+    build_with_env("build/powerpc", ppc_env, test=False)

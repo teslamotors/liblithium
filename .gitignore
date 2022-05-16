@@ -1,7 +1,6 @@
 /.eggs/
 /.sconsign.dblite
 /build/
-/dist/
 /tags
 *.egg-info/
 __pycache__/

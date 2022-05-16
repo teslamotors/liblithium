@@ -2,10 +2,10 @@
 
 set -xe
 
-scons --jobs $(nproc) dist/lith-keygen dist/lith-sign dist/lith-verify
+scons --jobs $(nproc) build/lith-keygen build/lith-sign build/lith-verify
 
-testdir="dist/test/signtest"
-PATH="$(pwd)/dist:$PATH"
+testdir="build/test/signtest"
+PATH="$(pwd)/build:$PATH"
 
 mkdir -p "$testdir"
 pushd "$testdir"

@@ -19,4 +19,4 @@ docker run \
   --workdir "$workdir" \
   --cap-add SYS_PTRACE \
   "$image" \
-  "bash" "-c" 'scons --jobs "$(nproc)" --mingw --powerpc'
+  "bash" "-c" 'scons --jobs "$(nproc)" --target=all --sanitize'

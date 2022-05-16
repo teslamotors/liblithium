@@ -16,10 +16,28 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -qq clang gcc-arm-none-eabi gcc-powerpc-linux-gnu \
-          llvm mingw-w64 scons
-    - name: Build with SCons
+          llvm scons
+    - name: Linux Host Build
       run: |
-        scons --jobs "$(nproc)" --mingw --powerpc
+        scons --jobs "$(nproc)"
+    - name: Linux Host Build -march=penryn
+      run: |
+        scons --jobs "$(nproc)" --host-march=penryn
+    - name: Linux Host Build -march=nehalem
+      run: |
+        scons --jobs "$(nproc)" --host-march=nehalem
+    - name: Linux Host Build -march=skylake
+      run: |
+        scons --jobs "$(nproc)" --host-march=skylake
+    - name: Linux Host Build with Sanitizers
+      run: |
+        scons --jobs "$(nproc)" --sanitize
+    - name: arm-eabi Cross Build
+      run: |
+        scons --jobs "$(nproc)" --target=arm-eabi
+    - name: powerpc-linux Cross Build
+      run: |
+        scons --jobs "$(nproc)" --target=powerpc-linux
 
   macos-test:
     name: macOS Test
@@ -31,7 +49,7 @@ jobs:
         brew install -q scons
     - name: Build with SCons
       run: |
-        scons --jobs "$(sysctl -n hw.ncpu)" --skip-arm-eabi
+        scons --jobs "$(sysctl -n hw.ncpu)"
 
   windows-test:
     name: Windows Test
@@ -44,7 +62,7 @@ jobs:
         choco install --limit-output --no-progress diffutils
     - name: Build with SCons
       run: |
-        scons --jobs "$env:NUMBER_OF_PROCESSORS" --skip-arm-eabi
+        scons --jobs "$env:NUMBER_OF_PROCESSORS"
 
   python-test:
     name: Python Test (${{ matrix.os }}, python${{ matrix.python-version }})

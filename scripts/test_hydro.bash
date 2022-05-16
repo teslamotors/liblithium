@@ -2,10 +2,10 @@
 
 set -xe
 
-scons --no-sanitize --jobs "$(nproc)" dist/hydro
+scons --jobs "$(nproc)" build/hydro
 
-testdir="dist/test/hydrotest"
-PATH="$(pwd)/dist/hydro:$PATH"
+testdir="build/test/hydrotest"
+PATH="$(pwd)/build/hydro:$PATH"
 
 mkdir -p "$testdir"
 pushd "$testdir"
@@ -59,7 +59,7 @@ $CC $CCFLAGS -c -o arm_hydrogen.o libhydrogen/hydrogen.c
 $CC $CCFLAGS -Wl,--entry=hydro_sign_verify -o libhydrogen_sign_verify arm_hydrogen.o
 $CC $CCFLAGS -Wl,--entry=hydro_hash_hash -o libhydrogen_hash_hash arm_hydrogen.o
 
-scons -C ../../.. --no-sanitize --jobs "$(nproc)" dist/arm-eabi/entrypoints
+scons -C ../../.. --jobs "$(nproc)" --target=arm-eabi build/arm-eabi/entrypoints
 
 arm-none-eabi-size \
   libhydrogen_sign_verify \
