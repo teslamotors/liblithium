@@ -27,26 +27,30 @@ void lith_sign_init(lith_sign_state *state);
 void lith_sign_update(lith_sign_state *state, const unsigned char *msg,
                       size_t len);
 
-void lith_sign_final_create(
-    lith_sign_state *state, unsigned char sig[LITH_SIGN_LEN],
-    const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN]);
+void lith_sign_final_create(lith_sign_state *state,
+                            unsigned char sig[LITH_SIGN_LEN],
+                            const unsigned char
+                                secret_key[LITH_SIGN_SECRET_KEY_LEN]);
 
-bool lith_sign_final_verify(
-    lith_sign_state *state, const unsigned char sig[LITH_SIGN_LEN],
-    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
+bool lith_sign_final_verify(lith_sign_state *state,
+                            const unsigned char sig[LITH_SIGN_LEN],
+                            const unsigned char
+                                public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 void lith_sign_final_prehash(lith_sign_state *state,
                              unsigned char prehash[LITH_SIGN_PREHASH_LEN]);
 
-void lith_sign_create_from_prehash(
-    unsigned char sig[LITH_SIGN_LEN],
-    const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
-    const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN]);
+void lith_sign_create_from_prehash(unsigned char sig[LITH_SIGN_LEN],
+                                   const unsigned char
+                                       prehash[LITH_SIGN_PREHASH_LEN],
+                                   const unsigned char
+                                       secret_key[LITH_SIGN_SECRET_KEY_LEN]);
 
-bool lith_sign_verify_prehash(
-    const unsigned char sig[LITH_SIGN_LEN],
-    const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
-    const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
+bool lith_sign_verify_prehash(const unsigned char sig[LITH_SIGN_LEN],
+                              const unsigned char
+                                  prehash[LITH_SIGN_PREHASH_LEN],
+                              const unsigned char
+                                  public_key[LITH_SIGN_PUBLIC_KEY_LEN]);
 
 void lith_sign_create(unsigned char sig[LITH_SIGN_LEN],
                       const unsigned char *msg, size_t len,

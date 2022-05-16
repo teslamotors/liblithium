@@ -17,3 +17,4 @@ BraceWrapping:
   SplitEmptyNamespace: true
 IndentWidth: 4
 AllowShortFunctionsOnASingleLine: false
+PenaltyBreakOpenParenthesis: 1000000
