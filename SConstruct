@@ -3,6 +3,8 @@
 import os
 import platform
 
+import SCons.Errors
+
 
 def build_with_env(path, env, test=True, measure_size=False):
     lith_env = env.Clone()
@@ -126,14 +128,14 @@ AddOption(
     metavar="TARGET1[,TARGET2...]",
 )
 
-targets = [t.strip() for t in GetOption("target").split(",")]
-
-if "all" in GetOption("target"):
+targets_str = GetOption("target")
+if targets_str == "all":
     targets = all_targets
-
-for t in targets:
-    if t not in all_targets:
-        raise SCons.Errors.UserError(f"Unknown target {t}")
+else:
+    targets = [t.strip() for t in targets_str.split(",")]
+    for t in targets:
+        if t not in all_targets:
+            raise SCons.Errors.UserError(f"Unknown target {t}")
 
 arch_default = "native"
 if platform.machine() in ("arm64", "aarch64"):
