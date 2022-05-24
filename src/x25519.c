@@ -82,31 +82,28 @@ static void ladder_part2(feq P, feq Q, const fe t, const fe x)
     mul1(X(P), t);      /* X(P) = AABB */
 }
 
-static void x25519_q(feq P, const sc k, const fe x)
+static void x25519_q(feq P, const unsigned char k[X25519_LEN], const fe x)
 {
     feq Q;
     limb swap = 0;
-    int i, j;
+    int i;
     (void)memcpy(X(Q), x, sizeof(fe));
     (void)memset(Z(Q), 0, sizeof(fe));
     (void)memset(P, 0, sizeof(feq));
     Z(Q)[0] = 1;
     X(P)[0] = 1;
 
-    for (i = NLIMBS - 1; i >= 0; --i)
+    for (i = X25519_BITS - 1; i >= 0; --i)
     {
-        for (j = LITH_X25519_WBITS - 1; j >= 0; --j)
-        {
-            fe t;
-            const limb kb = (limb)0 - ((k[i] >> j) & 1);
-            cswap(swap ^ kb, P, Q);
-            swap = kb;
-            ladder_part1(P, Q, t);
-            ladder_part2(P, Q, t, x);
+        fe t;
+        const limb kb = (limb)0 - ((k[i / 8] >> (i % 8)) & 1);
+        cswap(swap ^ kb, P, Q);
+        swap = kb;
+        ladder_part1(P, Q, t);
+        ladder_part2(P, Q, t, x);
 #if (LITH_ENABLE_WATCHDOG)
-            lith_watchdog_pet();
+        lith_watchdog_pet();
 #endif
-        }
     }
 
     cswap(swap, P, Q);
@@ -126,7 +123,7 @@ void x25519(unsigned char out[X25519_LEN],
 {
     feq P;
     fe x;
-    sc k;
+    unsigned char k[X25519_LEN];
 
     /*
      * Per RFC7748 section 5:
@@ -151,10 +148,10 @@ void x25519(unsigned char out[X25519_LEN],
      * Perform these bit set/clear operations after converting to an sc to
      * avoid making an extra copy.
      */
-    read_limbs(k, scalar);
-    k[0] &= ~(limb)0x7U;
-    k[NLIMBS - 1] &= ~LIMB_HIGH_BIT_MASK;
-    k[NLIMBS - 1] |= LIMB_HIGH_BIT_MASK >> 1;
+    memcpy(k, scalar, X25519_LEN);
+    k[0] &= 0xF8U;
+    k[X25519_LEN - 1] &= 0x7FU;
+    k[X25519_LEN - 1] |= 0x40U;
 
     x25519_q(P, k, x);
     feq_to_bytes(out, P);
@@ -287,9 +284,7 @@ void x25519_base_uniform(unsigned char out[X25519_LEN],
 {
     feq P;
     fe B = {BASE_POINT};
-    sc k;
-    read_limbs(k, scalar);
-    x25519_q(P, k, B);
+    x25519_q(P, scalar, B);
     feq_to_bytes(out, P);
 }
 
@@ -306,15 +301,12 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
      */
     feq P, Q;
     fe A, B = {BASE_POINT};
-    sc k;
 
-    read_limbs(k, response);
-    x25519_q(P, k, B);
+    x25519_q(P, response, B);
     /* P = x/z = response*base_point */
 
-    read_limbs(k, challenge);
     read_limbs(A, public_key);
-    x25519_q(Q, k, A);
+    x25519_q(Q, challenge, A);
     /* Q = u/w = challenge*public_key */
 
     mul(A, X(Q), Z(Q));
