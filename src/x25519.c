@@ -302,10 +302,10 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     feq P, Q;
     fe A, B = {BASE_POINT};
 
+    read_limbs(A, public_key);
+
     x25519_q(P, response, B);
     /* P = x/z = response*base_point */
-
-    read_limbs(A, public_key);
     x25519_q(Q, challenge, A);
     /* Q = u/w = challenge*public_key */
 
@@ -325,8 +325,8 @@ bool x25519_verify(const unsigned char response[X25519_LEN],
     mul1(A, B);
     /* A = left = 16uwR(xx + axz + zz) */
 
-    mul1(Z(Q), B);
-    sub(B, Z(Q), X(Q));
+    mul1(B, Z(Q));
+    sub(B, B, X(Q));
     sqr1(B);
     /* B = right = (R(2zu - 2xw) - (2xu - 2zw))^2 */
 
