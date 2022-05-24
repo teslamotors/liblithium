@@ -10,13 +10,13 @@
 
 #include <stdint.h>
 
-void gimli_absorb_byte(uint32_t *state, unsigned offset, unsigned char x);
+void gimli_absorb_byte(gimli_state *g, unsigned char x);
 
-unsigned char gimli_squeeze_byte(const uint32_t *state, unsigned offset);
+unsigned char gimli_squeeze_byte(const gimli_state *g);
 
-void gimli_advance(uint32_t *g, unsigned *offset);
+void gimli_advance(gimli_state *g);
 
-void gimli_pad(uint32_t *state, unsigned offset);
+void gimli_pad(gimli_state *g);
 
 uint32_t gimli_load(const unsigned char *p);
 
