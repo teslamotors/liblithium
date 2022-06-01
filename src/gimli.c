@@ -80,18 +80,12 @@ void gimli(uint32_t state[GIMLI_WORDS])
 
 #else /* !LITH_VECTORIZE */
 
-static void swap(uint32_t *x, int i, int j)
-{
-    const uint32_t tmp = x[i];
-    x[i] = x[j];
-    x[j] = tmp;
-}
-
 void gimli(uint32_t state[GIMLI_WORDS])
 {
     int round;
     for (round = 24; round > 0; --round)
     {
+        uint32_t tmp;
         int column;
         for (column = 0; column < 4; ++column)
         {
@@ -106,15 +100,22 @@ void gimli(uint32_t state[GIMLI_WORDS])
         {
         case 0:
             /* small swap: pattern s...s...s... etc. */
-            swap(state, 0, 1);
-            swap(state, 2, 3);
             /* add constant: pattern c...c...c... etc. */
-            state[0] ^= coeff(round);
+            tmp = state[0];
+            state[0] = state[1] ^ coeff(round);
+            state[1] = tmp;
+            tmp = state[2];
+            state[2] = state[3];
+            state[3] = tmp;
             break;
         case 2:
             /* big swap: pattern ..S...S...S. etc. */
-            swap(state, 0, 2);
-            swap(state, 1, 3);
+            tmp = state[0];
+            state[0] = state[2];
+            state[2] = tmp;
+            tmp = state[1];
+            state[1] = state[3];
+            state[3] = tmp;
             break;
         }
     }
