@@ -6,7 +6,7 @@ import platform
 import SCons.Errors
 
 
-def build_with_env(path, env, test=True, measure_size=False):
+def build_with_env(path, env, tests=True, examples=False, measure_size=False):
     lith_env = env.Clone()
     lith_env.Append(CPPPATH=[Dir("include")])
     liblith_env = lith_env.Clone()
@@ -31,19 +31,6 @@ def build_with_env(path, env, test=True, measure_size=False):
     # disables it for -ansi mode, so only disable it here.
     lith_env.Append(CFLAGS=["-Wno-declaration-after-statement"])
 
-    SConscript(
-        dirs="examples",
-        variant_dir=path,
-        exports={"env": lith_env},
-        duplicate=False,
-    )
-    SConscript(
-        dirs=".trustinsoft",
-        variant_dir=os.path.join(path, "trustinsoft"),
-        exports={"env": lith_env},
-        duplicate=False,
-    )
-
     hydro_env = lith_env.Clone()
     hydro_env.Append(CPPPATH=[Dir("hydro")])
     libhydrogen = SConscript(
@@ -54,14 +41,7 @@ def build_with_env(path, env, test=True, measure_size=False):
     )
     hydro_env.Prepend(LIBS=[libhydrogen])
 
-    SConscript(
-        dirs="hydro/examples",
-        variant_dir=os.path.join(path, "hydro"),
-        exports={"env": hydro_env},
-        duplicate=False,
-    )
-
-    if test:
+    if tests:
         test_env = lith_env.Clone()
         test_env.Append(CPPPATH=Dir("src"))
         SConscript(
@@ -73,6 +53,26 @@ def build_with_env(path, env, test=True, measure_size=False):
         SConscript(
             dirs="hydro/test",
             variant_dir=os.path.join(path, "hydro", "test"),
+            exports={"env": hydro_env},
+            duplicate=False,
+        )
+
+    if examples:
+        SConscript(
+            dirs="examples",
+            variant_dir=path,
+            exports={"env": lith_env},
+            duplicate=False,
+        )
+        SConscript(
+            dirs=".trustinsoft",
+            variant_dir=os.path.join(path, "trustinsoft"),
+            exports={"env": lith_env},
+            duplicate=False,
+        )
+        SConscript(
+            dirs="hydro/examples",
+            variant_dir=os.path.join(path, "hydro"),
             exports={"env": hydro_env},
             duplicate=False,
         )
@@ -229,7 +229,7 @@ if "host" in targets:
     arch_flag = f"-march={GetOption('host_march')}"
     host_env.Append(CCFLAGS=arch_flag, LINKFLAGS=arch_flag)
 
-    build_with_env("build", host_env)
+    build_with_env("build", host_env, examples=True)
 
     env16 = host_env.Clone()
     env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
@@ -287,7 +287,7 @@ if "arm-eabi" in targets:
         CCFLAGS=arm_gnu_flags,
         LINKFLAGS=arm_gnu_flags,
     )
-    build_with_env("build/arm-eabi", arm_env, test=False, measure_size=True)
+    build_with_env("build/arm-eabi", arm_env, tests=False, measure_size=True)
 
 if "powerpc-linux" in targets:
     ppc_env = env.Clone(
@@ -318,4 +318,4 @@ if "powerpc-linux" in targets:
         LINKFLAGS=ppc_gnu_flags,
     )
 
-    build_with_env("build/powerpc", ppc_env, test=False)
+    build_with_env("build/powerpc", ppc_env, tests=False)

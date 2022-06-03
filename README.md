@@ -25,8 +25,9 @@ STROBE.
 While you can embed liblithium in many environments, the library comes with a
 SConstruct file for building using scons by default.
 
-You can also use the `docker.sh` script that will conveniently build
-liblithium along with examples for multiple target architectures.
+You can also use the [`docker.bash`](docker.bash) script that will build a
+docker image with the necessary build dependencies and run a container.
+From within this container, run `scons`.
 
 # What you can use liblithium for
 
