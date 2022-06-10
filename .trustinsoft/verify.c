@@ -4,7 +4,7 @@
 
 int main(void)
 {
-    unsigned char sig[LITH_SIGN_LEN], msg[1024],
+    unsigned char sig[LITH_SIGN_LEN], msg[32],
         public_key[LITH_SIGN_PUBLIC_KEY_LEN];
     tis_make_unknown(sig, sizeof sig);
     tis_make_unknown(msg, sizeof msg);
