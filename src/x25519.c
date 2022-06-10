@@ -144,9 +144,6 @@ void x25519(unsigned char out[X25519_LEN],
      * set the three least significant bits of the first byte and the most
      * significant bit of the last to zero, set the second most significant bit
      * of the last byte to 1 and, finally, decode as little-endian."
-     *
-     * Perform these bit set/clear operations after converting to an sc to
-     * avoid making an extra copy.
      */
     memcpy(k, scalar, X25519_LEN);
     k[0] &= 0xF8U;
