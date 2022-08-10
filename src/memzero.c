@@ -9,19 +9,17 @@
 
 #include "memzero.h"
 
-#if defined(_WIN32)
+#if defined(__GNUC__) || defined(__clang__)
+#include <string.h>
+#elif defined(_WIN32)
 #include <windows.h>
 
 #include <wincrypt.h>
-#elif defined(__GNUC__) || defined(__clang__)
-#include <string.h>
 #endif
 
 void lith_memzero(void *p, size_t len)
 {
-#if defined(_WIN32)
-    SecureZeroMemory(p, len);
-#elif defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
     /*
      * Derived from musl libc's implementation of explicit_bzero.
      *
@@ -36,6 +34,8 @@ void lith_memzero(void *p, size_t len)
      * box sees the writes is for them to actually be performed."
      */
     __asm__ __volatile__("" : : "r"(memset(p, 0, len)) : "memory");
+#elif defined(_WIN32)
+    SecureZeroMemory(p, len);
 #else
     /*
      * Fall back to writing through a volatile pointer if nothing else is
