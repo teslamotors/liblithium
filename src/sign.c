@@ -47,11 +47,9 @@ gen_challenge(gimli_hash_state *state, unsigned char challenge[X25519_LEN],
     gimli_hash_final(state, challenge, X25519_LEN);
 }
 
-void lith_sign_create_from_prehash(unsigned char sig[LITH_SIGN_LEN],
-                                   const unsigned char
-                                       prehash[LITH_SIGN_PREHASH_LEN],
-                                   const unsigned char
-                                       secret_key[LITH_SIGN_SECRET_KEY_LEN])
+static void create(gimli_hash_state *state, unsigned char sig[LITH_SIGN_LEN],
+                   const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
+                   const unsigned char secret_key[LITH_SIGN_SECRET_KEY_LEN])
 {
     /* The two signature components. */
     unsigned char *const public_nonce = &sig[0];
@@ -72,18 +70,19 @@ void lith_sign_create_from_prehash(unsigned char sig[LITH_SIGN_LEN],
     /* Use the z component of the secret key expansion as scratch space for the
      * challenge after feeding z into the secret nonce calculation. */
     unsigned char *challenge = &az[X25519_LEN];
-    gimli_hash_state state;
 
-    gimli_hash(az, sizeof az, secret_key, X25519_LEN);
+    gimli_hash_init(state);
+    gimli_hash_update(state, secret_key, X25519_LEN);
+    gimli_hash_final(state, az, sizeof az);
 
-    gimli_hash_init(&state);
-    gimli_hash_update(&state, &az[X25519_LEN], X25519_LEN);
-    gimli_hash_update(&state, prehash, LITH_SIGN_PREHASH_LEN);
-    gimli_hash_final(&state, secret_nonce_unreduced, X25519_LEN * 2);
+    gimli_hash_init(state);
+    gimli_hash_update(state, &az[X25519_LEN], X25519_LEN);
+    gimli_hash_update(state, prehash, LITH_SIGN_PREHASH_LEN);
+    gimli_hash_final(state, secret_nonce_unreduced, X25519_LEN * 2);
     x25519_scalar_reduce(secret_nonce, secret_nonce_unreduced);
     x25519_base_uniform(public_nonce, secret_nonce);
 
-    gen_challenge(&state, challenge, public_nonce, public_key, prehash);
+    gen_challenge(state, challenge, public_nonce, public_key, prehash);
 
     x25519_sign(response, challenge, secret_nonce, secret_scalar);
     lith_memzero(secret_scalar, X25519_LEN);
@@ -95,6 +94,16 @@ void lith_sign_final_prehash(lith_sign_state *state,
     gimli_hash_final(state, prehash, LITH_SIGN_PREHASH_LEN);
 }
 
+void lith_sign_create_from_prehash(unsigned char sig[LITH_SIGN_LEN],
+                                   const unsigned char
+                                       prehash[LITH_SIGN_PREHASH_LEN],
+                                   const unsigned char
+                                       secret_key[LITH_SIGN_SECRET_KEY_LEN])
+{
+    gimli_hash_state state;
+    create(&state, sig, prehash, secret_key);
+}
+
 void lith_sign_final_create(lith_sign_state *state,
                             unsigned char sig[LITH_SIGN_LEN],
                             const unsigned char
@@ -102,7 +111,21 @@ void lith_sign_final_create(lith_sign_state *state,
 {
     unsigned char prehash[LITH_SIGN_PREHASH_LEN];
     lith_sign_final_prehash(state, prehash);
-    lith_sign_create_from_prehash(sig, prehash, secret_key);
+    create(state, sig, prehash, secret_key);
+}
+
+static bool verify(gimli_hash_state *state,
+                   const unsigned char sig[LITH_SIGN_LEN],
+                   const unsigned char prehash[LITH_SIGN_PREHASH_LEN],
+                   const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN])
+{
+    const unsigned char *const public_nonce = &sig[0];
+    const unsigned char *const response = &sig[X25519_LEN];
+
+    unsigned char challenge[X25519_LEN];
+    gen_challenge(state, challenge, public_nonce, public_key, prehash);
+
+    return x25519_verify(response, challenge, public_nonce, public_key);
 }
 
 bool lith_sign_verify_prehash(const unsigned char sig[LITH_SIGN_LEN],
@@ -111,14 +134,8 @@ bool lith_sign_verify_prehash(const unsigned char sig[LITH_SIGN_LEN],
                               const unsigned char
                                   public_key[LITH_SIGN_PUBLIC_KEY_LEN])
 {
-    const unsigned char *const public_nonce = &sig[0];
-    const unsigned char *const response = &sig[X25519_LEN];
-
     gimli_hash_state state;
-    unsigned char challenge[X25519_LEN];
-    gen_challenge(&state, challenge, public_nonce, public_key, prehash);
-
-    return x25519_verify(response, challenge, public_nonce, public_key);
+    return verify(&state, sig, prehash, public_key);
 }
 
 bool lith_sign_final_verify(lith_sign_state *state,
@@ -128,7 +145,7 @@ bool lith_sign_final_verify(lith_sign_state *state,
 {
     unsigned char prehash[LITH_SIGN_PREHASH_LEN];
     lith_sign_final_prehash(state, prehash);
-    return lith_sign_verify_prehash(sig, prehash, public_key);
+    return verify(state, sig, prehash, public_key);
 }
 
 void lith_sign_create(unsigned char sig[LITH_SIGN_LEN],
