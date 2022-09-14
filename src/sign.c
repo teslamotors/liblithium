@@ -40,13 +40,11 @@ gen_challenge(gimli_hash_state *state, unsigned char challenge[X25519_LEN],
               const unsigned char public_key[LITH_SIGN_PUBLIC_KEY_LEN],
               const unsigned char prehash[LITH_SIGN_PREHASH_LEN])
 {
-    unsigned char challenge_unreduced[X25519_LEN * 2];
     gimli_hash_init(state);
     gimli_hash_update(state, public_nonce, X25519_LEN);
     gimli_hash_update(state, public_key, LITH_SIGN_PUBLIC_KEY_LEN);
     gimli_hash_update(state, prehash, LITH_SIGN_PREHASH_LEN);
-    gimli_hash_final(state, challenge_unreduced, X25519_LEN * 2);
-    x25519_scalar_reduce(challenge, challenge_unreduced);
+    gimli_hash_final(state, challenge, X25519_LEN);
 }
 
 void lith_sign_create_from_prehash(unsigned char sig[LITH_SIGN_LEN],
