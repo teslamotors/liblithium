@@ -96,7 +96,7 @@ static void x25519_q(feq P, const unsigned char k[X25519_LEN], const fe x)
     for (i = X25519_BITS - 1; i >= 0; --i)
     {
         fe t;
-        const limb kb = (limb)0 - ((k[i / 8] >> (i % 8)) & 1);
+        const limb kb = (limb)-(int)((k[i / 8] >> (i % 8)) & 1);
         cswap(swap ^ kb, P, Q);
         swap = kb;
         ladder_part1(P, Q, t);
