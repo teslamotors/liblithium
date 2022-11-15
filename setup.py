@@ -34,11 +34,19 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     keywords=["x25519", "gimli", "signatures"],
-    package_dir={"lithium": "py_src"},
+    package_dir={"lithium": "py"},
     packages=["lithium"],
     include_package_data=True,
     package_data={"build_tools": ["ffibuilder.py"]},
     install_requires=["cffi>=1.12.0"],
     setup_requires=["cffi>=1.12.0", "setuptools_scm"],
     cffi_modules=["ffibuilder.py:ffibuilder"],
+    entry_points={
+        "console_scripts": [
+            "lith-keygen = lithium.entry_points.lith_keygen:main",
+            "lith-sign = lithium.entry_points.lith_sign:main",
+            "lith-verify = lithium.entry_points.lith_verify:main",
+            "gimli-hash = lithium.entry_points.gimli_hash:main",
+        ],
+    },
 )
