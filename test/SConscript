@@ -2,6 +2,23 @@
 
 Import("env")
 
+import SCons.Errors
+from difflib import unified_diff
+
+
+def diff_files(target, source, env):
+    if len(source) != 2 or len(target) != 1:
+        raise SCons.Errors.UserError("diff action must have two sources and one target")
+    with open(source[0].path, "r") as f:
+        a = f.readlines()
+    with open(source[1].path, "r") as f:
+        b = f.readlines()
+    diff = "".join(unified_diff(a, b))
+    with open(target[0].path, "w") as f:
+        f.write(diff)
+    if len(diff) != 0:
+        raise SCons.Errors.BuildError(errstr="output does not match\n" + diff)
+
 
 def test_kat(name, kat):
     prog = env.Program(name + ".c")
@@ -9,8 +26,7 @@ def test_kat(name, kat):
     env.Command(
         target=name + ".diff",
         source=[out, kat],
-        # Strip trailing CRs for comparing against files generated on Windows.
-        action="diff --strip-trailing-cr ${SOURCES[0]} ${SOURCES[1]}",
+        action=diff_files,
     )
 
 
