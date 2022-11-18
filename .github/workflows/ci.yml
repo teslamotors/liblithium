@@ -93,6 +93,12 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --verbose --color=yes test
+    - name: Test examples
+      run: |
+        lith-keygen testkey
+        lith-sign testkey SConstruct testsig
+        lith-verify testkey.pub SConstruct testsig
+        gimli-hash SConstruct
 
   black-check:
     name: Python Formatting
