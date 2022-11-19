@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-int main()
+int main(void)
 {
     uint32_t x[GIMLI_WORDS];
     unsigned int i;
