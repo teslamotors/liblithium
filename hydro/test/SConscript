@@ -2,21 +2,4 @@
 
 Import("env")
 
-import SCons.Errors
-
-import subprocess
-
-
-def test_and_stamp(target, source, env):
-    try:
-        subprocess.run([source[0].path]).check_returncode()
-    except subprocess.CalledProcessError as e:
-        raise SCons.Errors.BuildError(
-            errstr=f"test failed with exit code {e.returncode}"
-        )
-    with open(target[0].path, "w") as f:
-        pass
-
-
-test_hydro = env.Program("test_hydro.c")
-env.Command(target="test_hydro.stamp", source=test_hydro, action=test_and_stamp)
+env.TestStamp("test_hydro.c")

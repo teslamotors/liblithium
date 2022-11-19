@@ -4,7 +4,6 @@ Import("env")
 
 import SCons.Errors
 
-import subprocess
 from difflib import unified_diff
 
 
@@ -35,20 +34,9 @@ test_kat("test_lwc_hash_kat", "LWC_HASH_KAT_256.txt")
 test_kat("test_lwc_aead_kat", "LWC_AEAD_KAT_256_128.txt")
 
 
-def test_and_stamp(target, source, env):
-    try:
-        subprocess.run([source[0].path]).check_returncode()
-    except subprocess.CalledProcessError as e:
-        raise SCons.Errors.BuildError(
-            errstr=f"test failed with exit code {e.returncode}"
-        )
-    with open(target[0].path, "w") as f:
-        pass
-
-
 def test(name, extra_sources=[]):
     prog = env.Program(target=name, source=[name + ".c"] + extra_sources)
-    env.Command(target=name + ".stamp", source=prog, action=test_and_stamp)
+    env.TestStamp(prog)
 
 
 env_ed25519 = env.Clone()

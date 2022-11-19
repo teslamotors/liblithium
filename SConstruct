@@ -2,6 +2,7 @@
 
 import os
 import platform
+import subprocess
 
 import SCons.Errors
 
@@ -167,6 +168,28 @@ else:
 # for color terminal output when available
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]
+
+
+def test_stamp(target, source, env):
+    try:
+        subprocess.run([source[0].path]).check_returncode()
+    except subprocess.CalledProcessError as e:
+        raise SCons.Errors.BuildError(
+            errstr=f"test failed with exit code {e.returncode}"
+        )
+    with open(target[0].path, "w") as f:
+        pass
+
+
+env.Append(
+    BUILDERS={
+        "TestStamp": SCons.Builder.Builder(
+            action=test_stamp,
+            suffix=".stamp",
+            src_builder="Program",
+        )
+    }
+)
 
 if "host" in targets:
 
