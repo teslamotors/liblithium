@@ -157,12 +157,16 @@ limb canon(fe a)
      * Precondition: x < 2^255 + 1 word
      */
     sdlimb carry_sub = -19;
+    limb carry = 19;
     limb res = 0;
     int i;
 
     /* First, add 19. */
-    const fe nineteen = {19};
-    add(a, a, nineteen);
+    for (i = 0; i < NLIMBS; ++i)
+    {
+        a[i] = adc(&carry, a[i], 0);
+    }
+    propagate(a, carry);
 
     /*
      * Here, 19 <= x2 < 2^255
