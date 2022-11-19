@@ -50,7 +50,7 @@ int main(void)
 
         if (memcmp(shared1, shared2, sizeof(shared1)))
         {
-            fprintf(stderr, "FAIL shared %d\n", i);
+            printf("FAIL shared %d\n", i);
             return EXIT_FAILURE;
         }
     }
@@ -67,14 +67,14 @@ int main(void)
         x25519_sign(response, challenge, eph_secret, secret1);
         if (!x25519_verify(response, challenge, eph_public, public1))
         {
-            fprintf(stderr, "FAIL sign %d\n", i);
+            printf("FAIL sign %d\n", i);
             return EXIT_FAILURE;
         }
 
         challenge[4] ^= 1;
         if (x25519_verify(response, challenge, eph_public, public1))
         {
-            fprintf(stderr, "FAIL unsign %d\n", i);
+            printf("FAIL unsign %d\n", i);
             return EXIT_FAILURE;
         }
     }
@@ -103,7 +103,7 @@ int main(void)
     };
     if (memcmp(k, expected, X25519_LEN) != 0)
     {
-        fprintf(stderr, "FAIL iterated x25519\n");
+        printf("FAIL iterated x25519\n");
         return EXIT_FAILURE;
     }
 
