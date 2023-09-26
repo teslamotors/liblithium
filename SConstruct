@@ -192,7 +192,6 @@ env.Append(
 )
 
 if "host" in targets:
-
     if platform.system() != "Windows":
         host_env = env.Clone(CC="clang")
         llvm_flags = [
