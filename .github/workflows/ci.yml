@@ -88,7 +88,9 @@ jobs:
         flake8 . --count --max-complexity=10 --show-source --max-line-length=127 --statistics
     - name: Build and install package
       run: |
-        python -m pip install .
+        # --use-pep517 to work around bug with cffi wheels on macOS
+        # https://github.com/pypa/cibuildwheel/issues/813
+        python -m pip install --use-pep517 .
     - name: Test with pytest
       run: |
         pytest --verbose --color=yes test
