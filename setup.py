@@ -33,8 +33,8 @@ setup(
     packages=["lithium"],
     include_package_data=True,
     package_data={"build_tools": ["ffibuilder.py"]},
-    install_requires=["cffi>=1.12.0"],
-    setup_requires=["cffi>=1.12.0", "setuptools_scm"],
+    install_requires=["cffi>=1.16.0"],
+    setup_requires=["cffi>=1.16.0", "setuptools_scm"],
     cffi_modules=["ffibuilder.py:ffibuilder"],
     entry_points={
         "console_scripts": [
