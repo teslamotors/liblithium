@@ -159,15 +159,26 @@ AddOption(
     help="enable sanitizers on the host target",
 )
 
+AddOption(
+    "--compilation-db",
+    dest="compilation_db",
+    default=False,
+    action="store_true",
+    help="generate compile_commands.json",
+)
+
+env = Environment(tools=["cc", "link", "ar"])
+
 if platform.system() == "Windows":
-    env = Environment(tools=["cc", "c++", "link", "ar"])
     env["ENV"]["PATH"] = os.environ["PATH"]
-else:
-    env = Environment()
 
 # for color terminal output when available
 if "TERM" in os.environ:
     env["ENV"]["TERM"] = os.environ["TERM"]
+
+if GetOption("compilation_db"):
+    env.Tool("compilation_db")
+    env.CompilationDatabase()
 
 
 def test_stamp(target, source, env):
@@ -253,29 +264,31 @@ if "host" in targets:
 
     build_with_env("build", host_env, examples=True)
 
-    env16 = host_env.Clone()
-    env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
-    build_with_env("build/16", env16)
+    # Disable other variants when building the compilation_db.
+    if not GetOption("compilation_db"):
+        env16 = host_env.Clone()
+        env16.Append(CPPDEFINES={"LITH_X25519_WBITS": 16})
+        build_with_env("build/16", env16)
 
-    env32 = host_env.Clone()
-    env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
-    build_with_env("build/32", env32)
+        env32 = host_env.Clone()
+        env32.Append(CPPDEFINES={"LITH_X25519_WBITS": 32})
+        build_with_env("build/32", env32)
 
-    portable_asr_env = host_env.Clone()
-    portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
-    build_with_env("build/portable_asr", portable_asr_env)
+        portable_asr_env = host_env.Clone()
+        portable_asr_env.Append(CPPDEFINES=["LITH_FORCE_PORTABLE_ASR"])
+        build_with_env("build/portable_asr", portable_asr_env)
 
-    # disable architectural optimizations
-    no_opt_env = host_env.Clone()
-    no_opt_env.Append(
-        CPPDEFINES={
-            "LITH_LITTLE_ENDIAN": 0,
-            "LITH_BIG_ENDIAN": 0,
-            "LITH_SPONGE_WORDS": 0,
-            "LITH_VECTORIZE": 0,
-        }
-    )
-    build_with_env("build/no_opt", no_opt_env)
+        # disable architectural optimizations
+        no_opt_env = host_env.Clone()
+        no_opt_env.Append(
+            CPPDEFINES={
+                "LITH_LITTLE_ENDIAN": 0,
+                "LITH_BIG_ENDIAN": 0,
+                "LITH_SPONGE_WORDS": 0,
+                "LITH_VECTORIZE": 0,
+            }
+        )
+        build_with_env("build/no_opt", no_opt_env)
 
 
 if "arm-eabi" in targets:
