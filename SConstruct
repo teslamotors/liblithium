@@ -213,6 +213,7 @@ if "host" in targets:
             "-Wno-long-long",
             "-Wno-variadic-macros",
             "-Wno-format-non-iso",
+            "-Wno-unsafe-buffer-usage",
             "-Werror",
             "-O3",
             "-g",
