@@ -71,6 +71,8 @@ void gimli(uint32_t state[GIMLI_WORDS])
             /* big swap: pattern ..S...S...S. etc. */
             x = shuffle(x, 2, 3, 0, 1);
             break;
+        default:
+            break;
         }
     }
     s[0] = x;
@@ -116,6 +118,8 @@ void gimli(uint32_t state[GIMLI_WORDS])
             tmp = state[1];
             state[1] = state[3];
             state[3] = tmp;
+            break;
+        default:
             break;
         }
     }
