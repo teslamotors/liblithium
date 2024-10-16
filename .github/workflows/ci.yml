@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          pip3 install scons
+          brew install scons
       - name: Build with SCons
         run: |
           scons --jobs "$(sysctl -n hw.ncpu)"
