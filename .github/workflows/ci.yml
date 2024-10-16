@@ -2,119 +2,119 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   linux-test:
     name: Linux Test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -qq clang gcc-arm-none-eabi gcc-powerpc-linux-gnu \
-          llvm scons
-    - name: Linux Host Build
-      run: |
-        scons --jobs "$(nproc)"
-    - name: Linux Host Build -march=penryn
-      run: |
-        scons --jobs "$(nproc)" --host-march=penryn
-    - name: Linux Host Build -march=nehalem
-      run: |
-        scons --jobs "$(nproc)" --host-march=nehalem
-    - name: Linux Host Build -march=skylake
-      run: |
-        scons --jobs "$(nproc)" --host-march=skylake
-    - name: Linux Host Build with Sanitizers
-      run: |
-        scons --jobs "$(nproc)" --sanitize
-    - name: arm-eabi Cross Build
-      run: |
-        scons --jobs "$(nproc)" --target=arm-eabi
-    - name: powerpc-linux Cross Build
-      run: |
-        scons --jobs "$(nproc)" --target=powerpc-linux
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq clang gcc-arm-none-eabi gcc-powerpc-linux-gnu \
+            llvm scons
+      - name: Linux Host Build
+        run: |
+          scons --jobs "$(nproc)"
+      - name: Linux Host Build -march=penryn
+        run: |
+          scons --jobs "$(nproc)" --host-march=penryn
+      - name: Linux Host Build -march=nehalem
+        run: |
+          scons --jobs "$(nproc)" --host-march=nehalem
+      - name: Linux Host Build -march=skylake
+        run: |
+          scons --jobs "$(nproc)" --host-march=skylake
+      - name: Linux Host Build with Sanitizers
+        run: |
+          scons --jobs "$(nproc)" --sanitize
+      - name: arm-eabi Cross Build
+        run: |
+          scons --jobs "$(nproc)" --target=arm-eabi
+      - name: powerpc-linux Cross Build
+        run: |
+          scons --jobs "$(nproc)" --target=powerpc-linux
 
   macos-test:
     name: macOS Test
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        pip3 install scons
-    - name: Build with SCons
-      run: |
-        scons --jobs "$(sysctl -n hw.ncpu)"
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          pip3 install scons
+      - name: Build with SCons
+        run: |
+          scons --jobs "$(sysctl -n hw.ncpu)"
 
   windows-test:
     name: Windows Test
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        python -m pip install -qq scons
-    - name: Build with SCons
-      run: |
-        scons --jobs "$env:NUMBER_OF_PROCESSORS"
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          python -m pip install -qq scons
+      - name: Build with SCons
+        run: |
+          scons --jobs "$env:NUMBER_OF_PROCESSORS"
 
   python-test:
     name: Python Test (${{ matrix.os }}, python${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-2022]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [ubuntu-24.04, macos-14, windows-2022]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        cache-dependency-path: 'requirements-ci.txt'
-    - name: Install dependencies
-      run: |
-        python -m pip install -qq -r requirements-ci.txt
-    - name: Lint with flake8
-      run: |
-        # The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=10 --show-source --max-line-length=127 --statistics
-    - name: Build and install package
-      run: |
-        # --use-pep517 to work around bug with cffi wheels on macOS
-        # https://github.com/pypa/cibuildwheel/issues/813
-        python -m pip install --use-pep517 .
-    - name: Test with pytest
-      run: |
-        pytest --verbose --color=yes test
-    - name: Test examples
-      run: |
-        lith-keygen testkey
-        lith-sign testkey SConstruct testsig
-        lith-verify testkey.pub SConstruct testsig
-        gimli-hash SConstruct
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: "requirements-ci.txt"
+      - name: Install dependencies
+        run: |
+          python -m pip install -qq -r requirements-ci.txt
+      - name: Lint with flake8
+        run: |
+          # The GitHub editor is 127 chars wide
+          flake8 . --count --max-complexity=10 --show-source --max-line-length=127 --statistics
+      - name: Build and install package
+        run: |
+          # --use-pep517 to work around bug with cffi wheels on macOS
+          # https://github.com/pypa/cibuildwheel/issues/813
+          python -m pip install --use-pep517 .
+      - name: Test with pytest
+        run: |
+          pytest --verbose --color=yes test
+      - name: Test examples
+        run: |
+          lith-keygen testkey
+          lith-sign testkey SConstruct testsig
+          lith-verify testkey.pub SConstruct testsig
+          gimli-hash SConstruct
 
   black-check:
     name: Python Formatting
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-        cache: 'pip'
-        cache-dependency-path: 'requirements-black.txt'
-    - name: Install dependencies
-      run: |
-        python -m pip install -qq -r requirements-black.txt
-    - name: Format with black
-      run: |
-        bash black-check.bash
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: "requirements-black.txt"
+      - name: Install dependencies
+        run: |
+          python -m pip install -qq -r requirements-black.txt
+      - name: Format with black
+        run: |
+          bash black-check.bash

@@ -20,11 +20,11 @@ setup(
         "Topic :: Software Development :: Embedded Systems",
         "Programming Language :: C",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "License :: OSI Approved :: Apache Software License",
         "License :: OSI Approved :: MIT License",
     ],
@@ -33,8 +33,8 @@ setup(
     packages=["lithium"],
     include_package_data=True,
     package_data={"build_tools": ["ffibuilder.py"]},
-    install_requires=["cffi>=1.16.0"],
-    setup_requires=["cffi>=1.16.0", "setuptools_scm"],
+    install_requires=["cffi>=1.17.1"],
+    setup_requires=["cffi>=1.17.1", "setuptools_scm"],
     cffi_modules=["ffibuilder.py:ffibuilder"],
     entry_points={
         "console_scripts": [
