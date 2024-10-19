@@ -1,0 +1,42 @@
+[package]
+name = "liblithium"
+version = "0.1.0"
+authors = ["Chris Copeland <chris@chrisnc.net>"]
+description = "A lightweight and portable cryptography library"
+license = "Apache-2.0"
+repository = "https://github.com/teslamotors/liblithium"
+documentation = "https://docs.rs/liblithium"
+keywords = ["x25519", "gimli", "signatures"]
+categories = ["cryptography", "embedded", "no-std"]
+edition = "2021"
+rust-version = "1.82.0"
+build = "rust/build.rs"
+autobins = false
+autoexamples = false
+include = ["/src/", "/include/", "/rust/", "!SCons*", "!Dockerfile", "!*.bash"]
+
+[lib]
+path = "rust/src/lib.rs"
+
+[build-dependencies]
+bindgen = "0.71"
+cc = { version = "1.2", features = ["parallel"] }
+
+[profile.release]
+debug = true
+
+[[bin]]
+name = "gimli-hash"
+path = "rust/bin/hash.rs"
+
+[[bin]]
+name = "lith-keygen"
+path = "rust/bin/keygen.rs"
+
+[[bin]]
+name = "lith-sign"
+path = "rust/bin/sign.rs"
+
+[[bin]]
+name = "lith-verify"
+path = "rust/bin/verify.rs"

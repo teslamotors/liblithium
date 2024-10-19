@@ -17,19 +17,19 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -qq clang gcc-arm-none-eabi gcc-powerpc-linux-gnu \
             llvm scons
-      - name: Linux Host Build
+      - name: Linux Build
         run: |
           scons --jobs "$(nproc)"
-      - name: Linux Host Build -march=penryn
+      - name: Linux Build -march=penryn
         run: |
           scons --jobs "$(nproc)" --host-march=penryn
-      - name: Linux Host Build -march=nehalem
+      - name: Linux Build -march=nehalem
         run: |
           scons --jobs "$(nproc)" --host-march=nehalem
-      - name: Linux Host Build -march=skylake
+      - name: Linux Build -march=skylake
         run: |
           scons --jobs "$(nproc)" --host-march=skylake
-      - name: Linux Host Build with Sanitizers
+      - name: Linux Build with Sanitizers
         run: |
           scons --jobs "$(nproc)" --sanitize
       - name: arm-eabi Cross Build
@@ -38,6 +38,11 @@ jobs:
       - name: powerpc-linux Cross Build
         run: |
           scons --jobs "$(nproc)" --target=powerpc-linux
+      - name: Linux Rust Build
+        run: |
+          rustup update
+          cargo check --all-targets
+          cargo test
 
   macos-test:
     name: macOS Test
