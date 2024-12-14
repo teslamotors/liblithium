@@ -38,10 +38,10 @@ setup(
     cffi_modules=["ffibuilder.py:ffibuilder"],
     entry_points={
         "console_scripts": [
-            "lith-keygen = lithium.entry_points.lith_keygen:main",
-            "lith-sign = lithium.entry_points.lith_sign:main",
-            "lith-verify = lithium.entry_points.lith_verify:main",
-            "gimli-hash = lithium.entry_points.gimli_hash:main",
+            "gimli-hash = lithium.entry_points.hash:main",
+            "lith-keygen = lithium.entry_points.keygen:main",
+            "lith-sign = lithium.entry_points.sign:main",
+            "lith-verify = lithium.entry_points.verify:main",
         ],
     },
 )
