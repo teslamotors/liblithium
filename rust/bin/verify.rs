@@ -22,7 +22,7 @@ fn main() -> std::io::Result<()> {
     let pk: [u8; liblithium::sign::PUBLIC_KEY_LEN] = read(pk_path)?
         .as_slice()
         .try_into()
-        .expect("incorrect secret key length");
+        .expect("incorrect public key length");
     let sig: [u8; liblithium::sign::SIGN_LEN] = read(sig_path)?
         .as_slice()
         .try_into()
