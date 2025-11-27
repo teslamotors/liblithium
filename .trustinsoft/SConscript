@@ -1,7 +1,7 @@
 Import("env")
 
 tis_env = env.Clone()
-tis_env.Append(CPPPATH="stubs")
+tis_env.Append(CPPPATH=Dir("stubs").srcnode())
 
 tis_env.Program("hash.c")
 tis_env.Program("x25519.c")

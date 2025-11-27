@@ -9,7 +9,7 @@ import SCons.Errors
 
 def build_with_env(path, env, tests=True, examples=False, measure_size=False):
     lith_env = env.Clone()
-    lith_env.Append(CPPPATH=[Dir("include")])
+    lith_env.Append(CPPPATH=[Dir("include").srcnode()])
     liblith_env = lith_env.Clone()
     liblith_env.Append(CFLAGS=["-ansi"])
     liblithium = SConscript(
@@ -33,7 +33,7 @@ def build_with_env(path, env, tests=True, examples=False, measure_size=False):
     lith_env.Append(CFLAGS=["-Wno-declaration-after-statement"])
 
     hydro_env = lith_env.Clone()
-    hydro_env.Append(CPPPATH=[Dir("hydro")])
+    hydro_env.Append(CPPPATH=[Dir("hydro").srcnode()])
     libhydrogen = SConscript(
         dirs="hydro",
         variant_dir=os.path.join(path, "hydro", "lib"),
@@ -44,7 +44,7 @@ def build_with_env(path, env, tests=True, examples=False, measure_size=False):
 
     if tests:
         test_env = lith_env.Clone()
-        test_env.Append(CPPPATH=Dir("src"))
+        test_env.Append(CPPPATH=Dir("src").srcnode())
         SConscript(
             dirs="test",
             variant_dir=os.path.join(path, "test"),
@@ -125,7 +125,7 @@ AddOption(
     dest="target",
     default="host",
     action="store",
-    help=f"choose targets ({', '.join(all_targets)}) or specify \"all\"",
+    help=f'choose targets ({", ".join(all_targets)}) or specify "all"',
     metavar="TARGET1[,TARGET2...]",
 )
 
