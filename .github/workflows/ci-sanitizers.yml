@@ -1,0 +1,53 @@
+name: ci-sanitizers
+
+on:
+  pull_request:
+  push:
+    branches: [ "main", "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  asan-ubsan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm lld scons python3-pip
+          python3 -m pip install --upgrade pip
+          if [ -f requirements-ci.txt ]; then python3 -m pip install -r requirements-ci.txt; fi
+
+      - name: Build with ASan/UBSan
+        env:
+          CC: clang
+          CXX: clang++
+          CCFLAGS: "-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all -Wall -Wextra -Werror"
+          LINKFLAGS: "-fsanitize=address,undefined -fuse-ld=lld"
+        run: |
+          scons -c || true
+          scons
+
+      - name: Run C edge-case tests
+        run: |
+          if [ -f scripts/run_c_edge_tests.sh ]; then
+            chmod +x scripts/run_c_edge_tests.sh
+            scripts/run_c_edge_tests.sh
+          else
+            echo "No C edge test runner script yet."
+          fi
+
+      - name: Run Python tests (best effort)
+        run: |
+          if [ -d py ] && [ -f py/pyproject.toml -o -f py/setup.py ]; then
+            python3 -m pip install -e ./py || true
+          fi
+          if [ -f pytest.ini ] || [ -d tests ]; then
+            python3 -m pip install pytest
+            pytest -q || true
+          else
+            echo "No pytest suite detected; skipping."
+          fi
