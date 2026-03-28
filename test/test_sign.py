@@ -9,7 +9,7 @@ from lithium.sign import (
 
 
 def test_sign():
-    (pk, sk) = keygen()
+    pk, sk = keygen()
     data = bytearray(b"foo")
     sig = create(data, sk)
     assert verify(data, sig, pk)
@@ -18,7 +18,7 @@ def test_sign():
 
 
 def test_sign_prehash():
-    (pk, sk) = keygen()
+    pk, sk = keygen()
     data = bytearray(b"foo")
     s = Sign()
     s.update(data)
